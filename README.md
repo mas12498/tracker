@@ -1,6 +1,6 @@
 # tracker
 
-###Helpful Links
+### Helpful Links
 
 [Workflow](https://nvie.com/posts/a-successful-git-branching-model/)
 

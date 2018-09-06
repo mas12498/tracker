@@ -1,11 +1,10 @@
 package tspi.model;
 
+import java.util.Random;
+
 import rotation.Angle;
-import rotation.CodedPhase;
 import rotation.Rotator;
 import rotation.Vector3;
-
-//import org.apache.commons.math3.linear.*;
 
 /**  
  * Every thing native in EFG  WGS84 Cartesian frame
@@ -13,47 +12,53 @@ import rotation.Vector3;
  * */
 public class Pedestal {
 	
-	protected String _systemId; // system identifier
+	String _systemId; // system identifier
 	
-	/** PEDESTAL GEODETIC LOCATION WGS 84 ELLIPSOID [LLh] **/
-	protected final Ellipsoid _geodeticLocation = new Ellipsoid(); //lat, lon angles, h meters geodetic ellipsoid coordinates	
+	/** Angular bias of the pedestal's measurements. Supplies mean of the distribution in Angles and Meters. */
+	final Polar _bias = new Polar();
+	
+	/** Angular deviation of the pedestal's local.  Supplies deviation of the distribution in Angles and Meters. */
+	final Polar _deviation = new Polar();
+	// TODO just slapping stuff together; feel free to revise this error model!
+
+	/** PEDESTAL GEODETIC LOCATION WGS 84 ELLIPSOID [LLh] in Angles and Meters.**/
+	final Ellipsoid _geodeticLocation = new Ellipsoid();
 
 	/** PEDESTAL LOCAL VECTOR [RAE: Range, Azimuth, Elevation -- NO ATMOSPHERE] **/
-	protected final Polar _local = new Polar(); //Range, Azimuth, Elevation 
+	final Polar _local = new Polar();
 
 	/** LOCAL SITE TRANSFORMATION defined from geocentric XYZ. **/
-	protected final T_EFG_NED _localFrame = new T_EFG_NED();
+	final T_EFG_NED _localFrame = new T_EFG_NED();
 
 	/** LOCAL APERTURE TRANSFORMATION defined from geocentric XYZ. **/
-	protected final T_EFG_FRD _apertureFrame = new T_EFG_FRD();
+	final T_EFG_FRD _apertureFrame = new T_EFG_FRD();
 
 	/** PEDESTAL LOCATION WGS 84 GEOCENTRIC [XYZ] **/
-	protected final Vector3 _location = new Vector3(Vector3.EMPTY); // geocentric vector: EFG
+	final Vector3 _location = new Vector3(Vector3.EMPTY); // geocentric vector: EFG
 
 	/** PEDESTAL VECTOR WGS 84 GEOCENTRIC ORIENTED [XYZ] **/
-	protected final Vector3 _vector = new Vector3(Vector3.EMPTY); //local vector offset: EFG
+	final Vector3 _vector = new Vector3(Vector3.EMPTY); //local vector offset: EFG
 
 	/** LOCAL SITE 'NORTH' DIRECTION in geocentric XYZ frame. **/
-	protected final Vector3 _unitNorth = new Vector3(Vector3.EMPTY); 
+	final Vector3 _unitNorth = new Vector3(Vector3.EMPTY); 
 	
 	/** LOCAL SITE 'EAST' DIRECTION in geocentric XYZ frame. **/
-	protected final Vector3 _unitEast = new Vector3(Vector3.EMPTY); 
+	final Vector3 _unitEast = new Vector3(Vector3.EMPTY); 
 	
 	/** LOCAL SITE 'UP' DIRECTION in geocentric XYZ frame. **/
-	protected final Vector3 _unitUp = new Vector3(Vector3.EMPTY); 
-	
+	final Vector3 _unitUp = new Vector3(Vector3.EMPTY); 
 	
 	private static final int DIGITS = 14;
 	
 	//Constructor
 	public Pedestal( String id, Angle lat, Angle lon, double h) {
 		//_wgs84: from Pedestal's geodetic-ellipsoid coordinates Latitude, Longitude, height
-		this._systemId = id;		
-		this._geodeticLocation.set(lat,lon, h); //Ellipsoid		
+		this._systemId = id;	
+		this._geodeticLocation.set(lat,lon, h); //Ellipsoid
 		this._localFrame.set(this._geodeticLocation);	//T_EFG_NED
-		this._unitNorth.set(this._localFrame._local.getImage_i()); 
-		this._unitEast.set(this._localFrame._local.getImage_j()); 
-		this._unitUp.set(this._localFrame._local.getImage_k().negate()); 		
+		this._unitNorth.set(this._localFrame._local.getImage_i());
+		this._unitEast.set(this._localFrame._local.getImage_j());
+		this._unitUp.set(this._localFrame._local.getImage_k().negate());
 		this._location.set(this._geodeticLocation.getGeocentric()); //Cartesian
 		this.clearPedestalVector();
 	}
@@ -62,6 +67,28 @@ public class Pedestal {
 	//Clone Pedestal objects...
 	
 	public String getSystemId() { return this._systemId; }
+	
+	public Polar getBias() { return _bias; }
+
+	public Polar getDeviation() { return _deviation; }
+	
+	public Polar getPerturbedLocal(Random random) {
+		// add a normally distributed error to each of the polar coordinates 
+		double range =
+				_local.getRange() + _bias.getRange()
+				+ random.nextGaussian() * _deviation.getRange();
+		
+		double azimuth = 
+				_local.getAzimuth().getPiRadians() + _bias.getAzimuth().getPiRadians()
+				+ random.nextGaussian() * _deviation.getAzimuth().getPiRadians();
+		// TODO There is another correcting term that has to be added as elevation increases!!!
+		
+		double elevation = 
+				_local.getElevation().getPiRadians() + _bias.getElevation().getPiRadians()
+				+ random.nextGaussian() * _deviation.getElevation().getPiRadians();
+		
+		return new Polar (range, Angle.inPiRadians(azimuth), Angle.inPiRadians(elevation));
+	}
 	
 	/**
 	 * @return pedestal's vector in geocentric-oriented coordinate frame.
@@ -109,6 +136,11 @@ public class Pedestal {
 	};
 	
 	public void setSystemId(String id) { this._systemId = id; }
+	
+	public void setBias(Polar bias) { this._bias.set(bias); }
+	
+	public void setDeviation(Polar deviation) { this._deviation.set(deviation); }
+	
 	
 	public void locate(T_EFG_NED locationFrame){	
 		this._localFrame.set(locationFrame);

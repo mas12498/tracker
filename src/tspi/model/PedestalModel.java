@@ -211,13 +211,18 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 		}
 	}
 	
-	// TODO replace this with something standard!!!!!!!!!!!
+	static final String PedestalHeader = "id,lat(deg),lon(deg),h(m),az,el,r,mu_az,mu_el,mu_r,sigma_az,sigma_el,sigma_r";
+
+	// TODO replace this with something standard!!!!!!!!!!!	
 	public void load(File file) throws Exception {
 		pedestals.clear();
 		BufferedReader reader = new BufferedReader( new FileReader(file) );
 		String line = "";
 		int n=1;
 		try {
+			// read the header
+			reader.readLine();
+			
 			while( (line=reader.readLine()) != null) {
 				String cols[] = line.split(",");
 				if(cols.length==0 || (cols.length==1&&cols[0].equals("")))
@@ -226,12 +231,26 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 				Double lat = Double.parseDouble(cols[1].trim());
 				Double lon = Double.parseDouble(cols[2].trim());
 				Double h = Double.parseDouble(cols[3].trim());
+				Double az = Double.parseDouble(cols[4].trim());
+				Double el = Double.parseDouble(cols[5].trim());
+				Double r = Double.parseDouble(cols[6].trim());
+				Double mu_az = Double.parseDouble(cols[7].trim());
+				Double mu_el = Double.parseDouble(cols[8].trim());
+				Double mu_r = Double.parseDouble(cols[9].trim());
+				Double sigma_az = Double.parseDouble(cols[10].trim());
+				Double sigma_el = Double.parseDouble(cols[11].trim());
+				Double sigma_r = Double.parseDouble(cols[12].trim());
+				
 				Pedestal pedestal = new Pedestal(id, Angle.inDegrees(lat), Angle.inDegrees(lon), h);
+				pedestal.point( new Polar(r, Angle.inDegrees(az), Angle.inDegrees(el)) );
+				pedestal.setBias( new Polar(mu_r, Angle.inDegrees(mu_az), Angle.inDegrees(mu_el)) );
+				pedestal.setDeviation( new Polar(sigma_r, Angle.inDegrees(sigma_az), Angle.inDegrees(sigma_el)) );
+				
 				pedestals.add(pedestal);
 				n++;
 			}
 		} catch(Exception exception) {
-			throw new Exception( "Error, line "+n+" : First 4 columns should be id, lat, lon, h\n\""+line+"\"\nStopped loading." );
+			throw new Exception( "Error, line "+n+" : Format should be \""+PedestalHeader+"\". Stopped Loading." );
 		} finally {
 			reader.close();
 			this.fireTableDataChanged();
@@ -242,23 +261,48 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 	public void save(File file) throws Exception {
 		this.system = ELLIPSOIDAL;
 		PrintWriter writer = new PrintWriter(file);
+		writer.append( PedestalHeader );
+		writer.println();
+		
 		for(Pedestal pedestal : pedestals) {
+			// id
 			writer.append(pedestal.getSystemId());
 			writer.append(",");
+			
+			// geocentric coordinates
 			writer.append(pedestal.getLocationEllipsoid().getNorthLatitude().toDegreesString(7));
 			writer.append(",");
 			writer.append(pedestal.getLocationEllipsoid().getEastLongitude().signedPrinciple().toDegreesString(7));
 			writer.append(",");
 			writer.append(Double.toString(pedestal.getLocationEllipsoid().getEllipsoidHeight()));
-			if(pedestal._local.getAzimuth()!=null && pedestal._local.getElevation()!=null) {
-				writer.append(",");
-				writer.append(pedestal.getLocal().getAzimuth().toDegreesString(7));
-				writer.append(",");
-				writer.append(pedestal.getLocal().getElevation().toDegreesString(7));
-				// TODO add range?
-//				writer.append(",");
-//				writer.append(Double.toString(pedestal.getRange()));
-			}
+			writer.append(",");
+			
+			// current orientation
+			Polar local = pedestal.getLocal();
+			writer.append(local.getAzimuth().toDegreesString(7));
+			writer.append(",");
+			writer.append(local.getElevation().toDegreesString(7));
+			writer.append(",");
+			writer.append(Double.toString(local.getRange()) );
+			writer.append(",");
+			
+			// measurement bias in the polar directions
+			Polar bias = pedestal.getBias();
+			writer.append(bias.getAzimuth().toDegreesString(7));
+			writer.append(",");
+			writer.append(bias.getElevation().toDegreesString(7));
+			writer.append(",");
+			writer.append(Double.toString(bias.getRange()) );
+			writer.append(",");
+			
+			// measurement deviation in the polar directions
+			Polar deviation = pedestal.getDeviation();
+			writer.append(deviation.getAzimuth().toDegreesString(7));
+			writer.append(",");
+			writer.append(deviation.getElevation().toDegreesString(7));
+			writer.append(",");
+			writer.append(Double.toString(deviation.getRange()) );
+			
 			writer.println();
 		}
 		writer.close();
@@ -287,6 +331,19 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 				cell.setForeground(Color.black);
 			}	
 			return cell;
+		}
+	}
+	
+	// test program
+	public static void main(String args[]) {
+		File input = new File("C:\\Users\\shiel\\Documents\\workspace\\tracker\\data\\pedestalsExample.csv");
+		File output = new File("C:\\Users\\shiel\\Documents\\workspace\\tracker\\data\\pedestalsExampleEcho.csv");
+		PedestalModel model = new PedestalModel();
+		try {
+			model.load(input);
+			model.save(output);
+		} catch( Exception exception ) {
+			exception.printStackTrace();
 		}
 	}
 }

@@ -59,7 +59,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 	
 	
 	public static void main(String args[]) {
-		Increment2 frame = new Increment2();
+		Increment3 frame = new Increment3();
 		if(args.length==2) {
 			
 			// try to load a default pedestal file using the first argument as a path
@@ -181,7 +181,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		this.setLayout( new BorderLayout() );
 		this.add(bar, BorderLayout.NORTH);
 		this.add(split, BorderLayout.CENTER);
-		this.setTitle("TSPI Predictor; Increment 1 & 2");
+		this.setTitle("TSPI Predictor; Increment 3");
 		this.setBounds(100, 100, 1000, 400);
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
@@ -197,8 +197,10 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 			pedestal.pointToLocation( geo );
 	}
 	
+
+	
 	/** Increment 1, usecase 2: Updates the error of all targets using the two pedestals. */
-	public void ComputeError(ArrayList<Pedestal> selected, TargetModel targets) {
+	public void ComputeError(Vector3 origin, ArrayList<Pedestal> selected, TargetModel targets) {
 		// for each target
 		for(Target target : targets) {
 			Vector3 geo = target.getGeocentricCoordinates();
@@ -217,8 +219,8 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 			for(Pedestal pedestal : selected)
 				pedestal.pointToLocation(geo);
 			
-			// TODO obtain the origin from somewhere instead of just using the first pedestal!
-			Vector3 origin = new Vector3( selected.get(0).getLocation() );
+//			// TODO obtain the origin from somewhere instead of just using the first pedestal seleccted!
+//			Vector3 origin = new Vector3( selected.get(0).getLocation() );
 			
 			// compute new target and measure error
 			Solution solution = new Solution( origin, selected );
@@ -248,6 +250,23 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		// The bounds of the selected interval are used as the input pedestals to compute error
 		if( event.getSource() == this.pedestalTable.getSelectionModel() ) {
 			
+			
+			// Obtain the origin from first pedestal in file!
+			Vector3 origin = new Vector3( pedestals.getPedestal(0).getLocation() );
+			//Force "Origin: prefix...
+			String idPedStr = pedestals.getPedestal(0).getSystemId();
+			if (idPedStr.length() < 8) {
+				pedestals.getPedestal(0).setSystemId("Origin: " + idPedStr);
+				System.out.println("Origin Assigned: "+idPedStr+" "+origin.toString(14));
+			} else {
+				if (idPedStr.startsWith("Origin: ")) {
+					System.out.println(idPedStr + " "+origin.toString(14));
+				} else {
+					pedestals.getPedestal(0).setSystemId("Origin: " + idPedStr);
+					System.out.println("Origin Assigned: "+idPedStr+" "+origin.toString(14));
+				}
+			}
+			
 			int rows[] = pedestalTable.getSelectedRows();
 			ArrayList<Pedestal> list = new ArrayList<Pedestal>();
 			for(int row : rows) {
@@ -262,7 +281,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 			
 			// make sure enough pedestals are selected for a solution
 			if(list.size() >= 2)
-				ComputeError(list, targets);
+				ComputeError(origin, list, targets);
 			
 			// clear pedestal heading data
 			this.pedestals.clearOrientations();
@@ -379,7 +398,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 				this.targets.setCoordinateSystem(TargetModel.GEOCENTRIC);
 			} else if( event.getSource()==this.about) {
 				JOptionPane.showMessageDialog(this, 
-						"TSPI Predictor Increment 1 & 2\n"
+						"TSPI Predictor Increment 3\n"
 						+ "Mike Shields : Quaternion Library, Regresion Design\n"
 						+ "CaseyShields : UI\n\n"
 						+ "Case 1 : Compute pedestals' reference azimuth, elevation and range from target location\n"

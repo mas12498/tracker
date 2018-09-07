@@ -251,9 +251,26 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		if( event.getSource() == this.pedestalTable.getSelectionModel() ) {
 			
 			
-			// Obtain the origin from first pedestal in file!
+//			// Obtain the origin from first pedestal in file!
 			Vector3 origin = new Vector3( pedestals.getPedestal(0).getLocation() );
-			//Force "Origin: prefix...
+			
+//			//Clear "Origin: " prefix...
+			int pNum = pedestals.getRowCount();
+			for (int p = 1; p < pNum; p++) {
+				String idPedStr =  pedestals.getPedestal(p).getSystemId();
+				int idPedStrLen = idPedStr.length();
+				if (idPedStrLen >= 8) {
+					if (idPedStr.startsWith("Origin: ")) {
+						if(idPedStrLen==8) {
+							pedestals.getPedestal(p).setSystemId(null);							
+						}else {
+							pedestals.getPedestal(p).setSystemId(idPedStr.substring(8, idPedStrLen));
+						}						
+					}
+				}
+				
+			}			
+//			//Force "Origin: " prefix...
 			String idPedStr = pedestals.getPedestal(0).getSystemId();
 			if (idPedStr.length() < 8) {
 				pedestals.getPedestal(0).setSystemId("Origin: " + idPedStr);
@@ -266,6 +283,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 					System.out.println("Origin Assigned: "+idPedStr+" "+origin.toString(14));
 				}
 			}
+			
 			
 			int rows[] = pedestalTable.getSelectedRows();
 			ArrayList<Pedestal> list = new ArrayList<Pedestal>();

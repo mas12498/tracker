@@ -26,6 +26,7 @@ public class Solution {
 		
 		//count pedestal sensors active in fuzed solution
 		int pedSensorCnt =0;
+		//pedSensorCnt = pedestals.size()*2; //assumes always two valid sensors per pedestal...
 		for(Pedestal pedestal : pedestals) {
 			// begin with case (by 2) for az,el of pedestal... need not always be 2...
 			pedSensorCnt += 2;

@@ -58,26 +58,6 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 	private static final int DIGITS = 14;
 	
 	
-	public static void main(String args[]) {
-		Increment3 frame = new Increment3();
-		if(args.length==2) {
-			
-			// try to load a default pedestal file using the first argument as a path
-			File pedestalFile = new File( args[0] );
-			try { frame.pedestals.load( pedestalFile ); }
-			catch(Exception exception) {
-				JOptionPane.showMessageDialog(frame, "Failed to load "+args[1]+" as a pedestal csv:\n"+ exception.getMessage());
-			}
-			
-			// try to load a default target file using the second argument as a path
-			File targetFile = new File( args[1] );
-			try { frame.targets.load( targetFile ); }
-			catch(Exception exception) {
-				JOptionPane.showMessageDialog(frame, "Failed to load "+args[1]+" as a taget csv:\n" + exception.getMessage());
-			}
-		}
-		frame.setVisible(true);
-	}
 	
 	public Increment3() {
 		
@@ -199,8 +179,8 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 	
 
 	
-	/** Increment 1, usecase 2: Updates the error of all targets using the two pedestals. */
-	public void ComputeError(Vector3 origin, ArrayList<Pedestal> selected, TargetModel targets) {
+	/** Increment 1, usecase 2: Updates the error of all targets using the two or more selected pedestals. */
+	public void ComputeError(ArrayList<Pedestal> selected, TargetModel targets) {
 		// for each target
 		for(Target target : targets) {
 			Vector3 geo = target.getGeocentricCoordinates();
@@ -223,7 +203,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 //			Vector3 origin = new Vector3( selected.get(0).getLocation() );
 			
 			// compute new target and measure error
-			Solution solution = new Solution( origin, selected );
+			Solution solution = new Solution( selected );
 			solution.measureError( target.getGeocentricCoordinates() );
 			target.setSolution(solution);
 			
@@ -249,41 +229,51 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		// Pedestals were selected
 		// The bounds of the selected interval are used as the input pedestals to compute error
 		if( event.getSource() == this.pedestalTable.getSelectionModel() ) {
+						
+            /* Before selection...check if origin changed... AND fix local coordinates: */
 			
-			
-//			// Obtain the origin from first pedestal in file!
-			Vector3 origin = new Vector3( pedestals.getPedestal(0).getLocation() );
-			
-//			//Clear "Origin: " prefix...
+			//Clear "Origin: " display prefix if below...
 			int pNum = pedestals.getRowCount();
 			for (int p = 1; p < pNum; p++) {
 				String idPedStr =  pedestals.getPedestal(p).getSystemId();
 				int idPedStrLen = idPedStr.length();
 				if (idPedStrLen >= 8) {
 					if (idPedStr.startsWith("Origin: ")) {
+						pedestals.getPedestal(0);
 						if(idPedStrLen==8) {
 							pedestals.getPedestal(p).setSystemId(null);							
 						}else {
 							pedestals.getPedestal(p).setSystemId(idPedStr.substring(8, idPedStrLen));
 						}						
+
 					}
 				}
 				
 			}			
-//			//Force "Origin: " prefix...
+			//Force "Origin: " prefix...
 			String idPedStr = pedestals.getPedestal(0).getSystemId();
 			if (idPedStr.length() < 8) {
 				pedestals.getPedestal(0).setSystemId("Origin: " + idPedStr);
-				System.out.println("Origin Assigned: "+idPedStr+" "+origin.toString(14));
+				//System.out.println("Origin Assigned: "+idPedStr+" "+origin.toString(14));
 			} else {
 				if (idPedStr.startsWith("Origin: ")) {
-					System.out.println(idPedStr + " "+origin.toString(14));
+					//System.out.println(idPedStr + " "+origin.toString(14));
 				} else {
 					pedestals.getPedestal(0).setSystemId("Origin: " + idPedStr);
-					System.out.println("Origin Assigned: "+idPedStr+" "+origin.toString(14));
+					//System.out.println("Origin Assigned: "+idPedStr+" "+origin.toString(14));
 				}
 			}
+			//Check if origin location matches pedestal(0) location...
+			if (!(pedestals.getPedestal(0).getLocation().equals(Pedestal.getOrigin()))) {
+				Pedestal.setOrigin(pedestals.getPedestal(0).getLocation());
+				pNum = pedestals.getRowCount();
+				for (int p = 0; p < pNum; p++) {
+					pedestals.getPedestal(p).setLocalCoordinates();
+				}
+			}	
 			
+			
+            /* selection collection...pedestals to resolve targets: */
 			
 			int rows[] = pedestalTable.getSelectedRows();
 			ArrayList<Pedestal> list = new ArrayList<Pedestal>();
@@ -291,6 +281,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 				if(row==-1) continue;
 				Pedestal pedestal = pedestals.getPedestal(row); //pedestalTable.getRowSorter().convertRowIndexToModel(row) );
 				list.add(pedestal);
+				//System.out.println("local coordinates: "+pedestals.getPedestal(row).getLocalCoordinates().toString(14));
 			}
 			
 			// deselect the target table, and clear the error deltas
@@ -298,8 +289,9 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 			targets.clearSolutions();
 			
 			// make sure enough pedestals are selected for a solution
+			Vector3 origin = new Vector3(Pedestal.getOrigin());
 			if(list.size() >= 2)
-				ComputeError(origin, list, targets);
+				ComputeError( list, targets);
 			
 			// clear pedestal heading data
 			this.pedestals.clearOrientations();
@@ -432,4 +424,27 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 			JOptionPane.showMessageDialog(this, exception.getMessage());
 		}
 	}
+	
+	public static void main(String args[]) {
+		Increment3 frame = new Increment3();
+		if(args.length==2) {
+			
+			// try to load a default pedestal file using the first argument as a path
+			File pedestalFile = new File( args[0] );
+			try { frame.pedestals.load( pedestalFile ); }
+			catch(Exception exception) {
+				JOptionPane.showMessageDialog(frame, "Failed to load "+args[1]+" as a pedestal csv:\n"+ exception.getMessage());
+			}
+			
+			// try to load a default target file using the second argument as a path
+			File targetFile = new File( args[1] );
+			try { frame.targets.load( targetFile ); }
+			catch(Exception exception) {
+				JOptionPane.showMessageDialog(frame, "Failed to load "+args[1]+" as a taget csv:\n" + exception.getMessage());
+			}
+		}
+		frame.setVisible(true);
+	}
+
+	
 }

@@ -315,7 +315,7 @@ public class MonteCarloTest {
 				for( int n=0; n<pedestalCount; n++  )
 					list.add(pedestals.getPedestal(n));
 				Vector3 origin = pedestals.getPedestal(0).getLocation();
-				Solution solution = new Solution( origin, list );
+				Solution solution = new Solution( list );
 				Ellipsoid coordinate = new Ellipsoid();
 				coordinate.setGeocentric( solution.position_EFG );
 				double condition = solution.condition;

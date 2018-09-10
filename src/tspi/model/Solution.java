@@ -21,11 +21,12 @@ public class Solution {
 	public double error;
 	private static final int DIGITS = 14;
 	
-	public Solution(Vector3 origin, List<Pedestal> pedestals) {		
+	public Solution(List<Pedestal> pedestals) {		
 		
 		
 		//count pedestal sensors active in fuzed solution
 		int pedSensorCnt =0;
+		//pedSensorCnt = pedestals.size()*2; //assumes always two valid sensors per pedestal...
 		for(Pedestal pedestal : pedestals) {
 			// begin with case (by 2) for az,el of pedestal... need not always be 2...
 			pedSensorCnt += 2;
@@ -52,14 +53,14 @@ public class Solution {
 			matrixData[i][0] = row.getX();
 			matrixData[i][1]= row.getY();
 			matrixData[i][2] = row.getZ();			
-			rhs[i] = new Vector3(pedestal._location).subtract(origin).getInnerProduct(row);			
+			rhs[i] = pedestal._localCoordinates.getInnerProduct(row);			
 			i+=1;
 			
 			row = pedestal._apertureFrame._orientation.getImage_j();//axial EL dircos
 			matrixData[i][0] = row.getX();
 			matrixData[i][1]= row.getY();
 			matrixData[i][2] = row.getZ();			
-			rhs[i] = new Vector3(pedestal._location).subtract(origin).getInnerProduct(row);
+			rhs[i] = pedestal._localCoordinates.getInnerProduct(row); 
 			i+=1;	
 			
 		}
@@ -84,7 +85,7 @@ public class Solution {
 		
 		
 		//angles only solution
-		this.position_EFG = new Vector3(y.getEntry(0), y.getEntry(1), y.getEntry(2)).add(origin);
+		this.position_EFG = new Vector3(y.getEntry(0), y.getEntry(1), y.getEntry(2)).add(Pedestal.getOrigin());
 		this.condition = svd.getConditionNumber();
 				
 	System.out.println("Condition number : "+formatted(this.condition,5));

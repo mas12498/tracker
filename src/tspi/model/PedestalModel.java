@@ -220,20 +220,33 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 		String line = "";
 		int n=1;
 		try {
-			// read the header
-			reader.readLine();
-			
+			// read the header row...
+			reader.readLine(); 
+			// read the data rows...
 			while( (line=reader.readLine()) != null) {
 				String cols[] = line.split(",");
 				if(cols.length==0 || (cols.length==1&&cols[0].equals("")))
 					continue;
 				String id = cols[0].trim();
+				//location
 				Double lat = Double.parseDouble(cols[1].trim());
 				Double lon = Double.parseDouble(cols[2].trim());
 				Double h = Double.parseDouble(cols[3].trim());
+
+				Pedestal pedestal = new Pedestal(id, Angle.inDegrees(lat), Angle.inDegrees(lon), h);
+
+				//positioning (aperture pointing)
 				Double az = Double.parseDouble(cols[4].trim());
 				Double el = Double.parseDouble(cols[5].trim());
+				
+				if(Double.isNaN(az)&&Double.isNaN(el)) { //Increment program usage...temp by-pass...
+					pedestals.add(pedestal);
+					n++;
+					continue;
+				}
+				
 				Double r = Double.parseDouble(cols[6].trim());
+				
 				Double mu_az = Double.parseDouble(cols[7].trim());
 				Double mu_el = Double.parseDouble(cols[8].trim());
 				Double mu_r = Double.parseDouble(cols[9].trim());
@@ -241,7 +254,7 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 				Double sigma_el = Double.parseDouble(cols[11].trim());
 				Double sigma_r = Double.parseDouble(cols[12].trim());
 				
-				Pedestal pedestal = new Pedestal(id, Angle.inDegrees(lat), Angle.inDegrees(lon), h);
+				//Pedestal pedestal = new Pedestal(id, Angle.inDegrees(lat), Angle.inDegrees(lon), h);
 				pedestal.point( new Polar(r, Angle.inDegrees(az), Angle.inDegrees(el)) );
 				pedestal.setBias( new Polar(mu_r, Angle.inDegrees(mu_az), Angle.inDegrees(mu_el)) );
 				pedestal.setDeviation( new Polar(sigma_r, Angle.inDegrees(sigma_az), Angle.inDegrees(sigma_el)) );

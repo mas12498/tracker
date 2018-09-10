@@ -221,7 +221,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 			Vector3 origin = new Vector3( selected.get(0).getLocation() );
 			
 			// compute new target and measure error
-			Solution solution = new Solution( origin, selected );
+			Solution solution = new Solution( selected );
 			solution.measureError( target.getGeocentricCoordinates() );
 			target.setSolution(solution);
 			

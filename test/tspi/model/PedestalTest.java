@@ -15,8 +15,6 @@ import rotation.Quaternion;
 import rotation.QuaternionMath;
 import rotation.Rotator;
 import rotation.Vector3;
-import tspi.model.Ellipsoid;
-import tspi.model.T_EFG_NED;
 
 
 

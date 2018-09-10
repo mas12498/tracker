@@ -109,19 +109,26 @@ public class MonteCarloTest {
 		}
 	}
 
+	/** @param lat latitude of the center point of the grid in degrees
+	 * @param lon longitude of the center point of the grid in degrees
+	 * @param height altitude of entire plane of the grid in meters
+	 * @param time time to be assigned to every target
+	 * @param step distance in degrees between each grid line
+	 * @param count There will be 2*count+1 grid lines horizontally and vertically */
 	public static TargetModel generateTargetGrid(
 			long time, double lat, double lon, double height,
 			int count, double step
 	) {
 		TargetModel model = new TargetModel();
 		for (int n=-count; n<count; n++) { 
-			Target target = new Target(time, lat+(count*step), lon+(count*step), height);
+			Target target = new Target(time, lat+(step*count), lon+(step*count), height);
 			model.add(model.getRowCount(), target);
 		}
 		return model;
 	}
 	
-	public static void pointPedestals( PedestalModel model, Target target) {
+	/** Point all Pedestals in the model to a given target, adding a normal error generated from the Pedestals individual error models. */
+	public static void pointPerturbedPedestals( PedestalModel model, Target target) {
 		for (Pedestal pedestal : model) {
 			pedestal.pointToLocation( target.getGeocentricCoordinates() );
 			Polar pertubed = pedestal.getPerturbedLocal( Generator );

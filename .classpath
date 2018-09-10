@@ -5,7 +5,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/rotations"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/5"/>
-	<classpathentry kind="lib" path="H:/git/mas12498/tracker/lib/commons-math3-3.6/commons-math3-3.6.1.jar" sourcepath="lib/commons-math3-3.6/commons-math3-3.6.1-sources.jar"/>
-	<classpathentry kind="lib" path="H:/git/mas12498/tracker/lib/commons-math3-3.6/commons-math3-3.6.1-sources.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math3-3.6/commons-math3-3.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math3-3.6/commons-math3-3.6.1-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

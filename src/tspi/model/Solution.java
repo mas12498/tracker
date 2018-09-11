@@ -48,21 +48,24 @@ public class Solution {
 		int i = 0; 
 		for(Pedestal pedestal : pedestals) {	
 			System.out.println("Pedestal "+pedestal.getSystemId()+": q_NG="+pedestal._localFrame.getLocal().toString(5)+"  q_AG = "+pedestal._apertureFrame._orientation.toString(5));
+			
 			//Assuming two axial sensors per pedestal...			
-			row = pedestal._apertureFrame._orientation.getImage_k();//axial AZ dircos
-			matrixData[i][0] = row.getX();
-			matrixData[i][1]= row.getY();
-			matrixData[i][2] = row.getZ();			
-			rhs[i] = pedestal._localCoordinates.getInnerProduct(row);			
-			i+=1;
-			
-			row = pedestal._apertureFrame._orientation.getImage_j();//axial EL dircos
-			matrixData[i][0] = row.getX();
-			matrixData[i][1]= row.getY();
-			matrixData[i][2] = row.getZ();			
-			rhs[i] = pedestal._localCoordinates.getInnerProduct(row); 
-			i+=1;	
-			
+			if (pedestal.getMapEL()) {
+				row = pedestal._apertureFrame._orientation.getImage_k();// Vert: axial AZ dircos
+				matrixData[i][0] = row.getX();
+				matrixData[i][1] = row.getY();
+				matrixData[i][2] = row.getZ();
+				rhs[i] = pedestal._localCoordinates.getInnerProduct(row);
+				i += 1;
+			}
+			if (pedestal.getMapAZ()) {
+				row = pedestal._apertureFrame._orientation.getImage_j();// Horz: axial EL dircos
+				matrixData[i][0] = row.getX();
+				matrixData[i][1] = row.getY();
+				matrixData[i][2] = row.getZ();
+				rhs[i] = pedestal._localCoordinates.getInnerProduct(row);
+				i += 1;
+			}
 		}
 		
 		

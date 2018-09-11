@@ -21,7 +21,7 @@ import rotation.Angle;
 public class PedestalModel extends AbstractTableModel implements Iterable<Pedestal> {
 
 	protected ArrayList<Pedestal> pedestals;
-	public static final int ID=0, LAT=1, LON=2, H=3, AZ=4, EL=5, R=6;
+	public static final int ID=0, MAPAZ=1, MAPEL=2, LAT=3, LON=4, H=5, AZ=6, EL=7, R=8;
 	public static final int GEOCENTRIC=1, ELLIPSOIDAL=2;
 	protected int system = ELLIPSOIDAL;
 	
@@ -66,7 +66,7 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 	public Iterator<Pedestal> iterator() { return this.pedestals.iterator(); }
 	
 	@Override
-	public int getColumnCount() { return 7; }
+	public int getColumnCount() { return 9; }
 
 	@Override
 	public int getRowCount() { return pedestals.size(); }
@@ -76,6 +76,8 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 		if( this.system == ELLIPSOIDAL ) {
 			switch(col) {
 			case ID: return "System";
+			case MAPAZ: return "Maps AZ";
+			case MAPEL: return "Maps EL";
 			case LAT: return "North Latitude";
 			case LON: return "East Longitude";
 			case H: return "Height";
@@ -86,6 +88,8 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 		} else if( this.system == GEOCENTRIC ) {
 			switch(col) {
 			case ID: return "System";
+			case MAPAZ: return "Maps AZ";
+			case MAPEL: return "Maps EL";
 			case LAT: return "E";
 			case LON: return "F";
 			case H: return "G";
@@ -101,6 +105,8 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 	public Class<?> getColumnClass(int col) {
 		switch(col) {
 		case ID: return String.class;
+		case MAPAZ: return Boolean.class;
+		case MAPEL: return Boolean.class;
 		case LAT: return Double.class;
 		case LON: return Double.class;
 		case H: return Double.class;
@@ -124,6 +130,8 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 		if( this.system == ELLIPSOIDAL ) {
 			switch(col) {
 			case ID: return pedestal.getSystemId();
+			case MAPAZ: return pedestal.getMapAZ();
+			case MAPEL: return pedestal.getMapEL();
 			case LAT: return pedestal.getLocationEllipsoid().getNorthLatitude();
 			case LON: return pedestal.getLocationEllipsoid().getEastLongitude().signedPrinciple();
 			case H: return pedestal.getLocationEllipsoid().getEllipsoidHeight();
@@ -140,6 +148,8 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 		} else if( this.system == GEOCENTRIC ) {
 			switch(col) {
 			case ID: return pedestal.getSystemId();
+			case MAPAZ: return pedestal.getMapAZ();
+			case MAPEL: return pedestal.getMapEL();
 			case LAT: return pedestal.getLocation().getX();
 			case LON: return pedestal.getLocation().getY();
 			case H: return pedestal.getLocation().getZ();
@@ -165,6 +175,12 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			case ID:
 				pedestal.setSystemId((String) value);
 				break;
+			case MAPAZ:
+				pedestal.setMapAZ((Boolean) value);
+				break;
+			case MAPEL:
+				pedestal.setMapEL((Boolean) value);
+				break;
 			case LAT:
 				pedestal.locateLatitude(Angle.inDegrees((Double) value));
 				break;
@@ -189,6 +205,12 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			case ID:
 				pedestal.setSystemId((String) value);
 				break;
+			case MAPAZ:
+				pedestal.setMapAZ((Boolean) value);
+				break;
+			case MAPEL:
+				pedestal.setMapEL((Boolean) value);
+				break;
 			case LAT:
 				pedestal.locateX((Double) value);
 				break;
@@ -211,7 +233,7 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 		}
 	}
 	
-	static final String PedestalHeader = "id,lat(deg),lon(deg),h(m),az,el,r,mu_az,mu_el,mu_r,sigma_az,sigma_el,sigma_r";
+	static final String PedestalHeader = "id,mapAZ,mapEL,lat(deg),lon(deg),h(m),az,el,r,mu_az,mu_el,mu_r,sigma_az,sigma_el,sigma_r";
 
 	// TODO replace this with something standard!!!!!!!!!!!	
 	public void load(File file) throws Exception {
@@ -227,17 +249,23 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 				String cols[] = line.split(",");
 				if(cols.length==0 || (cols.length==1&&cols[0].equals("")))
 					continue;
+				
 				String id = cols[0].trim();
+				
+				//Sensor map
+				Boolean hasAZ = Boolean.parseBoolean(cols[1].trim());
+				Boolean hasEL = Boolean.parseBoolean(cols[2].trim());
+				
 				//location
-				Double lat = Double.parseDouble(cols[1].trim());
-				Double lon = Double.parseDouble(cols[2].trim());
-				Double h = Double.parseDouble(cols[3].trim());
+				Double lat = Double.parseDouble(cols[3].trim());
+				Double lon = Double.parseDouble(cols[4].trim());
+				Double h = Double.parseDouble(cols[5].trim());
 
-				Pedestal pedestal = new Pedestal(id, Angle.inDegrees(lat), Angle.inDegrees(lon), h);
+				Pedestal pedestal = new Pedestal(id, hasAZ, hasEL, Angle.inDegrees(lat), Angle.inDegrees(lon), h);
 
 				//positioning (aperture pointing)
-				Double az = Double.parseDouble(cols[4].trim());
-				Double el = Double.parseDouble(cols[5].trim());
+				Double az = Double.parseDouble(cols[6].trim());
+				Double el = Double.parseDouble(cols[7].trim());
 				
 				if(Double.isNaN(az)&&Double.isNaN(el)) { //Increment program usage...temp by-pass...
 					pedestals.add(pedestal);
@@ -245,16 +273,17 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 					continue;
 				}
 				
-				Double r = Double.parseDouble(cols[6].trim());
+				Double r = Double.parseDouble(cols[8].trim());
 				
-				Double mu_az = Double.parseDouble(cols[7].trim());
-				Double mu_el = Double.parseDouble(cols[8].trim());
-				Double mu_r = Double.parseDouble(cols[9].trim());
-				Double sigma_az = Double.parseDouble(cols[10].trim());
-				Double sigma_el = Double.parseDouble(cols[11].trim());
-				Double sigma_r = Double.parseDouble(cols[12].trim());
+				Double mu_az = Double.parseDouble(cols[9].trim());
+				Double mu_el = Double.parseDouble(cols[10].trim());
+				Double mu_r = Double.parseDouble(cols[11].trim());
+				Double sigma_az = Double.parseDouble(cols[12].trim());
+				Double sigma_el = Double.parseDouble(cols[13].trim());
+				Double sigma_r = Double.parseDouble(cols[14].trim());
 				
 				//Pedestal pedestal = new Pedestal(id, Angle.inDegrees(lat), Angle.inDegrees(lon), h);
+				pedestal.setMapSensors(false, hasAZ, hasEL);
 				pedestal.point( new Polar(r, Angle.inDegrees(az), Angle.inDegrees(el)) );
 				pedestal.setBias( new Polar(mu_r, Angle.inDegrees(mu_az), Angle.inDegrees(mu_el)) );
 				pedestal.setDeviation( new Polar(sigma_r, Angle.inDegrees(sigma_az), Angle.inDegrees(sigma_el)) );
@@ -280,6 +309,12 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 		for(Pedestal pedestal : pedestals) {
 			// id
 			writer.append(pedestal.getSystemId());
+			writer.append(",");
+			
+			//sensor map
+			writer.append(((Boolean) pedestal.getMapAZ()).toString());
+			writer.append(",");
+			writer.append(((Boolean) pedestal.getMapEL()).toString());
 			writer.append(",");
 			
 			// geocentric coordinates

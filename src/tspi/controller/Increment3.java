@@ -74,6 +74,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		this.cell = new PedestalModel.CellRenderer();
 		pedestalTable.setDefaultRenderer(Double.class, cell);
 		pedestalTable.setDefaultRenderer(String.class, cell);
+		pedestalTable.setDefaultRenderer(Boolean.class, cell);
 		//pedestalTable.getColumnModel().getColumn(0).setCellRenderer(cell);
 		
 		targets = new TargetModel();
@@ -343,7 +344,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 				int index = this.pedestalTable.getSelectedRow();
 				if(index==-1)
 					index = this.pedestals.getRowCount();
-				Pedestal pedestal = new Pedestal("",Angle.ZERO,Angle.ZERO,0.0);
+				Pedestal pedestal = new Pedestal("",false,false,Angle.ZERO,Angle.ZERO,0.0);
 				this.pedestals.add(index, pedestal);
 				this.pedestalTable.setRowSelectionInterval(index, index);
 				

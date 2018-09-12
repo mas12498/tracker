@@ -147,24 +147,30 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			case AZ:
 				Double az = pedestal.getLocal().getAzimuth().getDegrees();
 				if( !az.isNaN() ) return az;
+				break;
 			case EL:
 				Double el = pedestal.getLocal().getElevation().getDegrees();
 				if( !el.isNaN() ) return el;
+				break;
 			case R:
 				Double r = pedestal.getLocal().getRange();
 				if( !r.isNaN() ) return r;
+				break;
 			case DAZ:
 				Double mu_az = pedestal.getBiasAZ().getDegrees();
 				if (!mu_az.isNaN())
 					return mu_az;
+				break;
 			case DEL:
 				Double mu_el = pedestal.getBiasEL().getDegrees();
 				if (!mu_el.isNaN())
 					return mu_el;
+				break;
 			case DRG:
 				Double mu_r = pedestal.getBiasRG();
 				if (!mu_r.isNaN())
 					return mu_r;
+				break;
 			}
 		} else if( this.system == GEOCENTRIC ) {
 			switch(col) {
@@ -177,24 +183,30 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			case AZ:
 				Double az = pedestal.getLocal().getAzimuth().getDegrees();
 				if( !az.isNaN() ) return az;
+				break;
 			case EL:
 				Double el = pedestal.getLocal().getElevation().getDegrees();
 				if( !el.isNaN() ) return el;
+				break;
 			case R:
 				Double r = pedestal.getLocal().getRange();
 				if( !r.isNaN() ) return r;
+				break;
 			case DAZ:
 				Double mu_az = pedestal.getBiasAZ().getDegrees();
 				if (!mu_az.isNaN())
 					return mu_az;
+				break;
 			case DEL:
 				Double mu_el = pedestal.getBiasEL().getDegrees();
 				if (!mu_el.isNaN())
 					return mu_el;
+				break;
 			case DRG:
 				Double mu_r = pedestal.getBiasRG();
 				if (!mu_r.isNaN())
 					return mu_r;
+				break;
 			}
 		}
 		return null;

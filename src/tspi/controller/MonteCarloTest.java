@@ -24,21 +24,70 @@ import tspi.model.Solution;
 import tspi.model.Target;
 import tspi.model.TargetModel;
 
-// example solver arguments;
-//-solve
-//C:\\Users\\Casey\\Documents\\pedestals.csv
-//C:\\Users\\Casey\\Documents\\ensemble.csv
-//C:\\Users\\Casey\\Documents\\solution.csv
-//
-
-// /home/mike/repos/mike/pedestalsExample.csv
-// /home/mike/repos/mike/ensemble.csv
-// /home/mike/repos/mike/solution.csv
-
-//4
-//true
 public class MonteCarloTest {
 
+	public static TargetModel generateTargetGrid(
+			long time, double lat, double lon, double height,
+			int count, double step
+	) {
+		TargetModel model = new TargetModel();
+		for (int n=-count; n<count; n++) { 
+			Target target = new Target(time, lat+(count*step), lon+(count*step), height);
+			model.add(model.getRowCount(), target);
+		}
+		return model;
+	}
+	
+	public static void pointPedestals( PedestalModel model, Target target) {
+		for (Pedestal pedestal : model) {
+			pedestal.pointToLocation( target.getGeocentricCoordinates() );
+			Polar pertubed = pedestal.getPerturbedLocal( Generator );
+			pedestal.point(pertubed);
+		}
+	}
+	
+	public static void testGrid(
+			long time, double lat, double lon, double height, double step,
+			List<Pedestal> pedestals, int count, int trials ) {
+		
+//		File file = new File("pedestal.txt");
+//		PedestalModel pedestals = new PedestalModel();
+//		try {
+//			pedestals.load( file );
+//		} catch(Exception exception) {
+//			
+//		}
+			
+		TargetModel model = generateTargetGrid( time, lat, lon, height, count, step );
+		for (Target target: model) {
+			
+			Vector3 truth = target.getGeocentricCoordinates();
+			
+			ArrayList<Vector3> errors = new ArrayList<Vector3>(trials);
+			
+			for( int n=0; n < trials; n++ ) {
+				pointPedestals(pedestals, target);
+				
+				Solution solution = new Solution( pedestals );
+				Vector3 error = solution.position_EFG.subtract(truth);
+				
+				errors.add(error);
+			}
+			
+			// compute min, mean, mode and max of errors in AER
+			for ( Vector3 error : errors ) {
+				
+			}
+			
+			//store the error in the target grid? attached to some internal solution?
+			// or in a 2d array?
+
+		}
+			
+		
+	}
+	
+	
 	static SimpleDateFormat dayFormat = new SimpleDateFormat("yyyy.DDD");
 	static SimpleDateFormat timeFormat = new SimpleDateFormat("HHmmss.SSS");
 	static NumberFormat numberFormat = new DecimalFormat("0.00000000");
@@ -106,33 +155,6 @@ public class MonteCarloTest {
 			
 		} catch(Exception exception) {
 			exception.printStackTrace();
-		}
-	}
-
-	/** @param lat latitude of the center point of the grid in degrees
-	 * @param lon longitude of the center point of the grid in degrees
-	 * @param height altitude of entire plane of the grid in meters
-	 * @param time time to be assigned to every target
-	 * @param step distance in degrees between each grid line
-	 * @param count There will be 2*count+1 grid lines horizontally and vertically */
-	public static TargetModel generateTargetGrid(
-			long time, double lat, double lon, double height,
-			int count, double step
-	) {
-		TargetModel model = new TargetModel();
-		for (int n=-count; n<count; n++) { 
-			Target target = new Target(time, lat+(step*count), lon+(step*count), height);
-			model.add(model.getRowCount(), target);
-		}
-		return model;
-	}
-	
-	/** Point all Pedestals in the model to a given target, adding a normal error generated from the Pedestals individual error models. */
-	public static void pointPerturbedPedestals( PedestalModel model, Target target) {
-		for (Pedestal pedestal : model) {
-			pedestal.pointToLocation( target.getGeocentricCoordinates() );
-			Polar pertubed = pedestal.getPerturbedLocal( Generator );
-			pedestal.point(pertubed);
 		}
 	}
 	
@@ -383,3 +405,15 @@ public class MonteCarloTest {
 		return millis/1000.0;
 	}
 }
+
+//example solver arguments;
+//-solve
+//C:\\Users\\Casey\\Documents\\pedestals.csv
+//C:\\Users\\Casey\\Documents\\ensemble.csv
+//C:\\Users\\Casey\\Documents\\solution.csv
+//
+///home/mike/repos/mike/pedestalsExample.csv
+///home/mike/repos/mike/ensemble.csv
+///home/mike/repos/mike/solution.csv
+//4
+//true

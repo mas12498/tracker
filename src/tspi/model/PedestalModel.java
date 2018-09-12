@@ -21,7 +21,7 @@ import rotation.Angle;
 public class PedestalModel extends AbstractTableModel implements Iterable<Pedestal> {
 
 	protected ArrayList<Pedestal> pedestals;
-	public static final int ID=0, MAPAZ=1, MAPEL=2, LAT=3, LON=4, H=5, AZ=6, EL=7, R=8;
+	public static final int ID=0, MAPAZ=1, MAPEL=2, LAT=3, LON=4, H=5, AZ=6, EL=7, R= 8, DAZ=9, DEL=10, DRG=11;
 	public static final int GEOCENTRIC=1, ELLIPSOIDAL=2;
 	protected int system = ELLIPSOIDAL;
 	
@@ -66,7 +66,7 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 	public Iterator<Pedestal> iterator() { return this.pedestals.iterator(); }
 	
 	@Override
-	public int getColumnCount() { return 9; }
+	public int getColumnCount() { return 12; }
 
 	@Override
 	public int getRowCount() { return pedestals.size(); }
@@ -84,6 +84,9 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			case AZ: return "Azimuth";
 			case EL: return "Elevation";
 			case R: return "Range";
+			case DAZ: return "Bias AZ";
+			case DEL: return "Bias EL";
+			case DRG: return "Bias R*";			
 			}
 		} else if( this.system == GEOCENTRIC ) {
 			switch(col) {
@@ -96,6 +99,9 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			case AZ: return "Azimuth";
 			case EL: return "Elevation";
 			case R: return "Range";
+			case DAZ: return "Bias AZ";
+			case DEL: return "Bias EL";
+			case DRG: return "Bias R*";			
 			}
 		}
 		return "";
@@ -113,13 +119,16 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 		case AZ: return Double.class;
 		case EL: return Double.class;
 		case R: return Double.class;
+		case DAZ: return Double.class;
+		case DEL: return Double.class;
+		case DRG: return Double.class;			
 		default: return Object.class;
 		}
 	}
 	
 	@Override
 	public boolean isCellEditable(int row, int col) {
-		if(col==AZ || col==EL || col==R)
+		if(col==DRG || col==AZ || col==EL || col==R)
 			return false;
 		return true;
 	} 
@@ -144,6 +153,18 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			case R:
 				Double r = pedestal.getLocal().getRange();
 				if( !r.isNaN() ) return r;
+			case DAZ:
+				Double mu_az = pedestal.getBiasAZ().getDegrees();
+				if (!mu_az.isNaN())
+					return mu_az;
+			case DEL:
+				Double mu_el = pedestal.getBiasEL().getDegrees();
+				if (!mu_el.isNaN())
+					return mu_el;
+			case DRG:
+				Double mu_r = pedestal.getBiasRG();
+				if (!mu_r.isNaN())
+					return mu_r;
 			}
 		} else if( this.system == GEOCENTRIC ) {
 			switch(col) {
@@ -162,6 +183,18 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			case R:
 				Double r = pedestal.getLocal().getRange();
 				if( !r.isNaN() ) return r;
+			case DAZ:
+				Double mu_az = pedestal.getBiasAZ().getDegrees();
+				if (!mu_az.isNaN())
+					return mu_az;
+			case DEL:
+				Double mu_el = pedestal.getBiasEL().getDegrees();
+				if (!mu_el.isNaN())
+					return mu_el;
+			case DRG:
+				Double mu_r = pedestal.getBiasRG();
+				if (!mu_r.isNaN())
+					return mu_r;
 			}
 		}
 		return null;
@@ -199,6 +232,15 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			case R:
 				pedestal.pointRange((Double) value);
 				break;
+			case DAZ: 
+				pedestal.setBiasAZ(Angle.inDegrees((Double) value));
+				break;
+			case DEL: 
+				pedestal.setBiasEL(Angle.inDegrees((Double) value));
+				break;
+			case DRG: 
+				pedestal.setBiasRG((Double) value);
+				break;
 			}
 		} else if (this.system == GEOCENTRIC) {
 			switch (col) {
@@ -228,6 +270,15 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 				break;
 			case R:
 				pedestal.pointRange((Double) value);
+				break;
+			case DAZ: 
+				pedestal.setBiasAZ(Angle.inDegrees((Double) value));
+				break;
+			case DEL: 
+				pedestal.setBiasEL(Angle.inDegrees((Double) value));
+				break;
+			case DRG: 
+				pedestal.setBiasRG((Double) value);
 				break;
 			}
 		}
@@ -263,31 +314,28 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 
 				Pedestal pedestal = new Pedestal(id, hasAZ, hasEL, Angle.inDegrees(lat), Angle.inDegrees(lon), h);
 
-				//positioning (aperture pointing)
-				Double az = Double.parseDouble(cols[6].trim());
-				Double el = Double.parseDouble(cols[7].trim());
-				
-				if(Double.isNaN(az)&&Double.isNaN(el)) { //Increment program usage...temp by-pass...
-					pedestals.add(pedestal);
-					n++;
-					continue;
-				}
-				
-				Double r = Double.parseDouble(cols[8].trim());
-				
 				Double mu_az = Double.parseDouble(cols[9].trim());
 				Double mu_el = Double.parseDouble(cols[10].trim());
 				Double mu_r = Double.parseDouble(cols[11].trim());
-				Double sigma_az = Double.parseDouble(cols[12].trim());
-				Double sigma_el = Double.parseDouble(cols[13].trim());
-				Double sigma_r = Double.parseDouble(cols[14].trim());
 				
-				//Pedestal pedestal = new Pedestal(id, Angle.inDegrees(lat), Angle.inDegrees(lon), h);
-				pedestal.setMapSensors(false, hasAZ, hasEL);
-				pedestal.point( new Polar(r, Angle.inDegrees(az), Angle.inDegrees(el)) );
-				pedestal.setBias( new Polar(mu_r, Angle.inDegrees(mu_az), Angle.inDegrees(mu_el)) );
-				pedestal.setDeviation( new Polar(sigma_r, Angle.inDegrees(sigma_az), Angle.inDegrees(sigma_el)) );
+				pedestal.setBias( new Polar(mu_r, Angle.inDegrees(mu_az), Angle.inDegrees(mu_el)) );				
 				
+				//positioning (aperture pointing)
+				Double az = Double.parseDouble(cols[6].trim());
+				Double el = Double.parseDouble(cols[7].trim());				
+				if(Double.isNaN(az)&&Double.isNaN(el)) { //Increment program usage...temp by-pass...
+					pedestal.setMapSensors(false, hasAZ, hasEL);
+				}else {				
+					Double r = Double.parseDouble(cols[8].trim());
+					Double sigma_az = Double.parseDouble(cols[12].trim());
+					Double sigma_el = Double.parseDouble(cols[13].trim());
+					Double sigma_r = Double.parseDouble(cols[14].trim());
+
+					pedestal.setMapSensors(false, hasAZ, hasEL);
+					pedestal.point(new Polar(r, Angle.inDegrees(az), Angle.inDegrees(el)));
+					pedestal.setBias(new Polar(mu_r, Angle.inDegrees(mu_az), Angle.inDegrees(mu_el)));
+					pedestal.setDeviation(new Polar(sigma_r, Angle.inDegrees(sigma_az), Angle.inDegrees(sigma_el)));
+				}
 				pedestals.add(pedestal);
 				n++;
 			}
@@ -335,12 +383,11 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			writer.append(",");
 			
 			// measurement bias in the polar directions
-			Polar bias = pedestal.getBias();
-			writer.append(bias.getAzimuth().toDegreesString(7));
+			writer.append(pedestal.getBiasAZ().toDegreesString(7));
 			writer.append(",");
-			writer.append(bias.getElevation().toDegreesString(7));
+			writer.append(pedestal.getBiasEL().toDegreesString(7));
 			writer.append(",");
-			writer.append(Double.toString(bias.getRange()) );
+			writer.append(Double.toString(pedestal.getBiasRG()) );
 			writer.append(",");
 			
 			// measurement deviation in the polar directions
@@ -371,7 +418,7 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 //				cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
 //			else cell = super.getTableCellRendererComponent(table, value, false, hasFocus, row, col);
 			
-			if(col==AZ || col==EL || col== R ){
+			if(col==DRG || col==AZ || col==EL || col== R ){
 				cell.setEnabled(false);
 				cell.setForeground(Color.blue);
 			} else {

@@ -73,19 +73,10 @@ public class Pedestal {
 		this.setLocalCoordinates();		//zeros for the first pedestal in ensemble defined to be origin... 
 		this.clearPedestalVector();
 		
-	}
+	}	
 
-
-		
-
-	public static Vector3 getOrigin() {
-		return new Vector3( _origin );
-	}
-
-
-	public static void setOrigin( Vector3 geocentricOrigin ) {
-		_origin.set( geocentricOrigin );	
-	}
+	public static Vector3 getOrigin() { return new Vector3( _origin ); 	}
+	public static void setOrigin( Vector3 geocentricOrigin ) { _origin.set( geocentricOrigin );	}
 
 	//Clone Pedestal objects...
 	public String getSystemId() { return this._systemId; }
@@ -93,21 +84,18 @@ public class Pedestal {
 	/**
 	 * @return pedestal's location in geocentric coordinate frame.
 	 */
-	public Boolean getMapRG() { return (this._mapSensors[0]); }
-	public Boolean getMapAZ() { return (this._mapSensors[1]); }
-	public Boolean getMapEL() { return (this._mapSensors[2]); }
 	
+	public Boolean[] getMapSensors() { return _mapSensors; }
 	public void setMapSensors(Boolean hasRG, Boolean hasAZ, Boolean hasEL) { 
 		this._mapSensors[0] = hasRG; 
 		this._mapSensors[1] = hasAZ;
 		this._mapSensors[2] = hasEL;
 	}	
 	
-	public Boolean[] getMapSensors() {
-		return _mapSensors;
-	}
 
-	
+	public Boolean getMapRG() { return (this._mapSensors[0]); }
+	public Boolean getMapAZ() { return (this._mapSensors[1]); }
+	public Boolean getMapEL() { return (this._mapSensors[2]); }	
 	public void setMapRG(Boolean hasRG) { this._mapSensors[0] = hasRG; }
 	public void setMapAZ(Boolean hasAZ) { this._mapSensors[1] = hasAZ; }
 	public void setMapEL(Boolean hasEL) { this._mapSensors[2] = hasEL; }
@@ -122,31 +110,30 @@ public class Pedestal {
 	/**
 	 * @return pedestal's location from local origin given in geocentric oriented coordinate frame.
 	 */
-	public Vector3 getLocalCoordinates() {
-		return new Vector3( _localCoordinates );
-	}
+	public Vector3 getLocalCoordinates() { return new Vector3( _localCoordinates ); }
 
-
+	
 	public Polar getBias() { return _bias; }
-
+	public void setBias(Polar bias) { this._bias.set(bias); }
+	
+	public double getBiasRG() { return this._bias.getRange(); }
+	public Angle getBiasAZ() { return this._bias.getSignedAzimuth(); }
+	public Angle getBiasEL() { return this._bias.getElevation(); }
+	public void setBiasRG(double DRG) { this._bias.setRange(DRG); }
+	public void setBiasAZ(Angle DAZ) { this._bias.setAzimuth(DAZ); }
+	public void setBiasEL(Angle DEL) { this._bias.setElevation(DEL); }
+	
 	public Polar getDeviation() { return _deviation; }
+	public void setDeviation(Polar deviation) { this._deviation.set(deviation); }
 	
 	public Polar getPerturbedLocal(Random random) {
 		// add a normally distributed error to each of the polar coordinates 
-		double range =
-				_local.getRange() + _bias.getRange()
-				+ random.nextGaussian() * _deviation.getRange();
-		
-		double azimuth = 
-				_local.getAzimuth().getPiRadians() + _bias.getAzimuth().getPiRadians()
-				+ random.nextGaussian() * _deviation.getAzimuth().getPiRadians();
-		// TODO There is another correcting term that has to be added as elevation increases!!!
-		
-		double elevation = 
-				_local.getElevation().getPiRadians() + _bias.getElevation().getPiRadians()
-				+ random.nextGaussian() * _deviation.getElevation().getPiRadians();
-		
-		return new Polar (range, Angle.inPiRadians(azimuth), Angle.inPiRadians(elevation));
+		// TODO There is another daz correcting term that has to be added as elevation increases!!!		
+		return new Polar (
+				_local.getRange() + _bias.getRange() + _deviation.getRange() * random.nextGaussian()
+			    , new Angle(_local.getAzimuth()).add(_bias.getAzimuth()).add(_deviation.getAzimuth().multiply(random.nextGaussian()))
+			    , new Angle(_local.getElevation()).add(_bias.getElevation()).add(_deviation.getElevation().multiply(random.nextGaussian()))
+	    );
 	}
 	
 	/**
@@ -195,14 +182,18 @@ public class Pedestal {
 		_local.set(Double.NaN, Angle.EMPTY, Angle.EMPTY);
 		_apertureFrame.clear();
 	};
+
+	public void clearPedestalPerturbation(){
+		_bias.set(Double.NaN, Angle.EMPTY, Angle.EMPTY);
+		_deviation.set(Double.NaN, Angle.EMPTY, Angle.EMPTY);
+    //@MAS //any thing downstream, too 
+	};
+	
+	
 	
 	public void setSystemId(String id) { this._systemId = id; }
 
 
-	public void setBias(Polar bias) { this._bias.set(bias); }
-	
-	public void setDeviation(Polar deviation) { this._deviation.set(deviation); }
-	
 	
 	// After location is set... deal with pedestal rotator and range positioning updates...
 	

@@ -37,8 +37,8 @@ public class Solution {
 					+ " lon="+ellipsoid.getEastLongitude().signedPrinciple().toDegreesString(DIGITS)
 					+ " lat="+ellipsoid.getNorthLatitude().toDegreesString(DIGITS)
 					+ " h="+ellipsoid.getEllipsoidHeight()
-					+ " az=" + pedestal._local.getAzimuth().toDegreesString(7)
-					+ " el=" + pedestal._local.getElevation().toDegreesString(7));
+					+ " "+pedestal.getMapAZ()+"_az=" + pedestal._local.getAzimuth().toDegreesString(7)
+					+ " "+pedestal.getMapEL()+"_el=" + pedestal._local.getElevation().toDegreesString(7));
 		}	
 		
 		

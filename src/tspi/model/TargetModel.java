@@ -19,7 +19,7 @@ import rotation.Angle;
 public class TargetModel extends AbstractTableModel implements Iterable<Target> {
 
 	protected ArrayList<Target> targets = new ArrayList<Target>();
-	public static final int TIME=0, LAT=1, LON=2, H=3, ERR = 4, COND =5;
+	public static final int TIME=0, LAT=1, LON=2, H=3, ERR=4, COND=5, DX=6, DY=7, DZ=8, ODAZ=9, ODEL=10, ODRG=11;
 	public static final int GEOCENTRIC=1, ELLIPSOIDAL=2;
 	protected int system = ELLIPSOIDAL;
 	private static final int DIGITS=14; 
@@ -62,6 +62,8 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 	@Override
 	public int getRowCount() { return targets.size(); }
 
+//	DX=6, DY=7, DZ=8, oDAZ=9, oDEL=10, oDRG=11;	
+	
 	@Override
 	public String getColumnName(int col) {
 		if(this.system==ELLIPSOIDAL) {
@@ -72,6 +74,12 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			case H: return "Height";
 			case ERR: return "Error";
 			case COND: return "Condition";
+			case DX: return "Err X";
+			case DY: return "Err Y";
+			case DZ: return "Err Z";
+			case ODAZ: return "origin DAZ";
+			case ODEL: return "origin DEL";
+			case ODRG: return "origin DRG";			
 			}
 		} else if( system==GEOCENTRIC ) {
 			switch(col) {
@@ -81,6 +89,12 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			case H: return "G";
 			case ERR: return "Error";
 			case COND: return "Condition";
+			case DX: return "Err X";
+			case DY: return "Err Y";
+			case DZ: return "Err Z";
+			case ODAZ: return "origin DAZ";
+			case ODEL: return "origin DEL";
+			case ODRG: return "origin DRG";
 			}
 		}
 		return "";
@@ -95,6 +109,13 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 		case H: return Double.class;
 		case ERR: return Double.class;
 		case COND: return Double.class;
+//		case DX: return "Err X";
+//		case DY: return "Err Y";
+//		case DZ: return "Err Z";
+//		case ODAZ: return "origin DAZ";
+//		case ODEL: return "origin DEL";
+//		case ODRG: return "origin DRG";
+
 		default: return Object.class;
 		}
 	}
@@ -152,7 +173,14 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			case LAT: target.setLatitude( (Double)value ); break;
 			case LON: target.setLongitude( (Double)value ); break;
 			case H: target.setHeight( (Double)value ); break;
-			case ERR: case COND: break;//target.setError( (Double)value ); break;
+			case ERR: 
+			case COND: break;//target.setError( (Double)value ); break;
+//			case DX: return "Err X"; break;
+//			case DY: return "Err Y"; break;
+//			case DZ: return "Err Z"; break;
+//			case ODAZ: return "origin DAZ"; break;
+//			case ODEL: return "origin DEL"; break;
+//			case ODRG: return "origin DRG"; break;
 			}
 		} else if( system==GEOCENTRIC ) {
 			switch(col) {
@@ -160,7 +188,14 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			case LAT: target.setE( (Double)value ); break;
 			case LON: target.setF( (Double)value ); break;
 			case H: target.setG( (Double)value ); break;
-			case ERR: case COND: break;//target.setError( (Double)value ); break;
+			case ERR: 
+			case COND: break;//target.setError( (Double)value ); break;
+//			case DX: return "Err X"; break;
+//			case DY: return "Err Y"; break;
+//			case DZ: return "Err Z"; break;
+//			case ODAZ: return "origin DAZ"; break;
+//			case ODEL: return "origin DEL"; break;
+//			case ODRG: return "origin DRG"; break;
 			}
 		}
 	}

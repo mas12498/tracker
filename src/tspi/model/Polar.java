@@ -37,6 +37,15 @@ public class Polar {
 	}
 
 	/**
+	 * Azimuth signed Angle factory.
+	 * @return the signed principle azimuth Angle
+	 */
+	public Angle getSignedAzimuth() {
+		return _azimuth.signedPrinciple();
+	}
+
+	
+	/**
 	 * @return the coded signed principle elevation
 	 */
 	public Angle getElevation() {

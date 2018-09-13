@@ -1,5 +1,6 @@
 package tspi.controller;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -10,6 +11,7 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import rotation.Vector3;
 import tspi.model.Pedestal;
+import tspi.model.PedestalModel;
 import tspi.model.Polar;
 import tspi.model.Solution;
 import tspi.model.Target;
@@ -29,7 +31,34 @@ public class MonteCarloTest {
 
 	public static void main(String args[]) {
 		long seed = 1;
-		Generator = new Random( seed ); // TODO probably want to use the commons distributions API instead...
+		long time = 0;
+		double lat = 0.0, lon = 0.0, height=0.0;
+		double step = 0.05;
+		int count = 24, trials = 1000;
+		
+		Generator = new Random( seed );
+		// TODO probably want to use the commons distributions API instead...
+		
+		ArrayList<Pedestal> array;		
+		PedestalModel model = new PedestalModel();
+		File input = new File("");
+		
+		try {
+			model.load(input);
+			array = model.asList();
+			
+			Pedestal origin = model.getPedestal(0); // or something...
+			
+//			double grid[][][][] = 
+			testGrid(
+					time, lat, lon, height, step,
+					origin, model.asList(),
+					count, trials);
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+
 		
 	}
 	
@@ -114,6 +143,8 @@ public class MonteCarloTest {
 		final int azimuth=0, elevation=1, range=2;
 		final int min=0, mean=1, mode=2, max=3, deviation=4;
 		double stat[][] = new double [3][5];
+		long time;
+		double lat, lon, height;
 	}
 	
 	public static double ftime( Date time ) {

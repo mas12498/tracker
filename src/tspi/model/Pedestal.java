@@ -14,6 +14,9 @@ public class Pedestal {
 	
 	String _systemId; // system identifier
 	
+	/** Pedestal instruments available for TSPI: boolean values */
+	final Boolean[] _mapSensors = new Boolean[3]; // == {hasRG,hasAZ,hasEL}
+
 	/** Angular bias of the pedestal's measurements. Supplies mean of the distribution in Angles and Meters. */
 	final Polar _bias = new Polar();
 	
@@ -57,21 +60,23 @@ public class Pedestal {
 	private static final int DIGITS = 14;
 	
 	//Constructor
-	public Pedestal( String id, Angle lat, Angle lon, double h) {
+	public Pedestal( String id, Boolean hasAZ, Boolean hasEL, Angle lat, Angle lon, double h) {
 		//_wgs84: from Pedestal's geodetic-ellipsoid coordinates Latitude, Longitude, height
-		this._systemId = id;	
+		this._systemId = id;
 		this._geodeticLocation.set(lat,lon, h); //Ellipsoid
 		this._localFrame.set(this._geodeticLocation);	//T_EFG_NED
 		this._unitNorth.set(this._localFrame._local.getImage_i());
 		this._unitEast.set(this._localFrame._local.getImage_j());
 		this._unitUp.set(this._localFrame._local.getImage_k().negate());
 		this._location.set(this._geodeticLocation.getGeocentric()); //Cartesian	location for next to make sense...	
-//		if( _origin.equals(Vector3.EMPTY) ) _origin.set( new Vector3(this._location) ); //make origin empty to restart ensemble!!!
+		this.setMapSensors(false, hasAZ, hasEL);
 		this.setLocalCoordinates();		//zeros for the first pedestal in ensemble defined to be origin... 
 		this.clearPedestalVector();
 		
 	}
 
+
+		
 
 	public static Vector3 getOrigin() {
 		return new Vector3( _origin );
@@ -82,11 +87,31 @@ public class Pedestal {
 		_origin.set( geocentricOrigin );	
 	}
 
-
 	//Clone Pedestal objects...
-	
 	public String getSystemId() { return this._systemId; }
+	
+	/**
+	 * @return pedestal's location in geocentric coordinate frame.
+	 */
+	public Boolean getMapRG() { return (this._mapSensors[0]); }
+	public Boolean getMapAZ() { return (this._mapSensors[1]); }
+	public Boolean getMapEL() { return (this._mapSensors[2]); }
+	
+	public void setMapSensors(Boolean hasRG, Boolean hasAZ, Boolean hasEL) { 
+		this._mapSensors[0] = hasRG; 
+		this._mapSensors[1] = hasAZ;
+		this._mapSensors[2] = hasEL;
+	}	
+	
+	public Boolean[] getMapSensors() {
+		return _mapSensors;
+	}
 
+	
+	public void setMapRG(Boolean hasRG) { this._mapSensors[0] = hasRG; }
+	public void setMapAZ(Boolean hasAZ) { this._mapSensors[1] = hasAZ; }
+	public void setMapEL(Boolean hasEL) { this._mapSensors[2] = hasEL; }
+	
 
 	/**
 	 * @return pedestal's location in geocentric coordinate frame.

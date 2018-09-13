@@ -43,47 +43,61 @@ public class Solution {
 		
 		
 		Vector3 row = new Vector3(Double.NaN,Double.NaN,Double.NaN);
-		double [] rhs = new double [pedSensorCnt];
-		double [][] matrixData = new double [pedSensorCnt][3];
-		int i = 0; 
+		double [] rhs = new double [pedSensorCnt]; //max row dimension possible for initialization
+		double [][] matrixData = new double [pedSensorCnt][3]; //max row dimension possible for initialization
+		int i = 0;
+		int iAz = 0; 
+		int iEl = 0;
 		for(Pedestal pedestal : pedestals) {	
 			System.out.println("Pedestal "+pedestal.getSystemId()+": q_NG="+pedestal._localFrame.getLocal().toString(5)+"  q_AG = "+pedestal._apertureFrame._orientation.toString(5));
+			
 			//Assuming two axial sensors per pedestal...			
-			row = pedestal._apertureFrame._orientation.getImage_k();//axial AZ dircos
-			matrixData[i][0] = row.getX();
-			matrixData[i][1]= row.getY();
-			matrixData[i][2] = row.getZ();			
-			rhs[i] = pedestal._localCoordinates.getInnerProduct(row);			
-			i+=1;
-			
-			row = pedestal._apertureFrame._orientation.getImage_j();//axial EL dircos
-			matrixData[i][0] = row.getX();
-			matrixData[i][1]= row.getY();
-			matrixData[i][2] = row.getZ();			
-			rhs[i] = pedestal._localCoordinates.getInnerProduct(row); 
-			i+=1;	
-			
+			if (pedestal.getMapEL()) {
+				row = pedestal._apertureFrame._orientation.getImage_k();// Vert: axial AZ dircos
+				matrixData[i][0] = row.getX();
+				matrixData[i][1] = row.getY();
+				matrixData[i][2] = row.getZ();
+				rhs[i] = pedestal._localCoordinates.getInnerProduct(row);
+				i += 1;
+				iEl += 1;
+			}
+			if (pedestal.getMapAZ()) {
+				row = pedestal._apertureFrame._orientation.getImage_j();// Horz: axial EL dircos
+				matrixData[i][0] = row.getX();
+				matrixData[i][1] = row.getY();
+				matrixData[i][2] = row.getZ();
+				rhs[i] = pedestal._localCoordinates.getInnerProduct(row);
+				i += 1;
+				iAz += 1;
+			}
 		}
 		
 		
 		RealMatrix a = new Array2DRowRealMatrix(matrixData);
-	System.out.println("Sensors in solution: "+a.getRowDimension());
+	System.out.println("Pedestals in solution: "+pedSensorCnt/2);
+	System.out.println("Sensors in solution: "+iAz+" AZ + "+iEl+" EL = "+i+" Total.");
 	System.out.println(a.getColumnDimension()); // 3
-		SingularValueDecomposition svd = new SingularValueDecomposition(a);
+		SingularValueDecomposition svd = new SingularValueDecomposition(a.getSubMatrix(0,i-1,0, a.getColumnDimension()-1));
 		RealVector b = new ArrayRealVector(rhs);
-		RealVector y = svd.getSolver().solve(b);		
+		RealVector y = svd.getSolver().solve(b.getSubVector(0, i));
+		
+		RealMatrix covariance = svd.getCovariance(1e-9);
+		RealMatrix vSVD = svd.getV();
+		RealMatrix utSVD = svd.getUT();
+		RealMatrix sSVD = svd.getS();
+		double normSVD = svd.getNorm();
+		int rankSVD = svd.getRank();
 
-		OLSMultipleLinearRegression fit = new OLSMultipleLinearRegression();
-		fit.newSampleData(rhs, matrixData);
-		fit.setNoIntercept(true);
-		
-        double[] parm = fit.estimateRegressionParameters(); //y
-        
-		double R2Adjusted = fit.calculateAdjustedRSquared();
-		double mse = fit.estimateErrorVariance();
-		double[] parmSTD = fit.estimateRegressionParametersStandardErrors();
-		
-		
+//		OLSMultipleLinearRegression fit = new OLSMultipleLinearRegression();
+//		fit.newSampleData(rhs, matrixData);
+//		fit.setNoIntercept(true);
+//		
+//        double[] parm = fit.estimateRegressionParameters(); //y
+//        
+//		double R2Adjusted = fit.calculateAdjustedRSquared();
+//		double mse = fit.estimateErrorVariance();
+//		double[] parmSTD = fit.estimateRegressionParametersStandardErrors();
+				
 		//angles only solution
 		this.position_EFG = new Vector3(y.getEntry(0), y.getEntry(1), y.getEntry(2)).add(Pedestal.getOrigin());
 		this.condition = svd.getConditionNumber();

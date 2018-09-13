@@ -34,8 +34,8 @@ public class MonteCarloTest {
 	public static void main(String args[]) {
 		// Adjust these values; let me know if this is what you need.
 		long time = 0;
-		double lat = 0.0, lon = 0.0, height=0.0;
-		double step = 0.05;
+		double lat = 0.5, lon = 0.5, height=1000.0;
+		double step = 0.3;
 		int count = 10, trials = 100;
 		String input = ".\\data\\pedestalsWithOrigin.csv"; //"C:\Users\shiel\Documents\workspace\tracker\data\pedestalsWithOrigin.csv"
 		String output = ".\\data\\GridTest100.csv";
@@ -50,7 +50,7 @@ public class MonteCarloTest {
 		// I don't know, we'll talk it through.
 		
 		// I don't think I need this, because I'm computing all errors by pointing an origin pedestal...
-		//Pedestal.setOrigin( origin.getLocation() );
+		Pedestal.setOrigin( origin.getLocation() );
 		// I feel the origin should be an explicit argument more than a global state...
 		// for example, to get local coordinates you might add pedestal.getRelative(origin)
 		// then whatever application is running it would track the origin, whether it is a gui or Solution etc...
@@ -100,7 +100,7 @@ public class MonteCarloTest {
 			Polar truth = origin.getLocal();
 
 			// for every trial
-			for( int trial=0; trial < trials; trial++ ) {
+			for( int trial=0; trial<trials; trial++ ) {
 				
 				// point the pedestals at the target with a random perturbation generated from their error model
 				pointPedestals(pedestals, target);

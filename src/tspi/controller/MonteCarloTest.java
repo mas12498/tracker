@@ -36,7 +36,7 @@ public class MonteCarloTest {
 		long time = 0;
 		double lat = 0.0, lon = 0.0, height=0.0;
 		double step = 0.05;
-		int count = 24, trials = 100;
+		int count = 10, trials = 100;
 		String input = ".\\data\\pedestalsWithOrigin.csv"; //"C:\Users\shiel\Documents\workspace\tracker\data\pedestalsWithOrigin.csv"
 		String output = ".\\data\\GridTest100.csv";
 		
@@ -77,6 +77,7 @@ public class MonteCarloTest {
 	{
 		// print the header
 		stream.append("Lat, Lon, H, AZmin, AZmean, AZmode, AZmax, AZdev, ELmin, ELmean, ELmode, ELmax, ELdev, Rmin, Rmean, Rmode, Rmax, Rdev\n");
+		stream.flush();
 		
 		// declare statistics for az, el, r in that order
 		DescriptiveStatistics statistics[] = new DescriptiveStatistics[3];

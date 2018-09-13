@@ -128,12 +128,23 @@ public class Pedestal {
 	
 	public Polar getPerturbedLocal(Random random) {
 		// add a normally distributed error to each of the polar coordinates 
-		// TODO There is another daz correcting term that has to be added as elevation increases!!!		
-		return new Polar (
-				_local.getRange() + _bias.getRange() + _deviation.getRange() * random.nextGaussian()
-			    , new Angle(_local.getAzimuth()).add(_bias.getAzimuth()).add(_deviation.getAzimuth().multiply(random.nextGaussian()))
-			    , new Angle(_local.getElevation()).add(_bias.getElevation()).add(_deviation.getElevation().multiply(random.nextGaussian()))
-	    );
+		// TODO There is another daz correcting term that has to be handled as elevation increases!!!	
+		Polar perturbedLocal = new Polar(
+				_local.getRange() + _bias.getRange() + _deviation.getRange() * random.nextGaussian(),
+				Angle.inPiRadians(_local.getAzimuth().getPiRadians() + _bias.getSignedAzimuth().getPiRadians()
+						+ _deviation.getSignedAzimuth().getPiRadians() * random.nextGaussian()).unsignedPrinciple(),
+				Angle.inPiRadians(_local.getElevation().getPiRadians() + _bias.getElevation().getPiRadians()
+						+ _deviation.getElevation().getPiRadians() * random.nextGaussian()));
+		return perturbedLocal;  
+	}
+	
+	public Polar getBiasedLocal() {
+		// add a normally distributed error to each of the polar coordinates 
+		// TODO There is another daz correcting term that has to be handled as elevation increases!!!	
+		Polar biasedLocal = new Polar(_local.getRange() + _bias.getRange(),
+				Angle.inPiRadians(_local.getAzimuth().getPiRadians() + _bias.getSignedAzimuth().getPiRadians()).unsignedPrinciple(),
+				Angle.inPiRadians(_local.getElevation().getPiRadians() + _bias.getElevation().getPiRadians()));
+		return biasedLocal;  
 	}
 	
 	/**

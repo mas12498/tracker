@@ -29,6 +29,8 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 		this.pedestals = new ArrayList<Pedestal>();
 	}
 	
+	public ArrayList<Pedestal> asList() { return pedestals; }
+	
 	public Pedestal getPedestal(int row) {
 		return pedestals.get(row);
 	}

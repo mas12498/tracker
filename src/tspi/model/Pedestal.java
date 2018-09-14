@@ -55,7 +55,11 @@ public class Pedestal {
 	/** LOCAL SITE 'UP' DIRECTION in GEOCENTRIC [XYZ] frame. **/
 	final Vector3 _unitUp = new Vector3(Vector3.EMPTY); 
 	
+	/** Geocentric origin of solution **/
 	private static final Vector3 _origin = new Vector3(Vector3.EMPTY);
+	
+	/** LOCAL SITE TRANSFORMATION defined from geocentric XYZ. **/
+	private static final T_EFG_NED _originFrame = new T_EFG_NED();
 
 	private static final int DIGITS = 14;
 	
@@ -76,7 +80,12 @@ public class Pedestal {
 	}	
 
 	public static Vector3 getOrigin() { return new Vector3( _origin ); 	}
-	public static void setOrigin( Vector3 geocentricOrigin ) { _origin.set( geocentricOrigin );	}
+	public static T_EFG_NED getOriginFrame() { return new T_EFG_NED( _originFrame ); 	}
+
+	public static void setOrigin(Vector3 geocentricOrigin) {
+		_origin.set(geocentricOrigin);
+		_originFrame.set(_origin);
+	}
 
 	//Clone Pedestal objects...
 	public String getSystemId() { return this._systemId; }

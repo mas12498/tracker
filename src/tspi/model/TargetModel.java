@@ -57,7 +57,7 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 	public Iterator<Target> iterator() { return this.targets.iterator(); }
 	
 	@Override
-	public int getColumnCount() { return 6; }
+	public int getColumnCount() { return 12; }
 
 	@Override
 	public int getRowCount() { return targets.size(); }
@@ -109,12 +109,12 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 		case H: return Double.class;
 		case ERR: return Double.class;
 		case COND: return Double.class;
-//		case DX: return "Err X";
-//		case DY: return "Err Y";
-//		case DZ: return "Err Z";
-//		case ODAZ: return "origin DAZ";
-//		case ODEL: return "origin DEL";
-//		case ODRG: return "origin DRG";
+		case DX: return Double.class;
+		case DY: return Double.class;
+		case DZ: return Double.class;
+		case ODAZ: return Double.class;
+		case ODEL: return Double.class;
+		case ODRG: return Double.class;
 
 		default: return Object.class;
 		}
@@ -137,7 +137,33 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 				if(target.solution!=null && !Double.isNaN(target.solution.condition))
 					return target.solution.condition;
 				break;
-			}
+			
+			case DX:
+				if(target.solution!=null && !Double.isNaN(target.solution.condition))
+					return target.solution.delta_EFG.getX();
+				break;
+			case DY:
+				if(target.solution!=null && !Double.isNaN(target.solution.condition))
+					return target.solution.delta_EFG.getY();
+				break;
+			case DZ:
+				if(target.solution!=null && !Double.isNaN(target.solution.condition))
+					return target.solution.delta_EFG.getZ();
+				break;
+			case ODAZ:
+				if(target.solution!=null && !Double.isNaN(target.solution.condition))
+					return target.solution.delta_RAE.getSignedAzimuth().getDegrees();
+				break;
+			case ODEL:
+				if(target.solution!=null && !Double.isNaN(target.solution.condition))
+					return target.solution.delta_RAE.getElevation().getDegrees();
+				break;
+			case ODRG:
+				if(target.solution!=null && !Double.isNaN(target.solution.condition))
+					return target.solution.delta_RAE.getRange();
+				break;
+			}			
+			
 		} else if( system==GEOCENTRIC ) {
 			switch(col) {
 			case TIME: return target.getTime();
@@ -152,6 +178,31 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 				if(target.solution!=null && !Double.isNaN(target.solution.condition))
 					return target.solution.condition;
 				break;
+			
+			case DX:
+				if(target.solution!=null && !Double.isNaN(target.solution.condition))
+					return target.solution.delta_EFG.getX();
+				break;
+			case DY:
+				if(target.solution!=null && !Double.isNaN(target.solution.condition))
+					return target.solution.delta_EFG.getY();
+				break;
+			case DZ:
+				if(target.solution!=null && !Double.isNaN(target.solution.condition))
+					return target.solution.delta_EFG.getZ();
+				break;
+			case ODAZ:
+				if(target.solution!=null && !Double.isNaN(target.solution.condition))
+					return target.solution.delta_RAE.getSignedAzimuth().getDegrees();
+				break;
+			case ODEL:
+				if(target.solution!=null && !Double.isNaN(target.solution.condition))
+					return target.solution.delta_RAE.getElevation().getDegrees();
+				break;
+			case ODRG:
+				if(target.solution!=null && !Double.isNaN(target.solution.condition))
+					return target.solution.delta_RAE.getRange();
+				break;
 			}
 		}
 		return null;
@@ -159,7 +210,8 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 
 	@Override
 	public boolean isCellEditable(int row, int col) {
-		if(col==ERR || col==COND)
+		//if(col==ERR || col==COND)
+		if(col>=ERR )
 			return false;
 		return true;
 	}
@@ -174,13 +226,13 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			case LON: target.setLongitude( (Double)value ); break;
 			case H: target.setHeight( (Double)value ); break;
 			case ERR: 
-			case COND: break;//target.setError( (Double)value ); break;
-//			case DX: return "Err X"; break;
-//			case DY: return "Err Y"; break;
-//			case DZ: return "Err Z"; break;
-//			case ODAZ: return "origin DAZ"; break;
-//			case ODEL: return "origin DEL"; break;
-//			case ODRG: return "origin DRG"; break;
+			case COND: 
+			case DX: 
+			case DY: 
+			case DZ: 
+			case ODAZ: 
+			case ODEL: 
+			case ODRG: break;
 			}
 		} else if( system==GEOCENTRIC ) {
 			switch(col) {
@@ -189,13 +241,13 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			case LON: target.setF( (Double)value ); break;
 			case H: target.setG( (Double)value ); break;
 			case ERR: 
-			case COND: break;//target.setError( (Double)value ); break;
-//			case DX: return "Err X"; break;
-//			case DY: return "Err Y"; break;
-//			case DZ: return "Err Z"; break;
-//			case ODAZ: return "origin DAZ"; break;
-//			case ODEL: return "origin DEL"; break;
-//			case ODRG: return "origin DRG"; break;
+			case COND: 
+			case DX: 
+			case DY: 
+			case DZ: 
+			case ODAZ: 
+			case ODEL: 
+			case ODRG: break;
 			}
 		}
 	}
@@ -271,8 +323,9 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 					|| row == selections.getMinSelectionIndex() )
 				cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
 			else cell = super.getTableCellRendererComponent(table, value, false, hasFocus, row, col);
-			
-			if(col==ERR || col==COND)
+						
+			//if(col==ERR || col==COND || col==DX || col==DY || col==DZ || col==ODAZ || col==ODEL || col == ODRG )
+			if( col>=ERR )
 				cell.setEnabled(false);
 			else
 				cell.setEnabled(true);

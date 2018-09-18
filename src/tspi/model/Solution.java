@@ -8,7 +8,6 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 
-import rotation.Rotator;
 import rotation.Vector3;
 
 // TODO this needs to be fleshed out with system matrices, error models, etc.
@@ -58,6 +57,7 @@ public class Solution {
 		int iAz = 0; 
 		int iEl = 0;
 		for(Pedestal pedestal : pedestals) {	
+			
 			System.out.println("Pedestal "+pedestal.getSystemId()+": q_NG="+pedestal._localFrame.getLocal().toString(5)+"  q_AG = "+pedestal._apertureFrame._orientation.toString(5));
 			
 			//Assuming two axial sensors per pedestal...			
@@ -71,13 +71,12 @@ public class Solution {
 					matrixData[i][2] = _projection.getZ();
 				
 				//perturbed by biases pedestal, estimated solution matrix
-				// rotator EFG_NED
-				// vector3 localCoordinates
 				biasedLocal.set(pedestal.getBiasedLocal());
-				_projectionBiased.set(new Rotator(pedestal._localFrame._local)
-						.rotate_k(biasedLocal.getUnsignedAzimuth().codedPhase())
-						.rotate_j(biasedLocal.getElevation().codedPhase())
-						.getImage_k().unit()
+				_projectionBiased.set(
+						T_EFG_FRD.NED_to_FRD(pedestal._localFrame._local
+								, biasedLocal.getUnsignedAzimuth().codedPhase()
+								, biasedLocal.getElevation().codedPhase()
+							).getImage_k().unit()
 						);
 					rhsBiased[i] = pedestal._localCoordinates.getInnerProduct(_projectionBiased);					
 					matrixDataBiased[i][0] = _projectionBiased.getX();
@@ -98,22 +97,22 @@ public class Solution {
 				
 				//perturbed by biases, estimated pedestal solution matrix
 				biasedLocal.set(pedestal.getBiasedLocal());
-				_projectionBiased.set( new Rotator(	pedestal._localFrame._local )
-						.rotate_k( biasedLocal.getUnsignedAzimuth().codedPhase() )
-						.rotate_j(biasedLocal.getElevation().codedPhase())
-						.getImage_j().unit()
+				_projectionBiased.set( 
+						T_EFG_FRD.NED_to_FRD(pedestal._localFrame._local
+								, biasedLocal.getUnsignedAzimuth().codedPhase()
+								, biasedLocal.getElevation().codedPhase()
+							).getImage_j().unit()
 				);
+					rhsBiased[i] = pedestal._localCoordinates.getInnerProduct(_projectionBiased);
 					matrixDataBiased[i][0] = _projectionBiased.getX();
 					matrixDataBiased[i][1] = _projectionBiased.getY();
 					matrixDataBiased[i][2] = _projectionBiased.getZ();
-				rhsBiased[i] = pedestal._localCoordinates.getInnerProduct(_projectionBiased);
 								
 				i += 1;
 				iAz += 1;
 			}
 		}
-		
-		
+		//REFERENCE	
 		RealMatrix a = new Array2DRowRealMatrix(matrixData);
 			System.out.println("Pedestals in solution: "+pedSensorCnt/2);
 			System.out.println("Sensors in solution: "+iAz+" AZ + "+iEl+" EL = "+i+" Total.");
@@ -126,17 +125,65 @@ public class Solution {
 		Vector3 vector_EFG = new Vector3(y.getEntry(0), y.getEntry(1), y.getEntry(2));
 		Polar polar_EFG = Polar.commandLocal(vector_EFG, Pedestal.getOriginFrame()._local);
 
-		
+		//First trial for wgt computations
 		RealMatrix aPerturbed = new Array2DRowRealMatrix(matrixDataBiased);
 			System.out.println("Pedestals in solution: "+pedSensorCnt/2);
 			System.out.println("Sensors in solution: "+iAz+" AZ + "+iEl+" EL = "+i+" Total.");
 			System.out.println(a.getColumnDimension()); // 3
 		SingularValueDecomposition svdPerturbed = new SingularValueDecomposition(aPerturbed.getSubMatrix(0,i-1,0, aPerturbed.getColumnDimension()-1));
 		RealVector bPerturbed = new ArrayRealVector(rhsBiased);
-		RealVector yPerturbed = svdPerturbed.getSolver().solve(bPerturbed.getSubVector(0, i));
+		RealVector yPerturbed = svdPerturbed.getSolver().solve(bPerturbed.getSubVector(0, i));		
+		
 		//angles only solution -- perturbed
 		Vector3 vectorBiased_EFG = new Vector3(yPerturbed.getEntry(0), yPerturbed.getEntry(1), yPerturbed.getEntry(2));
-		Polar polarBiased_EFG = Polar.commandLocal(vectorBiased_EFG, Pedestal.getOriginFrame()._local);
+				
+		i = 0;
+		iAz = 0; 
+		iEl = 0;
+		for(Pedestal pedestal : pedestals) {	
+			
+			System.out.println("Pedestal "+pedestal.getSystemId()+": q_NG="+pedestal._localFrame.getLocal().toString(5)+"  q_AG = "+pedestal._apertureFrame._orientation.toString(5));
+			
+			//weight per function of pedestal range....
+		    double wgt = StrictMath.hypot( new Vector3(pedestal._localCoordinates ).subtract(vectorBiased_EFG).getAbs() , 1.5);
+
+			//Assuming two axial sensors per pedestal...			
+			if (pedestal.getMapEL()) { // Vert: axial AZ dircos for elevation
+								
+				//perturbed by biases pedestal, estimated solution matrix
+					rhsBiased[i] /= wgt;					
+					matrixDataBiased[i][0] /= wgt;
+					matrixDataBiased[i][1] /= wgt;
+					matrixDataBiased[i][2] /= wgt;
+				
+				i += 1;
+				iEl += 1;
+			}
+			if (pedestal.getMapAZ()) { // Horz: axial EL dircos for azimuth
+							
+				//perturbed by biases, estimated pedestal solution matrix
+				rhsBiased[i] /= wgt;					
+				matrixDataBiased[i][0] /= wgt;
+				matrixDataBiased[i][1] /= wgt;
+				matrixDataBiased[i][2] /= wgt;
+								
+				i += 1;
+				iAz += 1;
+			}
+		}
+		
+	//Weighted solutions....Overwrite first trial...
+	aPerturbed = new Array2DRowRealMatrix(matrixDataBiased);
+		System.out.println("Pedestals in solution: "+pedSensorCnt/2);
+		System.out.println("Sensors in solution: "+iAz+" AZ + "+iEl+" EL = "+i+" Total.");
+		System.out.println(a.getColumnDimension()); // 3
+	svdPerturbed = new SingularValueDecomposition(aPerturbed.getSubMatrix(0,i-1,0, aPerturbed.getColumnDimension()-1));
+	bPerturbed = new ArrayRealVector(rhsBiased);
+	yPerturbed = svdPerturbed.getSolver().solve(bPerturbed.getSubVector(0, i));		
+	
+	//angles only solution -- perturbed with obserations weighted by range meters...
+	vectorBiased_EFG = new Vector3(yPerturbed.getEntry(0), yPerturbed.getEntry(1), yPerturbed.getEntry(2));
+	Polar polarBiased_EFG = Polar.commandLocal(vectorBiased_EFG, Pedestal.getOriginFrame()._local);
 		
 
 //		RealMatrix covariance = svd.getCovariance(1e-9);

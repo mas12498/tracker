@@ -41,11 +41,11 @@ public class Target {
 	
 	public Double getError() {
 		if(solution==null) return null;
-		else return solution.error;
+		else return solution._error;
 	}
 	public Double getConditionNumber() {
 		if(solution==null) return null;
-		else return solution.condition;
+		else return solution._condition;
 	}
 
 	public void setTime(long time) { this.time = time; }

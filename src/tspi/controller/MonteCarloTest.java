@@ -107,14 +107,14 @@ public class MonteCarloTest {
 				
 				// Compute a target solution, and point the origin at it 
 				Solution solution = new Solution( pedestals );
-				origin.pointToLocation( solution.position_EFG );
+				origin.pointToLocation( solution._position_EFG );
 				Polar measurement = origin.getLocal();
 				// TODO make sure origin is right in this solution!!!
 				// TODO Solution pretty much needs to start from scratch every time right? I shouldn't be re-using something right?
 				
 				// Now compute error in spherical terms
 				double error[] = {
-						measurement.getAzimuth().subtract( truth.getAzimuth() ).getDegrees(),
+						measurement.getUnsignedAzimuth().subtract( truth.getUnsignedAzimuth() ).getDegrees(),
 						measurement.getElevation().subtract( truth.getElevation() ).getDegrees(),
 						measurement.getRange() - truth.getRange()
 				};

@@ -20,7 +20,7 @@ public class PolarTest extends TestCase {
 	public final void testPolar() {
 		Polar p = new Polar();		
 		assertTrue(Double.isNaN(p.getRange()));
-		assertTrue(Double.isNaN(p.getAzimuth().getPiRadians()));
+		assertTrue(Double.isNaN(p.getUnsignedAzimuth().getPiRadians()));
 		assertTrue(Double.isNaN(p.getElevation().getPiRadians()));
 //		fail("Not yet implemented"); // TODO
 	}
@@ -31,7 +31,7 @@ public class PolarTest extends TestCase {
 	public final void testPolarDoubleAngleAngle() {
 		Polar p = new Polar(10000d,Angle.inDegrees(120d),Angle.inDegrees(30d));		
 		assertEquals(10000d,p.getRange(),0d);
-		assertEquals(120d,p.getAzimuth().getDegrees(),0d);
+		assertEquals(120d,p.getUnsignedAzimuth().getDegrees(),0d);
 		assertEquals(30d,p.getElevation().getDegrees(),0d);
 		
 //		fail("Not yet implemented"); // TODO
@@ -44,36 +44,36 @@ public class PolarTest extends TestCase {
 		Polar q = new Polar(10000d,Angle.inDegrees(120d),Angle.inDegrees(30d));		
 		Polar p = new Polar(q);		
 		assertEquals(10000d,p.getRange(),0d);
-		assertEquals(120d,p.getAzimuth().getDegrees(),0d);
+		assertEquals(120d,p.getUnsignedAzimuth().getDegrees(),0d);
 		assertEquals(30d,p.getElevation().getDegrees(),0d);
 //		fail("Not yet implemented"); // TODO
 	}
 
 	/**
-	 * Test method for {@link tspi.model.Polar#getAzimuth()}.
+	 * Test method for {@link tspi.model.Polar#getUnsignedAzimuth()}.
 	 */
 	public final void testGetSetAzimuth() {
 		//Unsigned principle Angle Factory.class..
 		Polar p = new Polar(10000d,Angle.inDegrees(120d),Angle.inDegrees(30d));		
 		
 		//Angle factory:
-		Angle t = p.getAzimuth();
+		Angle t = p.getUnsignedAzimuth();
 		assertEquals(120d,t.getDegrees(),0);
 		t.set(Angle.inDegrees(30));
 		assertEquals(30d,t.getDegrees(),0);
-		assertEquals(120d,p.getAzimuth().getDegrees(),0d);
+		assertEquals(120d,p.getUnsignedAzimuth().getDegrees(),0d);
         
 		//gets unsigned values:
 		p.setAzimuth(Angle.inDegrees(-60));
 		//assertEquals(-60d,p._azimuth.getDegrees(),0d);		
-		assertEquals(300d,p.getAzimuth().getDegrees(),0d);
+		assertEquals(300d,p.getUnsignedAzimuth().getDegrees(),0d);
         //gets principle unsigned values:[0..360)
 		p.setAzimuth(Angle.inDegrees(360));
 		//assertEquals(360d,p._azimuth.getDegrees(),0d);		
 		//assertEquals(0d,p.getAzimuth().getDegrees(),0d);
 		p.setAzimuth(Angle.inDegrees(-420));
 		//assertEquals(-420d,p._azimuth.getDegrees(),0d);		
-		assertEquals(300d,p.getAzimuth().getDegrees(),0d);
+		assertEquals(300d,p.getUnsignedAzimuth().getDegrees(),0d);
 		
 		
 		//fail("Not yet implemented"); // TODO
@@ -132,7 +132,7 @@ public class PolarTest extends TestCase {
 		Polar p = new Polar(10000d,Angle.inDegrees(120d),Angle.inDegrees(30d));		
 		//assertEquals(10000d,p._range,0d);
 		assertEquals(10000d,p.getRange(),0d);
-		assertEquals(120d,p.getAzimuth().getDegrees(),0d);
+		assertEquals(120d,p.getUnsignedAzimuth().getDegrees(),0d);
 		assertEquals(30d,p.getElevation().getDegrees(),0d);
 		
 		//note: negative and zero inputs allowed... even though may be nonsense.
@@ -144,7 +144,7 @@ public class PolarTest extends TestCase {
 		assertEquals(-100d,p.getRange(),0d);
 		
 		//angles interpreted independent of sign of range!
-		assertEquals(120d,p.getAzimuth().getDegrees(),0d);
+		assertEquals(120d,p.getUnsignedAzimuth().getDegrees(),0d);
 		assertEquals(30d,p.getElevation().getDegrees(),0d);
 				
 //		fail("Not yet implemented"); // TODO
@@ -171,11 +171,11 @@ public class PolarTest extends TestCase {
 					System.out.println(
 						v.toString(5)+"  "
 					    + p.getRange() + " "
-					    + p.getAzimuth().getDegrees() + " "
+					    + p.getUnsignedAzimuth().getDegrees() + " "
 					    + p.getElevation().getDegrees() 
 					);
 					
-					q.set(p.getRange(), p.getAzimuth(), p.getElevation());
+					q.set(p.getRange(), p.getUnsignedAzimuth(), p.getElevation());
 					r.set(p);
 					w.set(p.getTopocentric());
 					//w.set(p.getTopocentric());

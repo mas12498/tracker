@@ -140,7 +140,7 @@ public class Pedestal {
 		// TODO There is another daz correcting term that has to be handled as elevation increases!!!	
 		Polar perturbedLocal = new Polar(
 				_local.getRange() + _bias.getRange() + _deviation.getRange() * random.nextGaussian(),
-				Angle.inPiRadians(_local.getAzimuth().getPiRadians() + _bias.getSignedAzimuth().getPiRadians()
+				Angle.inPiRadians(_local.getUnsignedAzimuth().getPiRadians() + _bias.getSignedAzimuth().getPiRadians()
 						+ _deviation.getSignedAzimuth().getPiRadians() * random.nextGaussian()).unsignedPrinciple(),
 				Angle.inPiRadians(_local.getElevation().getPiRadians() + _bias.getElevation().getPiRadians()
 						+ _deviation.getElevation().getPiRadians() * random.nextGaussian()));
@@ -149,10 +149,20 @@ public class Pedestal {
 	
 	public Polar getBiasedLocal() {
 		// add a normally distributed error to each of the polar coordinates 
-		// TODO There is another daz correcting term that has to be handled as elevation increases!!!	
-		Polar biasedLocal = new Polar(_local.getRange() + _bias.getRange(),
-				Angle.inPiRadians(_local.getAzimuth().getPiRadians() + _bias.getSignedAzimuth().getPiRadians()).unsignedPrinciple(),
-				Angle.inPiRadians(_local.getElevation().getPiRadians() + _bias.getElevation().getPiRadians()));
+		// TODO There is another daz correcting term that has to be handled as elevation increases!!!
+		double biasRange = _bias.getRange();
+		double biasAz = _bias.getSignedAzimuth().getPiRadians();
+		double biasEl = _bias.getElevation().getPiRadians();
+		
+		if(Double.isNaN(biasRange)) biasRange = 0d;
+		if(Double.isNaN(biasAz)) biasAz = 0d;
+		if(Double.isNaN(biasEl)) biasEl = 0d;
+
+		Polar biasedLocal = new Polar(
+				_local.getRange() + biasRange,
+				Angle.inPiRadians(_local.getSignedAzimuth().getPiRadians() + biasAz).unsignedPrinciple(),
+				Angle.inPiRadians(_local.getElevation().getPiRadians() + biasEl)
+		);
 		return biasedLocal;  
 	}
 	
@@ -448,7 +458,7 @@ public class Pedestal {
 	public String toString() { 
 		return this._systemId 
 				+ "("+ this._geodeticLocation.getNorthLatitude().toDegreesString(DIGITS) +", "+ this._geodeticLocation.getEastLongitude().toDegreesString(DIGITS)+", "+this.getLocationEllipsoid().getEllipsoidHeight()+")"
-				+"("+_local.getAzimuth().toDegreesString(DIGITS)+", "+_local.getElevation().toDegreesString(DIGITS)+")";
+				+"("+_local.getUnsignedAzimuth().toDegreesString(DIGITS)+", "+_local.getElevation().toDegreesString(DIGITS)+")";
 	}
 
 }

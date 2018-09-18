@@ -32,7 +32,7 @@ public class Polar {
 	 * Azimuth Angle factory.
 	 * @return the unsigned principle azimuth Angle
 	 */
-	public Angle getAzimuth() {
+	public Angle getUnsignedAzimuth() {
 		return _azimuth.unsignedPrinciple();
 	}
 

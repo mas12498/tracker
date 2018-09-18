@@ -174,7 +174,7 @@ public class EnsembleTest {
 					
 					// point pedestal at target then perturb
 					pedestal.pointToLocation( target.getGeocentricCoordinates() ); // TODO might want to cache instead of recomputing every trial...
-					Angle azimuth = pedestal.getLocal().getAzimuth();
+					Angle azimuth = pedestal.getLocal().getUnsignedAzimuth();
 					Angle elevation = pedestal.getLocal().getElevation();
 					azimuth.add( Angle.inDegrees( azBias + (Math.random()*azRange) ) );
 					elevation.add( Angle.inDegrees( elBias + (Math.random()*elRange) ) );
@@ -185,7 +185,7 @@ public class EnsembleTest {
 					
 //					stream.append( numberFormat.format( pedestal.getRange() ) );		
 //					stream.append( Separator );
-					stream.append( numberFormat.format( pedestal.getLocal().getAzimuth().getDegrees() ) );		
+					stream.append( numberFormat.format( pedestal.getLocal().getUnsignedAzimuth().getDegrees() ) );		
 					stream.append( Separator );
 					stream.append( numberFormat.format( pedestal.getLocal().getElevation().getDegrees() ) );		
 					stream.append( Separator );
@@ -292,15 +292,15 @@ public class EnsembleTest {
 				Vector3 origin = pedestals.getPedestal(0).getLocation();
 				Solution solution = new Solution( list );
 				Ellipsoid coordinate = new Ellipsoid();
-				coordinate.setGeocentric( solution.position_EFG );
-				double condition = solution.condition;
+				coordinate.setGeocentric( solution._position_EFG );
+				double condition = solution._condition;
 				
 				// write the solution coordinates
-				stream.append( numberFormat.format( solution.position_EFG.getX() ) ); // todo might want to make formats for longitude and latitude
+				stream.append( numberFormat.format( solution._position_EFG.getX() ) ); // todo might want to make formats for longitude and latitude
 				stream.append( Separator );
-				stream.append( numberFormat.format( solution.position_EFG.getY() ) );
+				stream.append( numberFormat.format( solution._position_EFG.getY() ) );
 				stream.append( Separator );
-				stream.append( numberFormat.format( solution.position_EFG.getZ() ) );
+				stream.append( numberFormat.format( solution._position_EFG.getZ() ) );
 				stream.append( Separator );
 				stream.append( longitudeFormat.format( coordinate.getEastLongitude().getDegrees() ) ); // todo might want to make formats for longitude and latitude
 				stream.append( Separator );
@@ -313,8 +313,8 @@ public class EnsembleTest {
 				
 				// compute the pedestal az and el given the solution
 				for(Pedestal pedestal : pedestals) {
-					pedestal.pointToLocation( solution.position_EFG );
-					double azimuth = pedestal.getLocal().getAzimuth().getDegrees();
+					pedestal.pointToLocation( solution._position_EFG );
+					double azimuth = pedestal.getLocal().getUnsignedAzimuth().getDegrees();
 					double elevation = pedestal.getLocal().getElevation().getDegrees();
 					double range = pedestal.getLocal().getRange();
 					

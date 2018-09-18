@@ -41,19 +41,27 @@ public class T_EFG_FRD {
 	
 	public void set(Polar plot, Rotator localHorizontal) {
 		_range = plot._range;
-		_orientation.set(localHorizontal);
-		_orientation.rotate_k(plot._azimuth.codedPhase()).rotate_j(plot._elevation.codedPhase());
+//		_orientation.set(localHorizontal);
+//		_orientation.rotate_k(plot._azimuth.codedPhase()).rotate_j(plot._elevation.codedPhase());
+		_orientation.set( NED_to_FRD(localHorizontal, plot._azimuth.codedPhase(), plot._elevation.codedPhase()) );
 	}
 
 	public void set(Angle paz, Angle pel, Rotator localHorizontal) {
-		_orientation.set(localHorizontal);
-		_orientation.rotate_k(paz.codedPhase()).rotate_j(pel.codedPhase());
+//		_orientation.set(localHorizontal);
+//		_orientation.rotate_k(paz.codedPhase()).rotate_j(pel.codedPhase());
+		_orientation.set( NED_to_FRD(localHorizontal, paz.codedPhase(), pel.codedPhase()) );
 	}
 
 	public void set(double pedRg, Angle pedAz, Angle pedEl, Rotator pedLocal) {
 		_range = pedRg;
-		_orientation.set(pedLocal);
-		_orientation.rotate_k(pedAz.codedPhase()).rotate_j(pedEl.codedPhase());
+//		_orientation.set(pedLocal);
+//		_orientation.rotate_k(pedAz.codedPhase()).rotate_j(pedEl.codedPhase());
+		_orientation.set( NED_to_FRD(pedLocal, pedAz.codedPhase(), pedEl.codedPhase()) );
+	}
+	
+	public static Rotator NED_to_FRD(Rotator qNED, CodedPhase paz, CodedPhase pel) {
+		Rotator qFRD = new Rotator(qNED).rotate_k(paz).rotate_j(pel);
+		return qFRD;
 	}
 
 	
@@ -72,7 +80,7 @@ public class T_EFG_FRD {
 
 	public void orient(Vector3 offsetEFG, Rotator localHorizon){	
 		Polar localVector = Polar.commandLocal(offsetEFG,localHorizon);
-		_orientation.set(T_EFG_FRD.face(localVector.getAzimuth().codedPhase()
+		_orientation.set(T_EFG_FRD.face(localVector.getUnsignedAzimuth().codedPhase()
 				,localVector.getElevation().codedPhase(),localHorizon));
 	}
 

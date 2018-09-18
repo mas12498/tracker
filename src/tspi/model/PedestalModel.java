@@ -147,7 +147,7 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			case LON: return pedestal.getLocationEllipsoid().getEastLongitude().signedPrinciple();
 			case H: return pedestal.getLocationEllipsoid().getEllipsoidHeight();
 			case AZ:
-				Double az = pedestal.getLocal().getAzimuth().getDegrees();
+				Double az = pedestal.getLocal().getUnsignedAzimuth().getDegrees();
 				if( !az.isNaN() ) return az;
 				break;
 			case EL:
@@ -183,7 +183,7 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			case LON: return pedestal.getLocation().getY();
 			case H: return pedestal.getLocation().getZ();
 			case AZ:
-				Double az = pedestal.getLocal().getAzimuth().getDegrees();
+				Double az = pedestal.getLocal().getUnsignedAzimuth().getDegrees();
 				if( !az.isNaN() ) return az;
 				break;
 			case EL:
@@ -389,7 +389,7 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			
 			// current orientation
 			Polar local = pedestal.getLocal();
-			writer.append(local.getAzimuth().toDegreesString(7));
+			writer.append(local.getUnsignedAzimuth().toDegreesString(7));
 			writer.append(",");
 			writer.append(local.getElevation().toDegreesString(7));
 			writer.append(",");
@@ -406,7 +406,7 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			
 			// measurement deviation in the polar directions
 			Polar deviation = pedestal.getDeviation();
-			writer.append(deviation.getAzimuth().toDegreesString(7));
+			writer.append(deviation.getUnsignedAzimuth().toDegreesString(7));
 			writer.append(",");
 			writer.append(deviation.getElevation().toDegreesString(7));
 			writer.append(",");

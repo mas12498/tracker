@@ -130,37 +130,37 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			case LON: return target.getLongitude();
 			case H: return target.getHeight();
 			case ERR:
-				if(target.solution!=null && !Double.isNaN(target.solution.error))
-					return target.solution.error;
+				if(target.solution!=null && !Double.isNaN(target.solution._error))
+					return target.solution._error;
 				break;
 			case COND:
-				if(target.solution!=null && !Double.isNaN(target.solution.condition))
-					return target.solution.condition;
+				if(target.solution!=null && !Double.isNaN(target.solution._condition))
+					return target.solution._condition;
 				break;
 			
 			case DX:
-				if(target.solution!=null && !Double.isNaN(target.solution.condition))
-					return target.solution.delta_EFG.getX();
+				if(target.solution!=null && !Double.isNaN(target.solution._condition))
+					return target.solution._delta_EFG.getX();
 				break;
 			case DY:
-				if(target.solution!=null && !Double.isNaN(target.solution.condition))
-					return target.solution.delta_EFG.getY();
+				if(target.solution!=null && !Double.isNaN(target.solution._condition))
+					return target.solution._delta_EFG.getY();
 				break;
 			case DZ:
-				if(target.solution!=null && !Double.isNaN(target.solution.condition))
-					return target.solution.delta_EFG.getZ();
+				if(target.solution!=null && !Double.isNaN(target.solution._condition))
+					return target.solution._delta_EFG.getZ();
 				break;
 			case ODAZ:
-				if(target.solution!=null && !Double.isNaN(target.solution.condition))
-					return target.solution.delta_RAE.getSignedAzimuth().getDegrees();
+				if(target.solution!=null && !Double.isNaN(target.solution._condition))
+					return target.solution._delta_RAE.getSignedAzimuth().getDegrees();
 				break;
 			case ODEL:
-				if(target.solution!=null && !Double.isNaN(target.solution.condition))
-					return target.solution.delta_RAE.getElevation().getDegrees();
+				if(target.solution!=null && !Double.isNaN(target.solution._condition))
+					return target.solution._delta_RAE.getElevation().getDegrees();
 				break;
 			case ODRG:
-				if(target.solution!=null && !Double.isNaN(target.solution.condition))
-					return target.solution.delta_RAE.getRange();
+				if(target.solution!=null && !Double.isNaN(target.solution._condition))
+					return target.solution._delta_RAE.getRange();
 				break;
 			}			
 			
@@ -171,37 +171,37 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			case LON: return target.getF();
 			case H: return target.getG();
 			case ERR:
-				if(target.solution!=null && !Double.isNaN(target.solution.error))
-					return target.solution.error;
+				if(target.solution!=null && !Double.isNaN(target.solution._error))
+					return target.solution._error;
 				break;
 			case COND:
-				if(target.solution!=null && !Double.isNaN(target.solution.condition))
-					return target.solution.condition;
+				if(target.solution!=null && !Double.isNaN(target.solution._condition))
+					return target.solution._condition;
 				break;
 			
 			case DX:
-				if(target.solution!=null && !Double.isNaN(target.solution.condition))
-					return target.solution.delta_EFG.getX();
+				if(target.solution!=null && !Double.isNaN(target.solution._condition))
+					return target.solution._delta_EFG.getX();
 				break;
 			case DY:
-				if(target.solution!=null && !Double.isNaN(target.solution.condition))
-					return target.solution.delta_EFG.getY();
+				if(target.solution!=null && !Double.isNaN(target.solution._condition))
+					return target.solution._delta_EFG.getY();
 				break;
 			case DZ:
-				if(target.solution!=null && !Double.isNaN(target.solution.condition))
-					return target.solution.delta_EFG.getZ();
+				if(target.solution!=null && !Double.isNaN(target.solution._condition))
+					return target.solution._delta_EFG.getZ();
 				break;
 			case ODAZ:
-				if(target.solution!=null && !Double.isNaN(target.solution.condition))
-					return target.solution.delta_RAE.getSignedAzimuth().getDegrees();
+				if(target.solution!=null && !Double.isNaN(target.solution._condition))
+					return target.solution._delta_RAE.getSignedAzimuth().getDegrees();
 				break;
 			case ODEL:
-				if(target.solution!=null && !Double.isNaN(target.solution.condition))
-					return target.solution.delta_RAE.getElevation().getDegrees();
+				if(target.solution!=null && !Double.isNaN(target.solution._condition))
+					return target.solution._delta_RAE.getElevation().getDegrees();
 				break;
 			case ODRG:
-				if(target.solution!=null && !Double.isNaN(target.solution.condition))
-					return target.solution.delta_RAE.getRange();
+				if(target.solution!=null && !Double.isNaN(target.solution._condition))
+					return target.solution._delta_RAE.getRange();
 				break;
 			}
 		}
@@ -210,7 +210,6 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 
 	@Override
 	public boolean isCellEditable(int row, int col) {
-		//if(col==ERR || col==COND)
 		if(col>=ERR )
 			return false;
 		return true;
@@ -299,11 +298,11 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			
 			if(target.solution!=null) {
 				writer.append(",");
-				writer.append(Double.toString(target.solution.error));
-//				writer.append(localFmt.format(target.solution.error));
+				writer.append(Double.toString(target.solution._error));
+//				writer.append(localFmt.format(target.solution._error));
 				writer.append(",");
-				writer.append(Double.toString(target.solution.condition));
-//				writer.append(localFmt.format(target.solution.condition));
+				writer.append(Double.toString(target.solution._condition));
+//				writer.append(localFmt.format(target.solution._condition));
 				// TODO there will be more complex measures of error...
 			}
 			writer.println();
@@ -319,17 +318,17 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			// this communicates to the user only two rows can be selected
 			Component cell;
 			ListSelectionModel selections = table.getSelectionModel();
-			if( row == selections.getMaxSelectionIndex()
-					|| row == selections.getMinSelectionIndex() )
+			
+			if (row == selections.getMaxSelectionIndex() || row == selections.getMinSelectionIndex())
 				cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
-			else cell = super.getTableCellRendererComponent(table, value, false, hasFocus, row, col);
-						
-			//if(col==ERR || col==COND || col==DX || col==DY || col==DZ || col==ODAZ || col==ODEL || col == ODRG )
-			if( col>=ERR )
+			else
+				cell = super.getTableCellRendererComponent(table, value, false, hasFocus, row, col);
+
+			if (col >= ERR)
 				cell.setEnabled(false);
 			else
 				cell.setEnabled(true);
-						
+
 			return cell;
 		}
 	}

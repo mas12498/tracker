@@ -34,11 +34,11 @@ public class MonteCarloTest {
 	public static void main(String args[]) {
 		// Adjust these values; let me know if this is what you need.
 		long time = 0;
-		double lat = 0.5, lon = 0.5, height=1000.0;
-		double step = 0.3;
-		int count = 10, trials = 100;
-		String input = ".\\data\\pedestalsWithOrigin.csv"; //"C:\Users\shiel\Documents\workspace\tracker\data\pedestalsWithOrigin.csv"
-		String output = ".\\data\\GridTest100.csv";
+		double lat = 0.0, lon = 0.0, height=1000.0;
+		double step = 0.1;
+		int count = 15, trials = 1000;
+		String input = ".\\data\\pedestalGrid.csv"; //"C:\Users\shiel\Documents\workspace\tracker\data\pedestalsWithOrigin.csv"
+		String output = ".\\data\\GridTest1000.csv";
 		
 		// I need the origin as a pedestal, so I can point it and compute spherical errors against Solutions.
 		// you did want spherical errors from the synthetic origin right? Not EFG?

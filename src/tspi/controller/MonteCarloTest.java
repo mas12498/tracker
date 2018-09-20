@@ -34,9 +34,9 @@ public class MonteCarloTest {
 	public static void main(String args[]) {
 		// Adjust these values; let me know if this is what you need.
 		long time = 0;
-		double lat = 0.5, lon = 0.5, height=1000.0;
-		double step = 0.3;
-		int count = 10, trials = 100;
+		double lat = 10.00, lon = -60.00, height=1000.0;
+		double step = 0.01;
+		int count = 20, trials = 1000;
 		String input = ".\\data\\pedestalsWithOrigin.csv"; //"C:\Users\shiel\Documents\workspace\tracker\data\pedestalsWithOrigin.csv"
 		String output = ".\\data\\GridTest100.csv";
 		

@@ -172,8 +172,8 @@ public class Solution {
 		
 	//Weighted pedestal solutions....Overwrite first trial for these 'single point' solutoins...
 	aPerturbed = new Array2DRowRealMatrix(matrixDataBiased);
-//		System.out.println("Pedestals in solution: "+pedSensorCnt/2);
-//		System.out.println("Sensors in solution: "+iAz+" AZ + "+iEl+" EL = "+i+" Total.");
+		System.out.println("Pedestals in solution: "+pedSensorCnt/2);
+		System.out.println("Sensors in solution: "+iAz+" AZ + "+iEl+" EL = "+i+" Total.");
 //		System.out.println(a.getColumnDimension()); // 3
 	svdPerturbed = new SingularValueDecomposition(aPerturbed.getSubMatrix(0,i-1,0, aPerturbed.getColumnDimension()-1));
 	bPerturbed = new ArrayRealVector(rhsBiased);
@@ -213,7 +213,7 @@ public class Solution {
 		
 		System.out.println("SVD rank: "+_rank); //need  3
 				
-//	System.out.println("Condition number : "+formatted(this._condition,5));
+	System.out.println("Condition number : "+formatted(this._condition,5));
 //	System.out.println( this._position_EFG.toString(5) );
 	}
 		

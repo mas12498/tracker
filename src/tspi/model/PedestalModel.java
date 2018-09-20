@@ -369,7 +369,7 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 		}
 	}
 	
-	static final String PedestalHeader = "id,mapAZ,mapEL,lat(deg),lon(deg),h(m),mu_r,mu_az,mu_el,sigma_r,sigma_az,sigma_el,r,az,el";
+	static final String PedestalHeader = "id,mapRG,mapAZ,mapEL,lat(deg),lon(deg),h(m),mu_r,mu_az,mu_el,sigma_r,sigma_az,sigma_el,r,az,el";
 
 	// TODO replace this with something standard!!!!!!!!!!!	
 	public void load(File file) throws Exception {

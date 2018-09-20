@@ -149,10 +149,12 @@ public class Solution {
 			if (pedestal.getMapAZ()) { // Horz: axial EL dircos for azimuth
 				
 				//perturbed by biases, estimated pedestal solution matrix
-					rhsBiased[i] /= wgt;					
-					matrixDataBiased[i][0] /= wgt;
-					matrixDataBiased[i][1] /= wgt;
-					matrixDataBiased[i][2] /= wgt;
+				
+					double cosELbyWgt = StrictMath.cos(pedestal.getLocal().getElevation().getRadians())/wgt;
+					rhsBiased[i] *= cosELbyWgt;					
+					matrixDataBiased[i][0] *= cosELbyWgt;
+					matrixDataBiased[i][1] *= cosELbyWgt;
+					matrixDataBiased[i][2] *= cosELbyWgt;
 								
 				i += 1;
 			}

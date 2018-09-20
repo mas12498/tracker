@@ -109,6 +109,7 @@ public class Pedestal {
 	public void setMapAZ(Boolean hasAZ) { this._mapSensors[1] = hasAZ; }
 	public void setMapEL(Boolean hasEL) { this._mapSensors[2] = hasEL; }
 	
+	
 
 	/**
 	 * @return pedestal's location in geocentric coordinate frame.
@@ -134,6 +135,14 @@ public class Pedestal {
 	
 	public Polar getDeviation() { return _deviation; }
 	public void setDeviation(Polar deviation) { this._deviation.set(deviation); }
+	
+	public double getDeviationRG() { return this._deviation.getRange(); }
+	public Angle getDeviationAZ() { return this._deviation.getSignedAzimuth(); }
+	public Angle getDeviationEL() { return this._deviation.getElevation(); }
+	public void setDeviationRG(Double sdRG) { this._deviation.setRange(sdRG); }
+	public void setDeviationAZ(Angle sdAZ) { this._deviation.setAzimuth(sdAZ); }
+	public void setDeviationEL(Angle sdEL) { this._deviation.setElevation(sdEL); }
+
 	
 	public Polar getPerturbedLocal(Random random) {
 		// add a normally distributed error to each of the polar coordinates 

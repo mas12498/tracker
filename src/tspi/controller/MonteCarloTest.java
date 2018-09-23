@@ -37,13 +37,13 @@ public class MonteCarloTest {
 		double lat = 10.00, lon = -60.00, height=1000.0;
 		double step = 0.01;
 		int count = 20, trials = 1000;
-		String input = ".\\data\\pedestalsWithOrigin.csv"; //"C:\Users\shiel\Documents\workspace\tracker\data\pedestalsWithOrigin.csv"
-		String output = ".\\data\\GridTest100.csv";
+		String input = "/home/mike/photon/workspace/github/tracker/data/pedestalsWithOrigin.csv"; //.\\data\\pedestalsWithOrigin.csv"; //"C:\Users\shiel\Documents\workspace\tracker\data\pedestalsWithOrigin.csv"
+		String output = "/home/mike/photon/workspace/github/tracker/data/GridTest100.csv"; //".\\data\\GridTest100.csv";
 		
 		// I need the origin as a pedestal, so I can point it and compute spherical errors against Solutions.
 		// you did want spherical errors from the synthetic origin right? Not EFG?
 		Pedestal origin = new Pedestal( "origin", true, true, 
-				Angle.inDegrees(0.0), Angle.inDegrees(0.0), 0.0);
+				Angle.inDegrees(10.0), Angle.inDegrees(-60.0), 0.0);
 		
 		// I don't understand the origin name convention; is it tied specifically to increment3 for being able to change origin on selection? 
 		// I think we should just add a header bar that lets you select it from a drop down whose list model is derived from the pedestal model... 

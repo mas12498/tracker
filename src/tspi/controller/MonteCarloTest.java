@@ -46,8 +46,8 @@ public class MonteCarloTest {
 		try {
 			if (args.length > 0) {
 				int originIndex = Integer.parseInt(args[0]); // 0
-				int count = Integer.parseInt(args[1]);       // 20
-				int trials = Integer.parseInt(args[2]);      // 100
+				int trials = Integer.parseInt(args[1]);      // 100
+				int count = Integer.parseInt(args[2]);       // 20
 				double step = Double.parseDouble(args[3]);   // 0.01d
 				File input = new File(args[4]);              // String input = "/home/mike/photon/workspace/github/tracker/data/pedestalsTest100.csv";
 				File output = new File(args[5]);             // String output = "/home/mike/photon/workspace/github/tracker/data/GridTest100.csv";
@@ -77,10 +77,7 @@ public class MonteCarloTest {
 					origin, model.asList(), stream );
 					
 			} else {
-				System.out.println("Usage:\n"
-						+ "MonteCarloTest -generate <input pedestal path> <input targets path> <output ensemble path>\n"
-						+ "or\n"
-						+ "MonteCarloTest  <input pedestal path> <input ensemble path> <ouput solution path> <solution pedestal count> <header present={true|else}>\n");
+				System.out.println("Usage:\n MonteCarloTest: originIndex, trials, count, step, <input pedestal path> <output targets path> \n");
 			}
 
 		} catch (Exception exception) {

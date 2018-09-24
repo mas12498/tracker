@@ -1,8 +1,0 @@
-P0,map AZ,map EL,1,1,0,1,-0.999847726
-P1   ,TRUE,TRUE,1,359,0,1,-0.999847726
-P2,TRUE,TRUE,-1,359,0,1,-0.999847726
-P3,TRUE,TRUE,-1,1,0,1,-0.999847726
-,,,,,,,
-Intentional error for testing load abort.,,,,,,,
-,,,,,,,
-P4,TRUE,TRUE,0,0,0,,

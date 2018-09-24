@@ -53,7 +53,9 @@ public class Pedestal {
 	final Vector3 _unitEast = new Vector3(Vector3.EMPTY); 
 	
 	/** LOCAL SITE 'UP' DIRECTION in GEOCENTRIC [XYZ] frame. **/
-	final Vector3 _unitUp = new Vector3(Vector3.EMPTY); 
+	final Vector3 _unitUp = new Vector3(Vector3.EMPTY);
+	
+	// Static final...
 	
 	/** Geocentric origin of solution **/
 	private static final Vector3 _origin = new Vector3(Vector3.EMPTY);
@@ -74,7 +76,7 @@ public class Pedestal {
 		this._unitUp.set(this._localFrame._local.getImage_k().negate());
 		this._location.set(this._geodeticLocation.getGeocentric()); //Cartesian	location for next to make sense...	
 		this.setMapSensors(false, hasAZ, hasEL);
-		this.setLocalCoordinates();		//zeros for the first pedestal in ensemble defined to be origin... 
+		this.setLocalOriginCoordinates();		//zeros for the first pedestal in ensemble defined to be origin... 
 		this.clearPedestalVector();
 		
 	}	
@@ -86,6 +88,32 @@ public class Pedestal {
 		_origin.set(geocentricOrigin);
 		_originFrame.set(_origin);
 	}
+	
+//	/**
+//	 * set current pedestal's origin and location from local origin in geocentric coordinates.
+//	 */
+//	public void setLocalCoordinates(Vector3 originXYZ) { 
+//		_origin.set(originXYZ);
+//		_originFrame.set(_origin);
+//		this._localCoordinates.set(new Vector3(this._location).subtract(_origin) );
+//	}	
+//
+//	/**
+//	 * set pedestal's origin and location from local origin in ellipsoid coordinates.
+//	 */
+//	public void setLocalCoordinates(Ellipsoid _originLLh) { 
+//		_origin.set(_originLLh.getGeocentric());
+//		_originFrame.set(_origin);
+//		this._localCoordinates.set(new Vector3(this._location).subtract(_origin) );
+//	}	
+	
+	
+	/**
+	 * set current Pedestal's instance location from local _origin.
+	 */
+	public void setLocalOriginCoordinates() { 
+		this._localCoordinates.set(new Vector3(this._location).subtract(_origin) );
+	}	
 
 	//Clone Pedestal objects...
 	public String getSystemId() { return this._systemId; }
@@ -231,18 +259,7 @@ public class Pedestal {
 	
 	
 	public void setSystemId(String id) { this._systemId = id; }
-
-
 	
-	// After location is set... deal with pedestal rotator and range positioning updates...
-	
-	/**
-	 * set pedestal's current location from local origin in geocentric oriented coordinate frame.
-	 */
-	public void setLocalCoordinates() { 
-		this._localCoordinates.set(new Vector3(this._location).subtract(_origin) );
-	}
-
 
 	public void locate(T_EFG_NED locationFrame){	
 		this._localFrame.set(locationFrame);
@@ -253,7 +270,7 @@ public class Pedestal {
 		this._geodeticLocation.set(_localFrame.getEllipsoid());		
 		
 		this._location.set(_geodeticLocation.getGeocentric());
-		this.setLocalCoordinates();		
+		this.setLocalOriginCoordinates();		
 
 	}
 	
@@ -266,7 +283,7 @@ public class Pedestal {
 		this._geodeticLocation.set(_localFrame.getEllipsoid());
 		
 		this._location.set(_geodeticLocation.getGeocentric());
-		this.setLocalCoordinates();		
+		this.setLocalOriginCoordinates();		
 
 	}
 	
@@ -279,7 +296,7 @@ public class Pedestal {
 		this._geodeticLocation.set(_localFrame.getEllipsoid());
 		
 		this._location.set(_geodeticLocation.getGeocentric());
-		this.setLocalCoordinates();		
+		this.setLocalOriginCoordinates();		
 
 	}
 	
@@ -289,7 +306,7 @@ public class Pedestal {
 		this._geodeticLocation.set(wgs84);
 		
 		this._location.set(_geodeticLocation.getGeocentric());
-		this.setLocalCoordinates();		
+		this.setLocalOriginCoordinates();		
 
 		this._localFrame.set(_geodeticLocation);
 		
@@ -302,7 +319,7 @@ public class Pedestal {
 		this._geodeticLocation.setNorthLatitude(lat);
 		
 		this._location.set(_geodeticLocation.getGeocentric());
-		this.setLocalCoordinates();		
+		this.setLocalOriginCoordinates();		
 
 		this._localFrame.set(_geodeticLocation);
 		
@@ -315,7 +332,7 @@ public class Pedestal {
 		this._geodeticLocation.setEastLongitude(lon);
 		
 		this._location.set(_geodeticLocation.getGeocentric());
-		this.setLocalCoordinates();		
+		this.setLocalOriginCoordinates();		
 
 		this._localFrame.set(_geodeticLocation);	
 		
@@ -330,7 +347,7 @@ public class Pedestal {
 		this._geodeticLocation.setEllipsoidHeight(meters);
 		
 		this._location.set(_geodeticLocation.getGeocentric());	
-		this.setLocalCoordinates();		
+		this.setLocalOriginCoordinates();		
 	
 		this._localFrame.set(_geodeticLocation); 
 		
@@ -342,7 +359,7 @@ public class Pedestal {
 
 	public void locate(Vector3 geocentric){
 		this._location.set(geocentric);
-		this.setLocalCoordinates();		
+		this.setLocalOriginCoordinates();		
 
 		
 		this._geodeticLocation.setGeocentric(_location);
@@ -356,7 +373,7 @@ public class Pedestal {
 		
 	public void locateX(double E) {
 		this._location.setX(E);
-		this.setLocalCoordinates();		
+		this.setLocalOriginCoordinates();		
 
 		// this._wgs84.set(_geocentric); //with moving pedestal -- could avoid need for Ellipsoid calculations below...
 		
@@ -371,7 +388,7 @@ public class Pedestal {
 
 	public void locateY(double F) {
 		this._location.setY(F);
-		this.setLocalCoordinates();		
+		this.setLocalOriginCoordinates();		
 
 		// this._wgs84.set(_geocentric); //with moving pedestal -- could avoid need for Ellipsoid calculations below...
 		
@@ -386,7 +403,7 @@ public class Pedestal {
 
 	public void locateZ(double G) {
 		this._location.setZ(G);
-		this.setLocalCoordinates();		
+		this.setLocalOriginCoordinates();		
 
 		// this._wgs84.set(_geocentric);//with moving pedestal -- could avoid need for Ellipsoid calculations below...
 		

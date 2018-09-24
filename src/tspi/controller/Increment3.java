@@ -60,7 +60,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 	
 	
 	public Increment3() {
-		
+		//pedestals model
 		pedestals = new PedestalModel();
 		pedestals.addTableModelListener( this );
 		
@@ -77,6 +77,8 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		pedestalTable.setDefaultRenderer(Boolean.class, cell);
 		//pedestalTable.getColumnModel().getColumn(0).setCellRenderer(cell);
 		
+		
+		//targets model
 		targets = new TargetModel();
 		targets.addTableModelListener( this );
 		
@@ -92,6 +94,8 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		targetTable.setDefaultRenderer(String.class, cell);
 		//targetTable.getColumnModel().getColumn(0).setCellRenderer(cell);
 		
+		
+		
 		JPanel pnlPedestals = new JPanel( new BorderLayout() );
 		JLabel lblPedestals = new JLabel("Pedestals");
 		lblPedestals.setHorizontalAlignment(JLabel.CENTER);
@@ -99,12 +103,15 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		pnlPedestals.add(lblPedestals, BorderLayout.NORTH);
 		pnlPedestals.add(scrPedestals, BorderLayout.CENTER);
 		
+		
+		
 		JPanel pnlTarget = new JPanel( new BorderLayout() );
 		JLabel lblTarget = new JLabel("Targets");
 		lblTarget.setHorizontalAlignment(JLabel.CENTER);
 		JScrollPane scrTarget = new JScrollPane(targetTable);
 		pnlTarget.add(lblTarget, BorderLayout.NORTH);
 		pnlTarget.add(scrTarget, BorderLayout.CENTER);
+		
 		
 		JSplitPane split = new JSplitPane(
 				JSplitPane.VERTICAL_SPLIT, true, pnlPedestals, pnlTarget);
@@ -269,7 +276,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 				Pedestal.setOrigin(pedestals.getPedestal(0).getLocation());
 				pNum = pedestals.getRowCount();
 				for (int p = 0; p < pNum; p++) {
-					pedestals.getPedestal(p).setLocalCoordinates();
+					pedestals.getPedestal(p).setLocalOriginCoordinates();
 				}
 			}	
 			

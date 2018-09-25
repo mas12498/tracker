@@ -19,7 +19,7 @@ import rotation.Angle;
 public class TargetModel extends AbstractTableModel implements Iterable<Target> {
 
 	protected ArrayList<Target> targets = new ArrayList<Target>();
-	public static final int TIME=0, LAT=1, LON=2, H=3, ERR=4, COND=5, DX=6, DY=7, DZ=8, ODAZ=9, ODEL=10, ODRG=11;
+	public static final int TIME=0, LAT=1, LON=2, H=3, RANK=4, COND=5, ERR=6, DX=7, DY=8, DZ=9, ODAZ=10, ODEL=11, ODRG=12;
 	public static final int GEOCENTRIC=1, ELLIPSOIDAL=2;
 	protected int system = ELLIPSOIDAL;
 	private static final int DIGITS=14; 
@@ -57,7 +57,7 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 	public Iterator<Target> iterator() { return this.targets.iterator(); }
 	
 	@Override
-	public int getColumnCount() { return 12; }
+	public int getColumnCount() { return 13; }
 
 	@Override
 	public int getRowCount() { return targets.size(); }
@@ -72,8 +72,9 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			case LAT: return "North Latitude";
 			case LON: return "East Longitude";
 			case H: return "Height";
-			case ERR: return "Error";
+			case RANK: return "Rank Sol";
 			case COND: return "Condition";
+			case ERR: return "Err";
 			case DX: return "Err X";
 			case DY: return "Err Y";
 			case DZ: return "Err Z";
@@ -87,8 +88,9 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			case LAT: return "E";
 			case LON: return "F";
 			case H: return "G";
-			case ERR: return "Error";
+			case RANK: return "Rank sol";
 			case COND: return "Condition";
+			case ERR: return "Error";
 			case DX: return "Err X";
 			case DY: return "Err Y";
 			case DZ: return "Err Z";
@@ -107,8 +109,9 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 		case LAT: return Double.class;
 		case LON: return Double.class;
 		case H: return Double.class;
-		case ERR: return Double.class;
+		case RANK: return Double.class;
 		case COND: return Double.class;
+		case ERR: return Double.class;
 		case DX: return Double.class;
 		case DY: return Double.class;
 		case DZ: return Double.class;
@@ -129,13 +132,17 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			case LAT: return target.getLatitude();
 			case LON: return target.getLongitude();
 			case H: return target.getHeight();
-			case ERR:
+			case RANK:
 				if(target.solution!=null && !Double.isNaN(target.solution._error))
-					return target.solution._error;
+					return target.solution._rank;
 				break;
 			case COND:
 				if(target.solution!=null && !Double.isNaN(target.solution._condition))
 					return target.solution._condition;
+				break;
+			case ERR:
+				if(target.solution!=null && !Double.isNaN(target.solution._error))
+					return target.solution._error;
 				break;
 			
 			case DX:
@@ -170,13 +177,17 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			case LAT: return target.getE();
 			case LON: return target.getF();
 			case H: return target.getG();
-			case ERR:
+			case RANK:
 				if(target.solution!=null && !Double.isNaN(target.solution._error))
-					return target.solution._error;
+					return target.solution._rank;
 				break;
 			case COND:
 				if(target.solution!=null && !Double.isNaN(target.solution._condition))
 					return target.solution._condition;
+				break;
+			case ERR:
+				if(target.solution!=null && !Double.isNaN(target.solution._error))
+					return target.solution._error;
 				break;
 			
 			case DX:
@@ -224,8 +235,9 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			case LAT: target.setLatitude( (Double)value ); break;
 			case LON: target.setLongitude( (Double)value ); break;
 			case H: target.setHeight( (Double)value ); break;
-			case ERR: 
+			case RANK: 
 			case COND: 
+			case ERR: 
 			case DX: 
 			case DY: 
 			case DZ: 
@@ -239,8 +251,9 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			case LAT: target.setE( (Double)value ); break;
 			case LON: target.setF( (Double)value ); break;
 			case H: target.setG( (Double)value ); break;
-			case ERR: 
+			case RANK: 
 			case COND: 
+			case ERR: 
 			case DX: 
 			case DY: 
 			case DZ: 

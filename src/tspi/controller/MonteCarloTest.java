@@ -1,7 +1,10 @@
 package tspi.controller;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
 
@@ -32,42 +35,61 @@ public class MonteCarloTest {
 	// TODO might want to use the commons distributions API instead...
 	 
 	public static void main(String args[]) {
-		// Adjust these values; let me know if this is what you need.
-		long time = 0;
-		double lat = 0.0, lon = 0.0, height=1000.0;
-		double step = 0.1;
-		int count = 15, trials = 1000;
-		String input = ".\\data\\pedestalGrid.csv"; //"C:\Users\shiel\Documents\workspace\tracker\data\pedestalsWithOrigin.csv"
-		String output = ".\\data\\GridTest1000.csv";
-		
-		// I need the origin as a pedestal, so I can point it and compute spherical errors against Solutions.
-		// you did want spherical errors from the synthetic origin right? Not EFG?
-		Pedestal origin = new Pedestal( "origin", true, true, 
-				Angle.inDegrees(0.0), Angle.inDegrees(0.0), 0.0);
-		
-		// I don't understand the origin name convention; is it tied specifically to increment3 for being able to change origin on selection? 
-		// I think we should just add a header bar that lets you select it from a drop down whose list model is derived from the pedestal model... 
-		// I don't know, we'll talk it through.
-		
-		// I don't think I need this, because I'm computing all errors by pointing an origin pedestal...
-		Pedestal.setOrigin( origin.getLocation() );
-		// I feel the origin should be an explicit argument more than a global state...
-		// for example, to get local coordinates you might add pedestal.getRelative(origin)
-		// then whatever application is running it would track the origin, whether it is a gui or Solution etc...
-		// this would prevent subtle global interactions, and reduces the complexity of Pedestal...
-		
-		PedestalModel model = new PedestalModel();
+// Adjust these values; let me know if this is what you need.
+//      originIndex = 0
+//		double step = 0.01;
+//		int count   = 20, 
+//		trials      = 100;
+//String input      = "/home/mike/photon/workspace/github/tracker/data/pedestalsTest100.csv"; 
+//String output     = "/home/mike/photon/workspace/github/tracker/data/GridTest100.csv"; 
+				
 		try {
-			PrintStream stream = new PrintStream( new File(output) );
-			model.load( new File(input) );
+			if (args.length > 0) {
+				int originIndex = Integer.parseInt(args[0]); // 0
+				int trials = Integer.parseInt(args[1]);      // 100
+				int count = Integer.parseInt(args[2]);       // 20
+				double step = Double.parseDouble(args[3]);   // 0.01d
+				File input = new File(args[4]);              // String input = "/home/mike/photon/workspace/github/tracker/data/pedestalsTest100.csv";
+				File output = new File(args[5]);             // String output = "/home/mike/photon/workspace/github/tracker/data/GridTest100.csv";
+				
+		    PedestalModel model = new PedestalModel();
+			model.load( input );
+
+			
+			// I need the origin as a pedestal, so I can point it and compute spherical errors against Solutions.
+			Pedestal origin = model.getPedestal(originIndex);
+
+			long time = 0; //initialize time?
+			double lat = origin.getLocationEllipsoid().getNorthLatitude().getDegrees(); //grid stream reference
+			double lon =origin.getLocationEllipsoid().getEastLongitude().getDegrees();  //grid stream reference
+			double height = origin.getLocationEllipsoid().getEllipsoidHeight() + 3000d;         //grid stream reference
+
+			Pedestal.setOrigin( origin.getLocation() );
+					
+			for(Pedestal p:model) {
+				p.setLocalOriginCoordinates();
+			}
+			PrintStream stream = new PrintStream( output );
+						
 			testGrid(
 					time, lat, lon, height,
 					step, count, trials, 
-					origin, model.asList(), stream);
-			
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
+					origin, model.asList(), stream );
+					
+			} else {
+				System.out.println("Usage:\n MonteCarloTest: originIndex, trials, count, step, <input pedestal path> <output targets path> \n");
+			}
+
+		} catch (Exception exception) {
+			exception.printStackTrace();
+		}		
+		
+		
+	
+		
+		
+		
+		
 	}
 	
 	public static void testGrid(

@@ -286,10 +286,13 @@ public class EnsembleTest {
 				}
 				
 				// solve the system
+				Vector3 origin = pedestals.getPedestal(0).getLocation(); //default first pedestal as origin...
+				Pedestal.setOrigin(origin);
 				ArrayList<Pedestal> list = new ArrayList<Pedestal>();
-				for( int n=0; n<pedestalCount; n++  )
-					list.add(pedestals.getPedestal(n));
-				Vector3 origin = pedestals.getPedestal(0).getLocation();
+				for( int n=0; n<pedestalCount; n++  ) {
+					pedestals.getPedestal(n).setLocalOriginCoordinates();
+			    	list.add(pedestals.getPedestal(n));					
+				}
 				Solution solution = new Solution( list );
 				Ellipsoid coordinate = new Ellipsoid();
 				coordinate.setGeocentric( solution._position_EFG );

@@ -115,8 +115,8 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		
 		JSplitPane split = new JSplitPane(
 				JSplitPane.VERTICAL_SPLIT, true, pnlPedestals, pnlTarget);
-		split.setResizeWeight(0.5);
-		split.setDividerLocation(0.5);
+		split.setResizeWeight(0.25);
+		split.setDividerLocation(0.25);
 		
 		addPedestal = new JMenuItem("Add Pedestal");
 		addTarget = new JMenuItem("Add Target");
@@ -170,7 +170,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		this.add(bar, BorderLayout.NORTH);
 		this.add(split, BorderLayout.CENTER);
 		this.setTitle("TSPI Predictor; Increment 3");
-		this.setBounds(100, 100, 1000, 400);
+		this.setBounds(100, 100, 1000, 600);
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
 	

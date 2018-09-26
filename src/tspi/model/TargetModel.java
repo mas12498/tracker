@@ -1,4 +1,5 @@
 package tspi.model;
+import java.awt.Color;
 import java.awt.Component;
 import java.io.BufferedReader;
 import java.io.File;
@@ -11,8 +12,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-
-import rotation.Angle;
+import javax.swing.table.TableModel;
 
 /** Represents a set of Targets and adapts them to a table view. Also provides a file load and save, as well as a CellRenderer appropriate for the model. */
 @SuppressWarnings("serial")
@@ -109,7 +109,7 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 		case LAT: return Double.class;
 		case LON: return Double.class;
 		case H: return Double.class;
-		case RANK: return Double.class;
+		case RANK: return Integer.class;
 		case COND: return Double.class;
 		case ERR: return Double.class;
 		case DX: return Double.class;
@@ -129,8 +129,8 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 		if( system==ELLIPSOIDAL ) {
 			switch(col) {
 			case TIME: return target.getTime();
-			case LAT: return target.getLatitude();
-			case LON: return target.getLongitude();
+			case LAT: return target.getLatitude().getDegrees();
+			case LON: return target.getLongitude().getDegrees();
 			case H: return target.getHeight();
 			case RANK:
 				if(target.solution!=null && !Double.isNaN(target.solution._error))
@@ -324,25 +324,36 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 	}
 	
 	public static class CellRenderer extends DefaultTableCellRenderer {
+		static Color highlight = new Color(184, 207, 229); // I really need to get this from some look and feel superclass
 		@Override
 		public Component getTableCellRendererComponent(JTable table, Object value,
 				boolean isSelected, boolean hasFocus, int row, int col) {
 			// turn off the selection if it is not the first selected or last selected
 			// this communicates to the user only two rows can be selected
-			Component cell;
 			ListSelectionModel selections = table.getSelectionModel();
-			
 			if (row == selections.getMaxSelectionIndex() || row == selections.getMinSelectionIndex())
-				cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+				setBackground(highlight);
 			else
-				cell = super.getTableCellRendererComponent(table, value, false, hasFocus, row, col);
+				setBackground(Color.white);
 
+			// get the table model so we can look up information
+			TableModel model = table.getModel();
+			
+			// conditionally format the value
+			if (value==null)
+				setValue("");
+			else if (model.getColumnClass(col) == Double.class)
+				setValue(String.format("%3.3f", value));
+			else
+				setValue( value.toString() );
+			
+			// prevent user from editing fields which are generated
 			if (col >= ERR)
-				cell.setEnabled(false);
+				setEnabled(false);
 			else
-				cell.setEnabled(true);
+				setEnabled(true);
 
-			return cell;
+			return this;
 		}
 	}
 }

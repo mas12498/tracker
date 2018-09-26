@@ -1,5 +1,4 @@
 package tspi.model;
-import java.awt.Color;
 import java.awt.Component;
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,7 +11,6 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableModel;
 
 /** Represents a set of Targets and adapts them to a table view. Also provides a file load and save, as well as a CellRenderer appropriate for the model. */
 @SuppressWarnings("serial")
@@ -324,20 +322,21 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 	}
 	
 	public static class CellRenderer extends DefaultTableCellRenderer {
-		static Color highlight = new Color(184, 207, 229); // I really need to get this from some look and feel superclass
+		
 		@Override
 		public Component getTableCellRendererComponent(JTable table, Object value,
 				boolean isSelected, boolean hasFocus, int row, int col) {
+			
 			// turn off the selection if it is not the first selected or last selected
 			// this communicates to the user only two rows can be selected
 			ListSelectionModel selections = table.getSelectionModel();
 			if (row == selections.getMaxSelectionIndex() || row == selections.getMinSelectionIndex())
-				setBackground(highlight);
+				super.getTableCellRendererComponent(table, value, true, hasFocus, row, col);
 			else
-				setBackground(Color.white);
+				super.getTableCellRendererComponent(table, value, false, hasFocus, row, col);
 
 			// get the table model so we can look up information
-			TableModel model = table.getModel();
+//			TableModel model = table.getModel();
 			
 			// conditionally format the value
 			if (value==null)
@@ -348,7 +347,6 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 				setValue(String.format("%.7f", value));
 			else
 				setValue( value.toString() );
-
 			
 			// prevent user from editing fields which are generated
 			if (col >= ERR)

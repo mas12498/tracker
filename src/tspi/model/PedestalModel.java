@@ -6,13 +6,14 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintWriter;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.swing.JTable;
-//import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableModel;
 
 import rotation.Angle;
 
@@ -156,9 +157,12 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			case MAPRG: return pedestal.getMapRG();
 			case MAPAZ: return pedestal.getMapAZ();
 			case MAPEL: return pedestal.getMapEL();
-			case LAT: return pedestal.getLocationEllipsoid().getNorthLatitude();
-			case LON: return pedestal.getLocationEllipsoid().getEastLongitude().signedPrinciple();
-			case H: return pedestal.getLocationEllipsoid().getEllipsoidHeight();
+			case LAT:
+				return pedestal.getLocationEllipsoid().getNorthLatitude().getDegrees();
+			case LON:
+				return pedestal.getLocationEllipsoid().getEastLongitude().signedPrinciple().getDegrees();
+			case H:
+				return pedestal.getLocationEllipsoid().getEllipsoidHeight();
 			case DRG:
 				Double mu_r = pedestal.getBiasRG();
 				if (!mu_r.isNaN())
@@ -492,28 +496,33 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 	}
 	
 	public static class CellRenderer extends DefaultTableCellRenderer {
+		
+		DecimalFormat format = new DecimalFormat("#.000;-#.000");
+		
 		@Override
 		public Component getTableCellRendererComponent(JTable table, Object value,
 				boolean isSelected, boolean hasFocus, int row, int col) {
-			// get a default label for the cell
-			Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
-			// this is from back when we were only fusing two sensors
-			// turn off the selection if it is not the first selected or last selected
-			// this communicates to the user only two rows can be selected
-//			ListSelectionModel selections = table.getSelectionModel();
-//			if( row == selections.getMaxSelectionIndex()
-//					|| row == selections.getMinSelectionIndex() )
-//				cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
-//			else cell = super.getTableCellRendererComponent(table, value, false, hasFocus, row, col);
+			
+			// cell renderers avoid creating new objects by reusing the same component and just adjusting it's properties
+			super.getTableCellRendererComponent(
+					table, value, isSelected, hasFocus, row, col);
+			
+			// check if the field holds a double
+			if(value!=null) {
+				TableModel model = table.getModel();
+				if(model.getColumnClass(col) == Double.class)
+					this.setValue( format.format(value) );
+			}
 			
 			if(col==DRG || col==AZ || col==EL || col== R ){
-				cell.setEnabled(false);
-				cell.setForeground(Color.blue);
+				this.setEnabled(false);
+				this.setForeground(Color.blue);
 			} else {
-				cell.setEnabled(true);
-				cell.setForeground(Color.black);
-			}	
-			return cell;
+				this.setEnabled(true);
+				this.setForeground(Color.black);
+			}
+			
+			return this;
 		}
 	}
 	

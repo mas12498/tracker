@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintWriter;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -337,14 +338,16 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 
 			// get the table model so we can look up information
 //			TableModel model = table.getModel();
+			DecimalFormat meters = new DecimalFormat("#0.##;-#0.##");
+			DecimalFormat degrees = new DecimalFormat("#0.0000000;-#0.0000000");
 			
 			// conditionally format the value
 			if (value==null)
 				setValue("");
 			else if (col==H || col==COND || col==ERR || col== DX || col== DY || col== DZ || col== ODRG )
-				setValue(String.format("%.2f", value));
+				setValue(meters.format(value));
 			else if (col==LAT || col==LON || col==ODAZ || col== ODEL  )
-				setValue(String.format("%.7f", value));
+				setValue(degrees.format(value));
 			else
 				setValue( value.toString() );
 			

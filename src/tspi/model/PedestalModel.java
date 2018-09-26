@@ -20,11 +20,12 @@ import rotation.Angle;
 /** A model which represents a list of Pedestals. Also provides a file load and save, as well as a CellRenderer appropriate for the model. */
 @SuppressWarnings("serial")
 public class PedestalModel extends AbstractTableModel implements Iterable<Pedestal> {
-
+    boolean isEllipsoid;
 	protected ArrayList<Pedestal> pedestals;
-	public static final int ID=0, MAPRG=1, MAPAZ=2, MAPEL=3, LAT=4, LON=5, H=6, DRG=7, DAZ=8, DEL=9, SDRG=10, SDAZ=11, SDEL=12, R= 13, AZ=14, EL=15;
+	public static final int ID=0, MAPRG=1, MAPAZ=2, MAPEL=3, LAT=4, LON=5, H=6, DRG=7, DAZ=8, DEL=9, SDRG=10, SDAZ=11, SDEL=12, R= 13, AZ=14, EL=15, COORD=16;
 	public static final int GEOCENTRIC=1, ELLIPSOIDAL=2;
 	protected int system = ELLIPSOIDAL;
+
 	
 	public PedestalModel() {
 		this.pedestals = new ArrayList<Pedestal>();
@@ -79,11 +80,11 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 		if( this.system == ELLIPSOIDAL ) {
 			switch(col) {
 			case ID: return "System";
-			case MAPRG: return "Maps RG";
-			case MAPAZ: return "Maps AZ";
-			case MAPEL: return "Maps EL";
-			case LAT: return "North Latitude";
-			case LON: return "East Longitude";
+			case MAPRG: return "RG?";
+			case MAPAZ: return "AZ?";
+			case MAPEL: return "EL?";
+			case LAT: return "N Latitude";
+			case LON: return "E Longitude";
 			case H: return "Height";
 			case DRG: return "Bias R*";			
 			case DAZ: return "Bias AZ";
@@ -98,9 +99,9 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 		} else if( this.system == GEOCENTRIC ) {
 			switch(col) {
 			case ID: return "System";
-			case MAPRG: return "Maps RG";
-			case MAPAZ: return "Maps AZ";
-			case MAPEL: return "Maps EL";
+			case MAPRG: return "RG?";
+			case MAPAZ: return "AZ?";
+			case MAPEL: return "EL?";
 			case LAT: return "E";
 			case LON: return "F";
 			case H: return "G";
@@ -497,7 +498,8 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 	
 	public static class CellRenderer extends DefaultTableCellRenderer {
 		
-		DecimalFormat format = new DecimalFormat("#.000;-#.000");
+		DecimalFormat meters = new DecimalFormat("#0.##;-#0.##");
+		DecimalFormat degrees = new DecimalFormat("#0.00#####;-#0.00#####");
 		
 		@Override
 		public Component getTableCellRendererComponent(JTable table, Object value,
@@ -510,9 +512,18 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 			// check if the field holds a double
 			if(value!=null) {
 				TableModel model = table.getModel();
+				
 				if(model.getColumnClass(col) == Double.class)
-					this.setValue( format.format(value) );
+					if(col==R || col==DRG || col==H ) {
+					this.setValue( meters.format(value) );
+					} else if(col==AZ || col==EL || col==DAZ || col==DEL || col==LAT || col==LON ) {
+						this.setValue( degrees.format(value) );
+					} else {
+						
+					}
 			}
+			
+			
 			
 			if(col==DRG || col==AZ || col==EL || col== R ){
 				this.setEnabled(false);

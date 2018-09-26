@@ -342,10 +342,13 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 			// conditionally format the value
 			if (value==null)
 				setValue("");
-			else if (model.getColumnClass(col) == Double.class)
-				setValue(String.format("%3.3f", value));
+			else if (col==H || col==COND || col==ERR || col== DX || col== DY || col== DZ || col== ODRG )
+				setValue(String.format("%.2f", value));
+			else if (col==LAT || col==LON || col==ODAZ || col== ODEL  )
+				setValue(String.format("%.7f", value));
 			else
 				setValue( value.toString() );
+
 			
 			// prevent user from editing fields which are generated
 			if (col >= ERR)

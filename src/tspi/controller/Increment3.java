@@ -74,9 +74,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		this.cell = new PedestalModel.CellRenderer();
 		pedestalTable.setDefaultRenderer(Double.class, cell);
 		pedestalTable.setDefaultRenderer(String.class, cell);
-		pedestalTable.setDefaultRenderer(Boolean.class, cell);
 		//pedestalTable.getColumnModel().getColumn(0).setCellRenderer(cell);
-		
 		
 		//targets model
 		targets = new TargetModel();

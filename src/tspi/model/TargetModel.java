@@ -338,7 +338,7 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 
 			// get the table model so we can look up information
 //			TableModel model = table.getModel();
-			DecimalFormat meters = new DecimalFormat("#0.##;-#0.##");
+			DecimalFormat meters = new DecimalFormat("#0.###;-#0.###");
 			DecimalFormat degrees = new DecimalFormat("#0.0000000;-#0.0000000");
 			
 			// conditionally format the value

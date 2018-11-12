@@ -144,7 +144,7 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 	
 	@Override
 	public boolean isCellEditable(int row, int col) {
-		if(col==MAPRG || col==DRG || col==SDRG || col==R || col==AZ || col==EL )
+		if( col==R || col==AZ || col==EL )
 			return false;
 		return true;
 	} 
@@ -403,7 +403,7 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 				Double lon = Double.parseDouble(cols[LON].trim());
 				Double h = Double.parseDouble(cols[H].trim());
 
-				Pedestal pedestal = new Pedestal(id, hasAZ, hasEL, Angle.inDegrees(lat), Angle.inDegrees(lon), h);
+				Pedestal pedestal = new Pedestal(id, hasRG, hasAZ, hasEL, Angle.inDegrees(lat), Angle.inDegrees(lon), h);
 
 				Double mu_r = Double.parseDouble(cols[DRG].trim());
 				Double mu_az = Double.parseDouble(cols[DAZ].trim());
@@ -417,12 +417,13 @@ public class PedestalModel extends AbstractTableModel implements Iterable<Pedest
 				
 				//positioning (aperture pointing)
 				Double az = Double.parseDouble(cols[AZ].trim());
-				Double el = Double.parseDouble(cols[EL].trim());				
-				if(Double.isNaN(az)&&Double.isNaN(el)) { //Increment program usage...temp by-pass...
-					pedestal.setMapSensors(false, hasAZ, hasEL);
+				Double el = Double.parseDouble(cols[EL].trim());	
+				//positioning rg gate
+				Double r = Double.parseDouble(cols[R].trim());				
+				if(Double.isNaN(az)&&Double.isNaN(az)&&Double.isNaN(el)) { //Increment program usage...temp by-pass...
+					pedestal.setMapSensors(hasRG, hasAZ, hasEL);
 				}else {				
-					pedestal.setMapSensors(false, hasAZ, hasEL);
-					Double r = Double.parseDouble(cols[R].trim());
+					pedestal.setMapSensors(hasRG, hasAZ, hasEL);
 					pedestal.point(new Polar(r, Angle.inDegrees(az), Angle.inDegrees(el)));
 				}
 				pedestals.add(pedestal);

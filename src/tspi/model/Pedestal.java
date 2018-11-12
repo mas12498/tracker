@@ -66,7 +66,7 @@ public class Pedestal {
 	private static final int DIGITS = 14;
 	
 	//Constructor
-	public Pedestal( String id, Boolean hasAZ, Boolean hasEL, Angle lat, Angle lon, double h) {
+	public Pedestal( String id, Boolean hasRG, Boolean hasAZ, Boolean hasEL, Angle lat, Angle lon, double h) {
 		//_wgs84: from Pedestal's geodetic-ellipsoid coordinates Latitude, Longitude, height
 		this._systemId = id;
 		this._geodeticLocation.set(lat,lon, h); //Ellipsoid
@@ -75,7 +75,7 @@ public class Pedestal {
 		this._unitEast.set(this._localFrame._local.getImage_j());
 		this._unitUp.set(this._localFrame._local.getImage_k().negate());
 		this._location.set(this._geodeticLocation.getGeocentric()); //Cartesian	location for next to make sense...	
-		this.setMapSensors(false, hasAZ, hasEL);
+		this.setMapSensors(hasRG, hasAZ, hasEL);
 		this.setLocalOriginCoordinates();		//zeros for the first pedestal in ensemble defined to be origin... 
 		this.clearPedestalVector();
 		
@@ -123,6 +123,7 @@ public class Pedestal {
 	 */
 	
 	public Boolean[] getMapSensors() { return _mapSensors; }
+	
 	public void setMapSensors(Boolean hasRG, Boolean hasAZ, Boolean hasEL) { 
 		this._mapSensors[0] = hasRG; 
 		this._mapSensors[1] = hasAZ;

@@ -314,7 +314,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 				int index = this.pedestalTable.getSelectedRow();
 				if(index==-1)
 					index = this.pedestals.getRowCount();
-				Pedestal pedestal = new Pedestal("",true,true,Angle.ZERO,Angle.ZERO,0.0);
+				Pedestal pedestal = new Pedestal("",true,true,true,Angle.ZERO,Angle.ZERO,0.0);
 				this.pedestals.add(index, pedestal);
 				this.pedestalTable.setRowSelectionInterval(index, index);
 				

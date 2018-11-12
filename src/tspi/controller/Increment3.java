@@ -42,6 +42,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 	protected TargetModel targets;
 	protected JTable pedestalTable;
 	protected JTable targetTable;
+	protected JMenuItem setOrigin;
 	protected JMenuItem addPedestal;
 	protected JMenuItem addTarget;
 	protected JMenuItem removePedestal;
@@ -60,23 +61,28 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 	
 	
 	public Increment3() {
-		//pedestals model
+		
+		
+		
+		//pedestals model table
 		pedestals = new PedestalModel();
-		pedestals.addTableModelListener( this );
+		pedestals.addTableModelListener( this );		
 		
 		pedestalTable = new JTable(pedestals);
 		pedestalTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		pedestalTable.setRowSelectionAllowed(true);
 		pedestalTable.setColumnSelectionAllowed(false);
 		pedestalTable.createDefaultColumnsFromModel();
-		pedestalTable.getSelectionModel().addListSelectionListener( this );
+		pedestalTable.getSelectionModel().addListSelectionListener( this );	
 		
 		this.cell = new PedestalModel.CellRenderer();
 		pedestalTable.setDefaultRenderer(Double.class, cell);
 		pedestalTable.setDefaultRenderer(String.class, cell);
 		//pedestalTable.getColumnModel().getColumn(0).setCellRenderer(cell);
 		
-		//targets model
+		
+		
+		//targets model table
 		targets = new TargetModel();
 		targets.addTableModelListener( this );
 		
@@ -93,7 +99,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		//targetTable.getColumnModel().getColumn(0).setCellRenderer(cell);
 		
 		
-		
+		//pedestals pnlPedestals pane
 		JPanel pnlPedestals = new JPanel( new BorderLayout() );
 		JLabel lblPedestals = new JLabel("Pedestals");
 		lblPedestals.setHorizontalAlignment(JLabel.CENTER);
@@ -102,7 +108,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		pnlPedestals.add(scrPedestals, BorderLayout.CENTER);
 		
 		
-		
+		//targets pnlTarget pane
 		JPanel pnlTarget = new JPanel( new BorderLayout() );
 		JLabel lblTarget = new JLabel("Targets");
 		lblTarget.setHorizontalAlignment(JLabel.CENTER);
@@ -110,26 +116,13 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		pnlTarget.add(lblTarget, BorderLayout.NORTH);
 		pnlTarget.add(scrTarget, BorderLayout.CENTER);
 		
-		
+		//split panes layout
 		JSplitPane split = new JSplitPane(
 				JSplitPane.VERTICAL_SPLIT, true, pnlPedestals, pnlTarget);
 		split.setResizeWeight(0.25);
 		split.setDividerLocation(0.25);
-		
-		addPedestal = new JMenuItem("Add Pedestal");
-		addTarget = new JMenuItem("Add Target");
-		removePedestal = new JMenuItem("Remove Pedestal");
-		removeTarget = new JMenuItem("Remove Target");
-		addPedestal.addActionListener(this);
-		addTarget.addActionListener(this);
-		removePedestal.addActionListener(this);
-		removeTarget.addActionListener(this);
-		JMenu edit = new JMenu("Edit");
-		edit.add(addPedestal);
-		edit.add(addTarget);
-		edit.add(removePedestal);
-		edit.add(removeTarget);
-		
+
+		//file menu drop down
 		loadPedestals = new JMenuItem( "Load Pedestals" );
 		loadTargets = new JMenuItem( "Load Targets" );
 		loadPedestals.addActionListener(this);
@@ -144,6 +137,25 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		file.add(savePedestals);
 		file.add(saveTargets);
 		
+		//edit menu drop down
+		setOrigin = new JMenuItem("Set Origin");
+		addPedestal = new JMenuItem("Add Pedestal");
+		addTarget = new JMenuItem("Add Target");
+		removePedestal = new JMenuItem("Remove Pedestal");
+		removeTarget = new JMenuItem("Remove Target");
+		setOrigin.addActionListener(this);
+		addPedestal.addActionListener(this);
+		addTarget.addActionListener(this);
+		removePedestal.addActionListener(this);
+		removeTarget.addActionListener(this);
+		JMenu edit = new JMenu("Edit");
+		edit.add(setOrigin);
+		edit.add(addPedestal);
+		edit.add(addTarget);
+		edit.add(removePedestal);
+		edit.add(removeTarget);
+		
+		//coordinates menu drop down
 		coordEllipsoidal = new JMenuItem("Ellipsoidal");
 		coordEllipsoidal.addActionListener(this);
 		coordGeocentric = new JMenuItem("Geocentric");
@@ -152,18 +164,22 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		coordinates.add(coordEllipsoidal);
 		coordinates.add(coordGeocentric);
 		
+		//about menu popup
 		about = new JMenuItem("About");
 		about.addActionListener(this);
 		
 		//TODO add or remove systems and targets
 		//JMenu edit = new JMenu("Edit");
 		
+		
+		//menu bar 
 		JMenuBar bar = new JMenuBar();
 		bar.add(file);
 		bar.add(edit);
 		bar.add(coordinates);
 		bar.add(about);
 		
+		//application gui layout
 		this.setLayout( new BorderLayout() );
 		this.add(bar, BorderLayout.NORTH);
 		this.add(split, BorderLayout.CENTER);
@@ -172,7 +188,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 	}
 	
-	/** Increment 1, usecase 1: Update all pedestal angles to point to the given target*/
+	/** Usecase 1: Update all pedestal's vector states to reference point-out of the selected target*/
 	public void ComputeDirections(Target target, PedestalModel pedestals) {
 		Vector3 geo = target.getGeocentricCoordinates();
 		if(geo==null) { //pedestal location not created[?]
@@ -185,8 +201,19 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 	
 
 	
-	/** Increment 1, usecase 2: Updates the error of all targets using the two or more selected pedestals. */
+	/**
+	 * Usecase 2: Updates errors computed in location of all targets using only
+	 * assigned (checked) sensors of two or more selected pedestals.
+	 */
 	public void ComputeError(ArrayList<Pedestal> selected, TargetModel targets) {
+		/**
+		 * The location errors of fused sensor solutions are defined with respect to an
+		 * arbitrary pedestal coordinate frame origin location. In this application, we
+		 * define the origin location to be defined as the first pedestal given in the
+		 * pedestals table list -- And, this origin pedestal need not provide any
+		 * sensors contributing to the fused solution of target locations.
+		 * 
+		 */
 		// for each target
 		for(Target target : targets) {
 			Vector3 geo = target.getGeocentricCoordinates();
@@ -195,32 +222,29 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 				continue;
 			}
 			Ellipsoid ellipsoid = target.getEllipsoidalCoordinates().getEllipsoid();
-			//Debug
+			
+			//Debug information to console:
 			System.out.println( "\nTarget "+target.getTime()+" : " 
 					+ " lon="+ellipsoid.getEastLongitude().signedPrinciple().toDegreesString(DIGITS)
 					+ " lat="+ellipsoid.getNorthLatitude().toDegreesString(DIGITS)
 					+ " h="+ellipsoid.getEllipsoidHeight());
 			
-			// point pedestals to target
+			// point pedestals to each target
 			for(Pedestal pedestal : selected)
 				pedestal.pointToLocation(geo);
 			
-//			// TODO obtain the origin from somewhere instead of just using the first pedestal seleccted!
+//			// TODO obtain the origin from reference of a distinct input ...instead of just the first pedestal in list!
 //			Vector3 origin = new Vector3( selected.get(0).getLocation() );
 			
-			// compute new target and measure error
-			Solution solution = new Solution( selected );
-			solution.measureError( target.getGeocentricCoordinates() );
-			target.setSolution(solution);
+			// compute measured target location fused from pedestal model
+			Solution fused = new Solution( selected );
 			
-//			// set error in the corresponding target 
-//			Vector3 targetPrime;
-//			if( solution==null || solution.position_EFG==null )
-//				targetPrime = new Vector3(0.0,0.0,0.0);
-//			else targetPrime = solution.position_EFG;
-//			targetPrime.subtract( target.getGeocentricCoordinates() );
-//			double error = targetPrime.getAbs();
-//			target.setError(error);
+			// compute measured target location error
+			fused.measureError( target.getGeocentricCoordinates() );
+			
+			//output to targets
+			target.setSolution(fused);
+			
 //			// TODO display more conditioning and error ellipse info, maybe even the calculated target location.
 		}
 	}
@@ -236,18 +260,19 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 		// The bounds of the selected interval are used as the input pedestals to compute error
 		if( event.getSource() == this.pedestalTable.getSelectionModel() ) {
 						
-            /* Before selection...check if origin changed... AND fix local coordinates: */
+           
+			/* Before selection...check if origin was changed... AND fix local coordinates: */
 			
-			//Clear "Origin: " display prefix if below...
+			//Clear old "Origin: " prefix if below first...
 			int pNum = pedestals.getRowCount();
-			for (int p = 1; p < pNum; p++) {
+			for (int p = 1; p < pNum; p++) { //start below origin position...
 				String idPedStr =  pedestals.getPedestal(p).getSystemId();
 				int idPedStrLen = idPedStr.length();
 				if (idPedStrLen >= 8) {
-					if (idPedStr.startsWith("Origin: ")) {
+					if (idPedStr.startsWith("Origin:")) {
 						pedestals.getPedestal(0);
-						if(idPedStrLen==8) {
-							pedestals.getPedestal(p).setSystemId(null);							
+						if(idPedStrLen<8) {
+							pedestals.getPedestal(p).setSystemId("o"+p);							
 						}else {
 							pedestals.getPedestal(p).setSystemId(idPedStr.substring(8, idPedStrLen));
 						}						
@@ -255,20 +280,18 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 					}
 				}
 				
-			}			
-			//Force "Origin: " prefix...
+			}	
+			
+			// Force the "Origin: " prefix...
 			String idPedStr = pedestals.getPedestal(0).getSystemId();
-			if (idPedStr.length() < 8) {
-				pedestals.getPedestal(0).setSystemId("Origin: " + idPedStr);
-				//System.out.println("Origin Assigned: "+idPedStr+" "+origin.toString(14));
+			if (idPedStr.startsWith("Origin:")) {
+				// need do nothing
+				// System.out.println(idPedStr + " "+origin.toString(14));
 			} else {
-				if (idPedStr.startsWith("Origin: ")) {
-					//System.out.println(idPedStr + " "+origin.toString(14));
-				} else {
-					pedestals.getPedestal(0).setSystemId("Origin: " + idPedStr);
-					//System.out.println("Origin Assigned: "+idPedStr+" "+origin.toString(14));
-				}
+				pedestals.getPedestal(0).setSystemId("Origin: " + idPedStr);
+				// System.out.println("Origin Assigned: "+idPedStr+" "+origin.toString(14));
 			}
+
 			//Check if origin location matches pedestal(0) location...
 			if (!(pedestals.getPedestal(0).getLocation().equals(Pedestal.getOrigin()))) {
 				Pedestal.setOrigin(pedestals.getPedestal(0).getLocation());
@@ -279,8 +302,7 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 			}	
 			
 			
-            /* selection collection...pedestals to resolve targets: */
-			
+            /* pedestal selection collection...pedestals used to resolve fused solutions for targets: */			
 			int rows[] = pedestalTable.getSelectedRows();
 			ArrayList<Pedestal> list = new ArrayList<Pedestal>();
 			for(int row : rows) {
@@ -345,11 +367,26 @@ implements ActionListener, ListSelectionListener, TableModelListener {
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		try{
-			if( event.getSource() == this.addPedestal ) {
+			if( event.getSource() == this.setOrigin ) {			
+				int index = this.pedestalTable.getSelectedRow();
+				if(index==-1)
+					index = 0;
+				Ellipsoid o = new Ellipsoid(pedestals.getPedestal(index).getLocationEllipsoid());
+				Pedestal pedestal = new Pedestal("Origin: " + pedestals.getPedestal(index).getSystemId(), false, false,
+						false, o.getNorthLatitude(), o.getEastLongitude(), o.getEllipsoidHeight());
+				this.pedestals.add(0, pedestal);
+				this.pedestalTable.setRowSelectionInterval(index+1, index+1);
+				Pedestal.setOrigin(pedestals.getPedestal(0).getLocation());
+				int pNum = pedestals.getRowCount();
+				for (int p = 0; p < pNum; p++) {
+					pedestals.getPedestal(p).setLocalOriginCoordinates();
+				}
+				
+			} else if( event.getSource() == this.addPedestal ) {
 				int index = this.pedestalTable.getSelectedRow();
 				if(index==-1)
 					index = this.pedestals.getRowCount();
-				Pedestal pedestal = new Pedestal("",false,false,Angle.ZERO,Angle.ZERO,0.0);
+				Pedestal pedestal = new Pedestal("",false,false,false,Angle.ZERO,Angle.ZERO,0.0);
 				this.pedestals.add(index, pedestal);
 				this.pedestalTable.setRowSelectionInterval(index, index);
 				

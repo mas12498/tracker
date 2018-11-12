@@ -31,8 +31,8 @@ public class Solution {
 		int pedSensorCnt =0;
 		//pedSensorCnt = pedestals.size()*2; //assumes always two valid sensors per pedestal...
 		for(Pedestal pedestal : pedestals) {
-			// begin with case (by 2) for az,el of pedestal... need not always be 2...
-			pedSensorCnt += 2;
+			// begin with case (by 3) for rg,az,el of pedestal... need not always be 3...
+			pedSensorCnt += 3;
 			Ellipsoid ellipsoid = pedestal.getLocationEllipsoid(); //.getWGS84().getEllipsoid();
 			//Debug
 			System.out.println( "Pedestal "+pedestal.getSystemId()+" : "
@@ -40,6 +40,7 @@ public class Solution {
 					+ " lon="+ellipsoid.getEastLongitude().signedPrinciple().toDegreesString(DIGITS)
 					+ " lat="+ellipsoid.getNorthLatitude().toDegreesString(DIGITS)
 					+ " h="+ellipsoid.getEllipsoidHeight()
+					+ " "+pedestal.getMapRG()+"_rg=" + pedestal._local.getRange()
 					+ " "+pedestal.getMapAZ()+"_az=" + pedestal._local.getUnsignedAzimuth().toDegreesString(7)
 					+ " "+pedestal.getMapEL()+"_el=" + pedestal._local.getElevation().toDegreesString(7));
 		}	
@@ -57,12 +58,38 @@ public class Solution {
 		int i = 0;
 		int iAz = 0; 
 		int iEl = 0;
+		int iRG = 0;
 		for(Pedestal pedestal : pedestals) {	
 			
 //			System.out.println("Pedestal "+pedestal.getSystemId()+": q_NG="+pedestal._localFrame.getLocal().toString(5)+"  q_AG = "+pedestal._apertureFrame._orientation.toString(5));
 			
-			//Assuming two {az,el} axial sensors per pedestal...	
+			//Assuming three {az,el,rg} axial sensors per pedestal...	
 			
+			if (pedestal.getMapRG()) { // range axis: dircos axial line of sight (polarization twist)
+				
+				//reference pedestal solution matrix: must have aperture proxy orientation to do this!!!
+				_projection = pedestal._apertureFrame._orientation.getImage_i().unit();
+					rhs[i] = pedestal._local.getRange() + pedestal._localCoordinates.getInnerProduct(_projection);
+					matrixData[i][0] = _projection.getX();
+					matrixData[i][1] = _projection.getY();
+					matrixData[i][2] = _projection.getZ();
+				
+				//perturbed by biases, estimated pedestal solution matrix unweighted
+				biasedLocal.set(pedestal.getBiasedLocal());
+				_projectionBiased.set( 
+						T_EFG_FRD.NED_to_FRD(pedestal._localFrame._local
+								, biasedLocal.getSignedAzimuth().codedPhase()
+								, biasedLocal.getElevation().codedPhase()
+							).getImage_i().unit()
+				);
+					rhsBiased[i] = biasedLocal.getRange() + pedestal._localCoordinates.getInnerProduct(_projectionBiased);
+					matrixDataBiased[i][0] = _projectionBiased.getX();
+					matrixDataBiased[i][1] = _projectionBiased.getY();
+					matrixDataBiased[i][2] = _projectionBiased.getZ();
+								
+				i += 1;
+				iRG += 1;
+			}			
 			if (pedestal.getMapAZ()) { // Horz: axial EL dircos
 				
 				//reference pedestal solution matrix
@@ -143,8 +170,21 @@ public class Solution {
 			//System.out.println("Pedestal "+pedestal.getSystemId()+": q_NG="+pedestal._localFrame.getLocal().toString(5)+"  q_AG = "+pedestal._apertureFrame._orientation.toString(5));
 			
 			//weight per function of pedestal range....
-		    double wgt = StrictMath.hypot( new Vector3(pedestal._localCoordinates ).subtract(vectorBiased_EFG).getAbs() , 1.5);
+		    double wgt = StrictMath.hypot( new Vector3(vectorBiased_EFG).subtract(pedestal._localCoordinates).getAbs() , 1.5);
 
+			//Assuming range sensor...		
+			if (pedestal.getMapRG()) { 
+				
+				//perturbed by biases, estimated pedestal solution matrix
+				
+					double rWgt = pedestal.getDeviationRG();
+					rhsBiased[i] /= rWgt;					
+					matrixDataBiased[i][0] /= rWgt;
+					matrixDataBiased[i][1] /= rWgt;
+					matrixDataBiased[i][2] /= rWgt;
+								
+				i += 1;
+			}
 			//Assuming two axial sensors per pedestal: [0..2] possible increments per pedestal...		
 			if (pedestal.getMapAZ()) { // Horz: axial EL dircos for azimuth
 				
@@ -173,7 +213,7 @@ public class Solution {
 	//Weighted pedestal solutions....Overwrite first trial for these 'single point' solutoins...
 	aPerturbed = new Array2DRowRealMatrix(matrixDataBiased);
 		System.out.println("Pedestals in solution: "+pedSensorCnt/2);
-		System.out.println("Sensors in solution: "+iAz+" AZ + "+iEl+" EL = "+i+" Total.");
+		System.out.println("Sensors in solution: "+iAz+" AZ + "+iEl+" EL + "+iRG +" RG = "+i+" Total.");
 //		System.out.println(a.getColumnDimension()); // 3
 	svdPerturbed = new SingularValueDecomposition(aPerturbed.getSubMatrix(0,i-1,0, aPerturbed.getColumnDimension()-1));
 	bPerturbed = new ArrayRealVector(rhsBiased);

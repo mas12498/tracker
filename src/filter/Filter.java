@@ -20,7 +20,7 @@ public class Filter {
 		this.time = 0.0;
 		this.pedestals = pedestals;
 		this.covariance = new Array2DRowRealMatrix(9, 9);
-		this.state = new ArrayRealVector(pedestals.length*2); //3 with range?
+		this.state = new ArrayRealVector(9);
 	}
 	
 	/** Update the filter's state and covariance using a vector of pedestal measurements.

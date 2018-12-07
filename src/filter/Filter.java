@@ -2,6 +2,9 @@ package filter;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.DecompositionSolver;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
@@ -14,14 +17,86 @@ public class Filter {
 	double time;
 	RealMatrix covariance;
 	RealVector state;
+		
+	RealVector x;
+	RealMatrix P;
+	
+	RealMatrix x_;
+	RealMatrix P_;
+	
+	
+	double dt;
+	RealVector A; //transition matrix: apriori predict from time k-1 to time at k
+	RealMatrix Q; //process noise matrix: stochastic noise introduced in transition
+
+	RealMatrix H; //observation matrix: map from state-space x to measurement space of z
+	RealMatrix z; //measurement vector for updating apriori filter
+	RealMatrix R; //measurement noise matrix: stochastic noise introduced in measurement
+	
+	RealMatrix K; //Kalman gain and blending matrix.
+
+	/** 
+	 * K: measurement update Kalman gain and blending matrix
+	 * @param H,R,P_   */
+	public RealMatrix updateKalmanGain( RealMatrix H, RealMatrix R, RealMatrix P_ ) {
+		//RealMatrix numerator = P_.multiply(H.transpose());                        //matrix RHS
+		//RealMatrix denominator =( H.multiply(P_).multiply(H.transpose())).add(R); //matrix LHS				
+		//QRDecomposition factored = new QRDecomposition((H.multiply(P_).multiply(H.transpose())).add(R));		
+		//DecompositionSolver K = factored.getSolver();                             //solve K
+		//return 	factored.getSolver().solve(P_.multiply(H.transpose()));		
+		return new QRDecomposition((H.multiply(P_).multiply(H.transpose())).add(R)).getSolver()
+				.solve(P_.multiply(H.transpose()));
+	}
+	
+	/** 
+	 * state: measurement update x
+	 * @param K,H,z,x_   */
+	public RealMatrix updateState( RealMatrix K, RealMatrix H, RealMatrix z, RealMatrix x_ ) {
+		
+		return  x_.add(K.multiply( z.subtract(H.multiply(x_)))) ;
+	
+	}
+	
+	/** 
+	 * covariance: measurement update P
+	 * @param K,H,P_  */
+	public RealMatrix updateCovariance( RealMatrix K, RealMatrix H, RealMatrix P_ ) {
+		
+		return  (MatrixUtils.createRealIdentityMatrix(9).subtract(K.multiply( H))).multiply(P_) ;
+	
+	}
+	
+	
+	/** 
+	 * state: propagate apriori x_
+	 * @param A,Q,x_   */
+	public RealMatrix propagateState( RealMatrix A, RealMatrix x ) {
+		
+		return  A.multiply(x);
+	
+	}
+	
+	/** 
+	 * covariance: apriori propagate P_
+	 * @param A,Q,P  */
+	public RealMatrix propagateCovariance( RealMatrix A, RealMatrix Q, RealMatrix P ) {
+		
+		return  (A.multiply(P).multiply(A.transpose())).add(Q); 
+	
+	}
+	
+	
 	Pedestal pedestals[];
 	
 	public Filter( Pedestal pedestals[] ) {
 		this.time = 0.0;
 		this.pedestals = pedestals;
-		this.covariance = new Array2DRowRealMatrix(9, 9);
-		this.state = new ArrayRealVector(9);
+		this.covariance = new Array2DRowRealMatrix(9, 9); //P matrix
+		this.state = new ArrayRealVector(9); //x vector
 	}
+	
+	
+	
 	
 	/** Update the filter's state and covariance using a vector of pedestal measurements.
 	 * @param measurements an array of measurements in the same index order as the corresponding pedestal array*/

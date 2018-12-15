@@ -3,10 +3,10 @@ package tspi.filter;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
-import tspi.filter.Trajectory.Model;
+import tspi.filter.TrackSimulator.Trajectory;
 
 /** Parametric model of 2nd order kinematic motion. */
-public class Kinematic implements Model {
+public class Kinematic implements Trajectory {
 
 	public ArrayRealVector a;
 	public ArrayRealVector v;
@@ -23,7 +23,6 @@ public class Kinematic implements Model {
 	public RealVector getState(double time) {
 		return p.add( v.mapMultiply(time) ).add( a.mapMultiply(time*time*0.5) );
 	} 
-
 }
 
 //public class Kinematic implements Model {

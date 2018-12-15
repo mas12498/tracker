@@ -9,25 +9,30 @@ import tspi.model.Pedestal;
 import tspi.model.Polar;
 
 /** Used to generate a series of test measurements of an idealized motion. */
-class Trajectory {
+class TrackSimulator {
 	
-	Model model;
-	Pedestal pedestals[];
-	Random random;
-	
-	public Trajectory( Model model, Pedestal pedestals[], Random random ) {
-		this.model = model;
-		this.pedestals = pedestals;
-		this.random = random;
-	}
-	
-	interface Model { 
+	/** A parametric model of the simulated trajectory. */
+	interface Trajectory {
 		public RealVector getState( double time );
 	}
 	// TODO implement a linear model, then a second order kinematic model
-	// then possibly some circle with a constant acceleration... 
+	// then possibly some circle with a constant acceleration...
 	
-	/** Obtain a ideal point from the model then generate a measurement vector 
+	Trajectory model;
+	Pedestal pedestals[];
+	Random random;
+	
+	/** Create a trajectory simulator.
+	 * @param model the ideal path
+	 * @param pedestal the pedestals who will measure the trajectory
+	 * @param random The random number generator for the simulation */
+	public TrackSimulator( Trajectory model, Pedestal pedestals[], Random random ) {
+		this.model = model;
+		this.pedestals = pedestals;
+		this.random = random;
+	} 
+	
+	/** Obtain a ideal point from the trajectory model then generate a measurement vector 
 	 * by pointing each pedestal at the ideal point then perturbing it by the
 	 * pedestals' error model. */
 	Polar[] generate( double time, Polar measurements[] ) {

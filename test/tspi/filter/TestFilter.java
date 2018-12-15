@@ -17,20 +17,20 @@ class TestFilter {
 		Filter filter = new KalmanFilter( pedestals );
 		
 		// TODO create the Trajectory
-		Trajectory.Model model = null;
-		Trajectory trajectory = new Trajectory( model, pedestals, random ); 
+		TrackSimulator.Trajectory model = null;
+		TrackSimulator simulator = new TrackSimulator( model, pedestals, random ); 
 		Polar measurements[] = {};
 		
 		// generate measurements over time 
 		double start=0, end=10, dt=.020;
 		for (double t=start; t<end; t+=dt) {
-			measurements = trajectory.generate(t, measurements);
+			measurements = simulator.generate(t, measurements);
 			
 			// update the filter
 			filter.measurement(t+dt, measurements);
 			
 			//TODO compare prediction with next time step?
-			// compare filterstate with parametric model.
+			// compare filter state with parametric model.
 			// use descriptive statistics
 			// tabulate into CSV output?
 		}

@@ -1,6 +1,8 @@
 package tspi.filter;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -18,10 +20,19 @@ class TestFilter {
 		// constant seed right now for reproducibility
 		Random random = new Random(1);
 		
-		// initialize the pedestal array
-		File file = new File("");
-		PedestalModel model = new PedestalModel();
-		try { model.load(file); }
+		PedestalModel model;
+		try {
+			// initialize output
+			File out = null;
+			PrintStream stream = System.out;
+			if (out!=null)
+				stream = new PrintStream( new FileOutputStream(out) );
+			
+			// initialize the pedestal array
+			File in = new File("");
+			model = new PedestalModel();
+			model.load(in);
+		}
 		catch (Exception e) {
 			e.printStackTrace();
 			return;
@@ -33,9 +44,11 @@ class TestFilter {
 		list.toArray(pedestals);
 		
 		// create the Trajectory model
-		double a[] = {0.0, 0.0, 0.0};
-		double v[] = {0.0, 0.0, 0.0};
-		double p[] = {0.0, 0.0, 0.0};
+		// moving west over intersection of meridian and equator at about 700m altitude?
+		// we're in meters right? TODO I should just use the EFG classes to construct this correctly...
+		double a[] = {-10.0, 0.0, 0.0}; // mpss
+		double v[] = {0.0, 300.0, 0.0}; // mps
+		double p[] = {4500000.0, 0.0, 0.0}; // meter
 		TrackSimulator.Trajectory trajectory = new Kinematic(
 				new ArrayRealVector(a),
 				new ArrayRealVector(v),
@@ -46,21 +59,31 @@ class TestFilter {
 		Polar measurements[] = {};
 		
 		// TODO create the filter
-		Filter filter = new KalmanFilter( pedestals );
+//		Filter filter = new KalmanFilter( pedestals );
+		Filter filter = new CheatFilter( trajectory ); 
 		
 		// generate measurements over time 
-		double start=0, end=10, dt=.020;
+		double start=0, end=100, dt=.02;
 		for (double t=start; t<end; t+=dt) {
 			measurements = simulator.generate(t, measurements);
 			
 			// update the filter
-			filter.measurement(t+dt, measurements);
+			filter.measurement(t, measurements);
 			
-			//TODO compare prediction with next time step?
-			// compare filter state with parametric model.
-			// use descriptive statistics
-			// tabulate into CSV output?
+			// TODO compare filter state with parametric model.
+			filter.prediction(t); // prediction is kind of a misnomer when dt is 0...
+			
+			//TODO compare prediction with next time step too?
+			filter.prediction(t+dt);
+			
+			// TODO use descriptive statistics
+			
+			// TODO tabulate into CSV output?
+			
 		}
+		// TODO make sensors intermittently drop measurements
+		
+		//TODO extract test which compares given filter to cheating filter... 
 	}
 }
 

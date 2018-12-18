@@ -3,10 +3,8 @@ package tspi.filter;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
-import tspi.filter.TrackSimulator.Trajectory;
-
 /** Parametric model of 2nd order kinematic motion. */
-public class Kinematic implements Trajectory {
+public class Kinematic implements TrackSimulator.Trajectory {
 
 	public ArrayRealVector a;
 	public ArrayRealVector v;

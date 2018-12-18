@@ -113,7 +113,7 @@ public class Pedestal {
 	 */
 	public void setLocalOriginCoordinates() { 
 		this._localCoordinates.set(new Vector3(this._location).subtract(_origin) );
-	}	
+	}		
 
 	//Clone Pedestal objects...
 	public String getSystemId() { return this._systemId; }
@@ -218,6 +218,27 @@ public class Pedestal {
 	 * @return model transform from geocentric frame coordinates to pedestal's aperture frame coordinates.
 	 */
 	public T_EFG_FRD getApertureFrame() { return new T_EFG_FRD(this._apertureFrame); }
+	
+	/**
+	 * @return Vector3 unit-vector i direction ('F' is line-of-sight of {FRD}).
+	 */
+	public Vector3 getAperture_i() {
+		return this._apertureFrame._orientation.getImage_i().unit();
+	}
+	
+	/**
+	 * @return Vector3 unit-vector j direction ('R' is normal to 'F' in level plane {FRD}).
+	 */
+	public Vector3 getAperture_j() {
+		return this._apertureFrame._orientation.getImage_j().unit();
+	}
+
+	/**
+	 * @return Vector3 unit-vector k direction ('D' is normal to 'F' in vertical plane {FRD}).
+	 */
+	public Vector3 getAperture_k() {
+		return this._apertureFrame._orientation.getImage_k().unit();
+	}
 		
 	/**
 	 * @return pedestal's location in WGS 84's ellipsoid coordinates.

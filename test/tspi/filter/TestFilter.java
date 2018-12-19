@@ -60,7 +60,7 @@ class TestFilter {
 		
 		// TODO create the filter
 //		Filter filter = new KalmanFilter( pedestals );
-		Filter filter = new CheatFilter( trajectory ); 
+		Filter kalman = new CheatFilter( trajectory ); 
 		
 		// generate measurements over time 
 		double start=0, end=100, dt=.02;
@@ -68,13 +68,13 @@ class TestFilter {
 			measurements = simulator.generate(t, measurements);
 			
 			// update the filter
-			filter.measurement(t, measurements);
+			RealVector state = kalman.filter(t, measurements);
 			
-			// TODO compare filter state with parametric model.
-			filter.prediction(t); // prediction is kind of a misnomer when dt is 0...
-			
-			//TODO compare prediction with next time step too?
-			filter.prediction(t+dt);
+//			// TODO compare filter state with parametric model.
+//			filter.prediction(t); // prediction is kind of a misnomer when dt is 0...
+//			
+//			//TODO compare prediction with next time step too?
+//			filter.prediction(t+dt);
 			
 			// TODO use descriptive statistics
 			
@@ -96,10 +96,7 @@ class CheatFilter implements Filter {
 	}
 	
 	@Override
-	public void measurement(double time, Polar[] measurements) {}
-	
-	@Override
-	public RealVector prediction(double time) {
+	public RealVector filter(double time, Polar[] measurements) {
 		return cheat.getState(time);
 	}
 	

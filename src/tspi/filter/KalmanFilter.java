@@ -113,28 +113,34 @@ public class KalmanFilter implements Filter {
 		this.state = new ArrayRealVector(9); //x vector
 	}
 	
-	
-	
-	
 	/* (non-Javadoc)
 	 * @see tspi.filter.Filter#measurement(double, tspi.model.Polar[])
 	 */
 	@Override
-	public void measurement( double time, Polar measurements[] ) {
-		
+	public RealVector filter( double time, Polar measurements[] ) {
+		//TODO
+		return null;
 	}
 	// digression; we might want something more explicit and dynamic;
 //	public void measurement( long time, Map<Pedestal, Polar> measurements ) { }
 	
-	
-	/* (non-Javadoc)
-	 * @see tspi.filter.Filter#prediction(double)
-	 */
-	@Override
-	public RealVector prediction( double time ) {
-		//TODO
+	//TODO implement accessors for the state you want displayed.
+	Polar[] getResidualsPrediction( double dt ) {
 		return null;
 	}
-	//TODO this has to eventually be done in a thread safe way...
-	// and we probably want something less contentious that a simple mutex on the state object...
+	Polar[] getResidualsUpdate( double dt ) {
+		return null;
+	}
+	RealVector getState() {
+		return state;
+	}
+	RealMatrix getCovariance() {
+		return covariance;
+	}
+	
+//	@Override
+//	public RealVector prediction( double time ) {
+//		//TODO
+//		return null;
+//	}
 }

@@ -6,11 +6,9 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Random;
 
-import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
-import rotation.Vector3;
 import tspi.model.Pedestal;
 import tspi.model.PedestalModel;
 import tspi.model.Polar;
@@ -25,7 +23,7 @@ class TestFilter {
 		
 		Pedestal pedestals[];
 		File in = new File("./tracker/data/pedestalsIncrement.csv");
-		File out = new File("./tracker/data/testFilter.csv");
+		File out = null;//new File("./tracker/data/testFilter.csv");
 		PrintStream stream = System.out;
 
 		// initialize IO
@@ -40,13 +38,10 @@ class TestFilter {
 		}
 		
 		// create the Trajectory model
-		double a[] = {-10.0, 0.0, 0.0}; // mpss
-		double v[] = {0.0, 300.0, 0.0}; // mps
-		double p[] = {4500000.0, 0.0, 0.0}; // meter
-		Trajectory trajectory = new Kinematic(
-				new ArrayRealVector(a),
-				new ArrayRealVector(v),
-				new ArrayRealVector(p) );
+		Trajectory trajectory = new Kinematic( 0.0, // t0
+				4500000.0, 0.0, 0.0, // p0
+				0.0, 300.0, 0.0, // v0
+				-10.0, 0.0, 0.0 ); // a0 
 		// moving west over intersection of meridian and equator at about 700m altitude?
 		// we're in meters right? TODO I should just use the EFG classes to construct this correctly...
 				
@@ -56,9 +51,7 @@ class TestFilter {
 		// Filter kalman = new KalmanFilter( pedestals );
 		
 		// test the filter
-		demoFilter( cheat, trajectory, pedestals, stream );
-		
-		//TODO devise some tests 
+		demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream );
 		
 		// dispose IO
 		stream.close();
@@ -77,70 +70,69 @@ class TestFilter {
 		list.toArray(pedestals);
 		return pedestals;
 	}
-	
+		
 	/** runs a demo of the filter tracking a simple kinematic, . */
 	public static void demoFilter(
-			Filter filter, Trajectory trajectory, Pedestal pedestals[], PrintStream stream
-	) {		
-		// generate measurements over time 
-		double start=0, end=100, dt=.02;
-		for (double t=start; t<end; t+=dt) {
+			Filter filter, Trajectory trajectory, Pedestal pedestals[],
+			double t0, double dt, int n, PrintStream stream
+	) {
+		// print the header
+		stream.append("time, S0, S1, S2, S3, S4, S5, S6, S7, S8, "
+				+ "dS0, dS1, dS2, dS3, dS4, dS5, dS6, dS7, dS8");
+		for (Pedestal pedestal : pedestals) {
+			stream.append( ", "+pedestal.getSystemId()+"_az");
+			stream.append( ", "+pedestal.getSystemId()+"_el");
+		}
+		stream.println();
+					
+		// generate measurements over time
+		for (double t=t0; t<t0+n*dt; t+=dt) {
 			
 			// get the true object state
 			RealVector truth = trajectory.getState( t );
 			
 			// take perturbed measurements
-			Polar measurements[] = trackTrajectory( t, trajectory, pedestals );
+			Polar measurements[] = trajectory.track( t, pedestals, random );
 			
 			// update the filter with the noisy measurements
 			RealVector state = filter.filter(t, measurements);
 			
-			
 			// compare the measurements
+			state.subtract( truth );
 			
 			// tabulate the results into CSV
-			// time
-			// true state
-			// state delta
-			// residue
-			//  pre, post
-			//   az, el
+			stream.append(Double.toString(t)); // time
 			
-			// TODO use descriptive statistics
+			for (double d : truth.toArray())
+				stream.append(", "+d);// true state
 			
+			for (double d : state.toArray())
+				stream.append(", "+d);// state delta
+			
+			// TODO I don't think if residue is meaningful for the cheatFilter...
+			// put this back in when you're ready?
+//			Polar[] residue = filter.getResidualsPrediction(t);
+//			for(Polar polar : residue) {
+//				stream.append( ", "+polar.getSignedAzimuth() );
+//				stream.append( ", "+polar.getElevation() );
+//			} // pre
+//			
+//			residue = filter.getResidualsUpdate(t);
+//			for(Polar polar : residue) {
+//				stream.append( ", "+polar.getSignedAzimuth() );
+//				stream.append( ", "+polar.getElevation() );
+//			} // post
+			
+			stream.println();
 		}
-		
-		//TODO extract test which compares given filter to cheating filter... 
+		// TODO use descriptive statistics and print a summary to screen ? Use them for unit test?
 	}
-	
-	/** Obtain a ideal point from the trajectory model then generate a measurement vector 
-	 * by pointing each pedestal at the ideal point then perturbing it by the
-	 * pedestals' error model.
-	 * @param time
-	 * @param trajectory the truth source for the tracked object's movement
-	 * @param pedestals the sensors which will take measurements of the moving object, including error
-	 * @return an array containing all the pedestals' measurements of the moving object. It's 
-	 * indices correspond to the indices of the pedestal array. */
-	static Polar[] trackTrajectory( double time, Trajectory trajectory, Pedestal pedestals[] ) {
-		
-		// find the value of the parametric model at the given time
-		RealVector p = trajectory.getState(time);
-		Vector3 efg = new Vector3( p.getEntry(0), p.getEntry(1), p.getEntry(2) );
-		
-		// have each pedestal take a measurement, including error
-		Polar measurements[] = new Polar[pedestals.length];
-		for (int n=0; n<pedestals.length; n++) {
-			pedestals[n].pointToLocation( efg );
-			measurements[n] = pedestals[n].getPerturbedLocal(random);
-		}
-		
-		return measurements;
-	} // TODO make sensors intermittently drop measurements
 	
 }
 
-/** You ain't cheating you ain't trying */
+/** Uses the Trajectory model to get the state, therefore all errors should be zero. */
 class CheatFilter implements Filter {
+	double time;
 	Trajectory cheat;
 	
 	public CheatFilter(Trajectory hint) {
@@ -149,7 +141,19 @@ class CheatFilter implements Filter {
 	
 	@Override
 	public RealVector filter(double time, Polar[] measurements) {
+		this.time = time;
 		return cheat.getState(time);
+	}
+
+	@Override
+	public RealVector getState() {
+		return cheat.getState(time);
+	}
+
+	@Override
+	public RealMatrix getCovariance() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
@@ -164,17 +168,5 @@ class CheatFilter implements Filter {
 		return null;
 	}
 
-	@Override
-	public RealVector getState() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public RealMatrix getCovariance() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
 }
 

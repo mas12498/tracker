@@ -121,20 +121,20 @@ public class KalmanFilter implements Filter {
 		//TODO
 		return null;
 	}
-	// digression; we might want something more explicit and dynamic;
-//	public void measurement( long time, Map<Pedestal, Polar> measurements ) { }
+	// NOTE We might want something more explicit and dynamic;
+	//	public void measurement( long time, Map<Pedestal, Polar> measurements ) { }
 	
 	//TODO implement accessors for the state you want displayed.
-	Polar[] getResidualsPrediction( double dt ) {
+	public Polar[] getResidualsPrediction( double dt ) {
 		return null;
 	}
-	Polar[] getResidualsUpdate( double dt ) {
+	public Polar[] getResidualsUpdate( double dt ) {
 		return null;
 	}
-	RealVector getState() {
+	public RealVector getState() {
 		return state;
 	}
-	RealMatrix getCovariance() {
+	public RealMatrix getCovariance() {
 		return covariance;
 	}
 	

@@ -4,7 +4,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 /** Parametric model of 2nd order kinematic motion. */
-public class Kinematic implements TrackSimulator.Trajectory {
+public class Kinematic implements Trajectory {
 
 	public ArrayRealVector a;
 	public ArrayRealVector v;

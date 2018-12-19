@@ -1,5 +1,6 @@
 package tspi.filter;
 
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
 import tspi.model.Polar;
@@ -19,4 +20,10 @@ public interface Filter {
 //	RealVector prediction( double time );
 //	//TODO this has to eventually be done in a thread safe way...
 //	// and we probably want something less contentious that a simple mutex on the state object...
+	
+	Polar[] getResidualsPrediction( double dt );
+	Polar[] getResidualsUpdate( double dt );
+	RealVector getState();
+	RealMatrix getCovariance();
+	
 }

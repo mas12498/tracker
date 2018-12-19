@@ -22,8 +22,10 @@ class TestFilter {
 	public static void main(String args[]) {
 		
 		Pedestal pedestals[];
-		File in = new File("./tracker/data/pedestalsIncrement.csv");
-		File out = null;//new File("./tracker/data/testFilter.csv");
+		File in = new File("/home/mike/photon/workspace/github/tracker/data/pedestalsIncrement.csv");
+		File out = null;//new File("/home/mike/photon/workspace/github/tracker/data/testFilter.csv");
+//		File in = new File("./tracker/data/pedestalsIncrement.csv");
+//		File out = null;//new File("./tracker/data/testFilter.csv");
 		PrintStream stream = System.out;
 
 		// initialize IO

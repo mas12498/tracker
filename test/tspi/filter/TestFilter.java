@@ -6,6 +6,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
@@ -20,9 +21,15 @@ class TestFilter {
 	static Random random = new Random(1);
 
 	public static void main(String args[]) {
+//		double[]vd = {1,2,3};
+//		double[][] ad = {{1,0,1},{0,1,2},{0,0,3}};
+//		RealVector v = MatrixUtils.createRealVector(vd);
+//		RealMatrix a = MatrixUtils.createRealMatrix(ad);
+//		RealVector y = a.operate(v);
+//		RealVector  w = a.preMultiply(v);
 		
 		Pedestal pedestals[];
-		File in = new File("/home/mike/photon/workspace/github/tracker/data/pedestalsIncrement.csv");
+		File in = new File("H:/git/mas12498/tracker/data/pedestalsIncrement.csv");
 		File out = null;//new File("/home/mike/photon/workspace/github/tracker/data/testFilter.csv");
 //		File in = new File("./tracker/data/pedestalsIncrement.csv");
 //		File out = null;//new File("./tracker/data/testFilter.csv");
@@ -41,23 +48,31 @@ class TestFilter {
 		
 		// create the Trajectory model
 		Trajectory trajectory = new Kinematic( 0.0, // t0
-				4500000.0, 0.0, 0.0, // p0
-				0.0, 300.0, 0.0, // v0
-				-10.0, 0.0, 0.0 ); // a0 
+				3146814.7105773017, -5435097.18852511, 1114582.200504945, // p0
+				0.0, 0.0, 10.0, // v0
+				0.0, 2.0, 0.0 ); // a0 
+//		Trajectory trajectory = new Kinematic( 0.0, // t0
+//				3146814.7105773017, 0.0, 0.0, // p0
+//				0.0, 300.0, 0.0, // v0
+//				-10.0, 0.0, 0.0 ); // a0 
 		// moving west over intersection of meridian and equator at about 700m altitude?
 		// we're in meters right? TODO I should just use the EFG classes to construct this correctly...
 				
 		// create the filter
 		Filter cheat = new CheatFilter( trajectory );
+		
 		// TODO add the real filter
-		// Filter kalman = new KalmanFilter( pedestals );
+		Filter kalman = new KalmanFilter( pedestals );
 		
 		// test the filter
-		demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream );
+		//demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream );
+		demoFilter( kalman, trajectory, pedestals, 0.0, 0.02, 500, stream );
 		
 		// dispose IO
 		stream.close();
 	}
+	
+	
 	
 	/** Read an array of pedestals from the given file */
 	public static Pedestal[] loadPedestals(File file) throws Exception {
@@ -72,6 +87,8 @@ class TestFilter {
 		list.toArray(pedestals);
 		return pedestals;
 	}
+	
+	
 		
 	/** runs a demo of the filter tracking a simple kinematic, . */
 	public static void demoFilter(
@@ -94,10 +111,12 @@ class TestFilter {
 			RealVector truth = trajectory.getState( t );
 			
 			// take perturbed measurements
-			Polar measurements[] = trajectory.track( t, pedestals, random );
+			/////Polar measurements[] = trajectory.track( t, pedestals, random );
+			trajectory.simulateTrack( t, pedestals, random );
 			
 			// update the filter with the noisy measurements
-			RealVector state = filter.filter(t, measurements);
+			RealVector state = filter.filter(t, pedestals);
+			//RealVector state = KalmanFilter.filter(t, pedestals);
 			
 			// compare the measurements
 			state.subtract( truth );
@@ -132,21 +151,28 @@ class TestFilter {
 	
 }
 
+
 /** Uses the Trajectory model to get the state, therefore all errors should be zero. */
 class CheatFilter implements Filter {
 	double time;
 	Trajectory cheat;
 	
 	public CheatFilter(Trajectory hint) {
+		//just pass it thru...
 		this.cheat = hint;
 	}
 	
+	
+	
 	@Override
-	public RealVector filter(double time, Polar[] measurements) {
+	public RealVector filter(double time, Pedestal[] measurements) {
 		this.time = time;
+		//below is replaced by the filter state[?]
 		return cheat.getState(time);
 	}
 
+	
+	
 	@Override
 	public RealVector getState() {
 		return cheat.getState(time);

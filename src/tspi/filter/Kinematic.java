@@ -31,33 +31,35 @@ public class Kinematic implements Trajectory {
 		this.v0 = v0;
 		this.a0 = a0;
 	}
+	
+	//integrate kinematic trajectory assumming constant acceleration and initial state {p;v;a} at t0:
 
-	/** p(t) = p0 + v*t + 0.5*a*t^2 */
-	public RealVector getPosition( double time ) {
-		double dt = time - t0;
-		ArrayRealVector p1 = p0.add( v0.mapMultiply(dt) ).add( a0.mapMultiply(dt*dt*0.5) );
-		return p1;
+	/** p(t) = p0 + v0*t + 0.5*a0*t^2 */
+	public RealVector getPosition( double currentTime ) {
+		double elapsedTime = currentTime - t0;
+		ArrayRealVector position = p0.add( v0.mapMultiply(elapsedTime) ).add( a0.mapMultiply(elapsedTime*elapsedTime*0.5) );
+		return position;
 	}
 	
-	/** Compute velocity linearly from acceleration */
-	public RealVector getVelocity( double time ) {
-		double dt = time - t0;
-		ArrayRealVector v1 = v0.add( a0.mapMultiply(dt) );
-		return v1;
+	/** v(t) = v0 + a0*t */
+	public RealVector getVelocity( double currentTime ) {
+		double elapsedTime = currentTime - t0;
+		ArrayRealVector velocity = v0.add( a0.mapMultiply(elapsedTime) );
+		return velocity;
 	}
 	
-	/** Acceleration is constant */
-	public RealVector getAcceleration( double time ) {
-		ArrayRealVector a1 = new ArrayRealVector(a0);
-		return a1;
+	/** a(t) = a0 */
+	public RealVector getAcceleration( double currentTime ) {
+		ArrayRealVector acceleration = new ArrayRealVector(a0);
+		return acceleration;
 	}
 	
 	@Override
-	public RealVector getState(double time) {
+	public RealVector getState(double currentTime) {
 		
-		RealVector p = getPosition(time);
-		RealVector v = getVelocity(time);
-		RealVector a = getAcceleration(time);
+		RealVector p = getPosition(currentTime);
+		RealVector v = getVelocity(currentTime);
+		RealVector a = getAcceleration(currentTime);
 
 		return p.append(v.append(a));
 	} // TODO improve efficiency 

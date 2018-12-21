@@ -35,10 +35,12 @@ public class KalmanFilter implements Filter {
 	RealMatrix Pt_ = MatrixUtils.createRealMatrix(9,9);
 	
 	//transition state update matrix:   (9,9)
-	SparseRealMatrix S; 
-	
+	//SparseRealMatrix S; 
+	double[][] S_doub = new double[9][9]; 
+	RealMatrix S =  MatrixUtils.createRealMatrix(S_doub);
 	//process noise update matrix:      (9,9)
-	SparseRealMatrix Q; 
+	double[][] Q_doub = new double[9][9]; 
+	RealMatrix Q = MatrixUtils.createRealMatrix(Q_doub);
 	
 	//Kalman gain and working matrices...
 	RealMatrix Kt = MatrixUtils.createRealMatrix(6,9); //Kalman gain and blending matrix.
@@ -54,8 +56,10 @@ public class KalmanFilter implements Filter {
 	//innovations w vector -- residuals for updating apriori filter
 	RealVector w = new ArrayRealVector(6); 
 	
-	//measurement noise update:  (9,9)
-	SparseRealMatrix R; 
+	//measurement noise update:  (6,6)
+	//SparseRealMatrix R; 
+	double[][] R_doub = new double[6][6]; 
+	RealMatrix R =  MatrixUtils.createRealMatrix(R_doub);
 	
 	//list of pedestals and positionings
 	double[] measurements = new double[6];
@@ -81,7 +85,7 @@ public class KalmanFilter implements Filter {
 	 *       S == (A-I)
 	 * Generate sparse transition update matrix S for time of propagation between measurements:
 	 * @param timePropagate   */
-    public SparseRealMatrix initSparseUpdateS(double timePropagate) {
+    public RealMatrix initSparseUpdateS(double timePropagate) {
     	RealMatrix subDiagonal = MatrixUtils.createRealIdentityMatrix(3).scalarMultiply(timePropagate);   	   	
     	RealMatrix T = MatrixUtils.createRealMatrix(9,9);
     	//by cliques:
@@ -89,7 +93,7 @@ public class KalmanFilter implements Filter {
     	T.setSubMatrix(subDiagonal.getData(), 6, 3);
     	subDiagonal.scalarMultiply(timePropagate/2);
     	T.setSubMatrix(subDiagonal.getData(), 0, 6);
-    	return ( SparseRealMatrix) (T); //transition matrix cast to sparse!
+    	return T; //transition matrix cast to sparse!
     }
 	
 	
@@ -131,8 +135,8 @@ public class KalmanFilter implements Filter {
 	/** 
 	 * state: propagate apriori x_
 	 * @param S,Q,x_   */
-	public RealVector propagateState( SparseRealMatrix S, RealVector x ) {
-		x =  x.copy().add(S.operate(x));                //Sparse level 2
+	public RealVector propagateState( RealMatrix s2, RealVector x ) {
+		x =  x.copy().add(s2.operate(x));                //Sparse level 2
 		
 		//monitor Filter track range
 		TVector position = new TVector(x,0);
@@ -147,9 +151,9 @@ public class KalmanFilter implements Filter {
 	/** 
 	 * covariance: apriori propagate Pt_
 	 * @param S,Q,Pt  */
-	public RealMatrix propagateTransposedCovariance(SparseRealMatrix S, SparseRealMatrix Q, RealMatrix Pt) {
-		RealMatrix Pt1 = Pt.add(Pt.multiply(S.transpose())); // Sparse level 3
-		return Pt1.add((S).multiply(Pt1)).add(Q); // Sparse Level 3
+	public RealMatrix propagateTransposedCovariance(RealMatrix s2, RealMatrix q2, RealMatrix Pt) {
+		RealMatrix Pt1 = Pt.add(Pt.multiply(s2.transpose())); // Sparse level 3
+		return Pt1.add((s2).multiply(Pt1)).add(q2); // Sparse Level 3
 	}
 	
 	Pedestal pedestals[];
@@ -164,6 +168,7 @@ public class KalmanFilter implements Filter {
 		
 		this.pedestals = pedestals;
 		this.covariance = new Array2DRowRealMatrix(9, 9); //P matrix
+		
 		//this.state = new ArrayRealVector(9); //x vector
 		
 		//?instance in stream?	
@@ -180,6 +185,8 @@ public class KalmanFilter implements Filter {
 		long msTimeAdvOld = msTimeAdv;
 		this.msTimeAdv = StrictMath.round((this.time - this.timeLagged)*1000);
 		filterRange = StrictMath.hypot(StrictMath.hypot(x.getEntry(1), x.getEntry(2)),x.getEntry(3));
+		if(filterRange < 100) filterRange = 1000;
+		if(msTimeAdv < 10 ) msTimeAdv = 20;
 		if(msTimeAdv!=msTimeAdvOld) {
 			S = initSparseUpdateS(((double) msTimeAdv)*0.001);
 		
@@ -197,23 +204,23 @@ public class KalmanFilter implements Filter {
 		}
 		
 		x_ = propagateState( S, x );
-		Pt_ = propagateTransposedCovariance( S, Q, Pt );
+		Pt_ = propagateTransposedCovariance( S,  Q, Pt );
 		
 		//Compile measurement: {(H|z),R}
         
 		int mp = 0;		
 		for (int n=0; n<measurements.length; n++) {
-			
+			System.out.println(measurements[n].getSystemId()+" "+n);
 //			transportReliable = bernouliDeviate(); // simulate leaky measurement transport...
 //			if (pedestals[n].getMapAZ() && pedestals[n].getMapEL() && transportReliable) {
 			if (measurements[n].getMapAZ() && measurements[n].getMapEL()) {
  
 				// add rows to H, z vector, and diag(R)  (pairs for this case)!!!!
-				TVector pedLoc = (TVector) measurements[n].getLocalCoordinates(); // location from fusion origin
+				TVector pedLoc = new TVector(measurements[n].getLocalCoordinates()); // location from fusion origin
 				TVector seJ = new TVector( measurements[n].getAperture_j().divide(filterRange)); 
 				TVector seK = new TVector( measurements[n].getAperture_k().divide(filterRange));				
-				double hM[][] = { seJ.doubleArray() 
-						         ,seK.doubleArray() };
+				double hM[][] = { {seJ.getX(),seJ.getY(),seJ.getZ()} 
+						         ,{seJ.getX(),seJ.getY(),seJ.getZ()} };
 				
 				H.setSubMatrix(hM,mp,0 );
 				z.setEntry(mp,  seJ.getInnerProduct(pedLoc)); //radians measurement error AZ

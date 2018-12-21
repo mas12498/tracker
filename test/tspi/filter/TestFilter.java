@@ -6,7 +6,6 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Random;
 
-import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
@@ -30,8 +29,8 @@ class TestFilter {
 		
 		Pedestal pedestals[];
 		File in = new File("H:/git/mas12498/tracker/data/pedestalsIncrement.csv");
-		File out = null;//new File("/home/mike/photon/workspace/github/tracker/data/testFilter.csv");
-//		File in = new File("./tracker/data/pedestalsIncrement.csv");
+		File out = null;//new File("/home/mike/photon/workspace/github/tracker/data/testfilter.csv");
+//		File in = new File("C:\\Users\\Casey Shields\\eclipse-workspace\\tracker\\data\\pedestalsIncrement.csv");
 //		File out = null;//new File("./tracker/data/testFilter.csv");
 		PrintStream stream = System.out;
 
@@ -59,7 +58,10 @@ class TestFilter {
 		// we're in meters right? TODO I should just use the EFG classes to construct this correctly...
 				
 		// create the filter
-		Filter cheat = new CheatFilter( trajectory );
+//		Filter cheat = new CheatFilter( trajectory );
+		
+		// Pedestal origin hack!
+		Pedestal.setOrigin( pedestals[0].getLocation() );
 		
 		// TODO add the real filter
 		Filter kalman = new KalmanFilter( pedestals );
@@ -111,12 +113,10 @@ class TestFilter {
 			RealVector truth = trajectory.getState( t );
 			
 			// take perturbed measurements
-			/////Polar measurements[] = trajectory.track( t, pedestals, random );
 			trajectory.simulateTrack( t, pedestals, random );
 			
 			// update the filter with the noisy measurements
 			RealVector state = filter.filter(t, pedestals);
-			//RealVector state = KalmanFilter.filter(t, pedestals);
 			
 			// compare the measurements
 			state.subtract( truth );

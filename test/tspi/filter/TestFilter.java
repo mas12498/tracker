@@ -28,7 +28,8 @@ class TestFilter {
 //		RealVector  w = a.preMultiply(v);
 		
 		Pedestal pedestals[];
-		File in = new File("H:/git/mas12498/tracker/data/pedestalsIncrement.csv");
+		File in = new File("/home/mike/photon/workspace/github/tracker/data/pedestalsFilter1.csv");
+//		File in = new File("H:/git/mas12498/tracker/data/pedestalsIncrement.csv");
 		File out = null;//new File("/home/mike/photon/workspace/github/tracker/data/testfilter.csv");
 //		File in = new File("C:\\Users\\Casey Shields\\eclipse-workspace\\tracker\\data\\pedestalsIncrement.csv");
 //		File out = null;//new File("./tracker/data/testFilter.csv");
@@ -36,20 +37,20 @@ class TestFilter {
 
 		// initialize IO
 		try {
-			if (out!=null)
+			if (out!=null) 
 				stream = new PrintStream( new FileOutputStream(out) );
 			pedestals = loadPedestals(in);
-		}
-		catch (Exception e) {
+			
+		} catch (Exception e) {
 			e.printStackTrace();
 			return;
 		}
 		
 		// create the Trajectory model
 		Trajectory trajectory = new Kinematic( 0.0, // t0
-				3146814.7105773017, -5435097.18852511, 1114582.200504945, // p0
-				0.0, 0.0, 10.0, // v0
-				0.0, 2.0, 0.0 ); // a0 
+				3135932.588, -5444754.209, 1103864.549, // p0
+				0.0, 0.0, 0.0, // v0
+				0.0, 0.0, 0.0 ); // a0 
 //		Trajectory trajectory = new Kinematic( 0.0, // t0
 //				3146814.7105773017, 0.0, 0.0, // p0
 //				0.0, 300.0, 0.0, // v0
@@ -59,10 +60,7 @@ class TestFilter {
 				
 		// create the filter
 //		Filter cheat = new CheatFilter( trajectory );
-		
-		// Pedestal origin hack!
-		Pedestal.setOrigin( pedestals[0].getLocation() );
-		
+				
 		// TODO add the real filter
 		Filter kalman = new KalmanFilter( pedestals );
 		
@@ -87,6 +85,17 @@ class TestFilter {
 		ArrayList<Pedestal> list = model.asList();
 		Pedestal pedestals[] = new Pedestal[list.size()];
 		list.toArray(pedestals);
+
+		//Assume first pedestal is origin
+		Pedestal.setOrigin(pedestals[0].getLocation());
+		System.out.println("ORIGIN:" + Pedestal.getOrigin().toString(3));
+		//Compute local coordinates wrt origin defined 
+		int pNum = pedestals.length;
+		for (int p = 0; p < pNum; p++) {
+			pedestals[p].setLocalOriginCoordinates();
+		}
+		
+		
 		return pedestals;
 	}
 	

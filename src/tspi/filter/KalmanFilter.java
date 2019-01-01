@@ -16,8 +16,7 @@ import tspi.util.TVector;
 public class KalmanFilter implements Filter {
 	
 	
-	//Filter Globals
-	double _time;
+//	//Filter Globals
 	double _timePrev;
 	long _msecAdv;
 	TVector _position;
@@ -73,9 +72,8 @@ public class KalmanFilter implements Filter {
 	//constructor from pedestals list 
 	public KalmanFilter( Pedestal pedestals[] ) {
 			
-		this._time = 0.0;
+//		this._time = 0.0;
 		
-		this._position	= 	new TVector(Vector3.EMPTY);
 		
 		//potential measurement pedestals listed (including origin and non fusion sensors)
 		this.pedestals = pedestals; //reference to external array list...
@@ -89,8 +87,11 @@ public class KalmanFilter implements Filter {
 		this._x = new ArrayRealVector(9);
 		//trial initiation starting point... really done elsewhere MAS:
 		  _x.setEntry(0,-5003.827);
-		  _x.setEntry(1,-4492.775);
-		  _x.setEntry(2,3616.001);
+		  _x.setEntry(1,-4492.756);
+		  _x.setEntry(2, 3616.001);
+		  
+		this._position	= 	new TVector(Vector3.EMPTY);
+		  
 		this._P = MatrixUtils.createRealMatrix(9,9);
 		
 		//a priori internal filter state and COV place hold
@@ -147,22 +148,28 @@ public class KalmanFilter implements Filter {
     	RealMatrix T = MatrixUtils.createRealMatrix(9,9);
     	//by cliques:
     	T.setSubMatrix(subDiagonal.getData(), 0, 3);
-    	T.setSubMatrix(subDiagonal.getData(), 6, 3);
-    	subDiagonal.scalarMultiply(timePropagate/2);
+    	T.setSubMatrix(subDiagonal.getData(), 3, 6);
+    	subDiagonal = subDiagonal.scalarMultiply(timePropagate/2);
     	T.setSubMatrix(subDiagonal.getData(), 0, 6);
     	return T; //transition matrix cast to sparse!
     }
 	
-	
+	/** 
+	 * first part of similarity transform...HP of HPH'
+	 * Return F:= H P_
+	 * @param H,P_   */
+	public RealMatrix productHP( RealMatrix H, RealMatrix P_ ) {
+		return H.multiply(P_);                                                                             //level 3
+	}
+	   
 	/** 
 	 * Kt: update the transpose of the Kalman gain and blending matrix K
 	 * @param H,R,P_ : (F)  */
-	public RealMatrix updateTransposedKalmanGain( RealMatrix H, RealMatrix R, RealMatrix P_, RealMatrix F ) {
-		F = H.multiply(P_);                                                                             //level 3
-		return new QRDecomposition(F.copy().multiply(H.transpose()).add(R)).getSolver().solve(F);		//LA JAMA Style
+	public RealMatrix updateTransposedKalmanGain( RealMatrix H, RealMatrix R, RealMatrix P_, RealMatrix F ) {  
+		//level 3
+		return new QRDecomposition( F.copy().multiply(H.transpose()).add(R) ).getSolver().solve(F);		//LA JAMA Style
 	}
-	
-	
+		
 	/** 
 	 * state: measurement innovation w: filter residual of measurement z
 	 * @param H,z,x_   */
@@ -189,10 +196,11 @@ public class KalmanFilter implements Filter {
 	 * state: propagate apriori x_
 	 * @param s2==S, x==x_   */
 	public RealVector propagateState( RealMatrix s2, RealVector x ) {
-		x =  x.copy().add(s2.operate(x));                //Sparse level 2
+		RealVector y = x.copy();
+		x =  y.add(s2.operate(x));                //Sparse level 2
 		
 		//monitor Filter track range
-		TVector position = new TVector(x,0);
+		TVector position = new TVector(x);
 		filterRange = position.getAbs(); //StrictMath.hypot(x.getEntry, y)
 		if (filterRange < 500) {
 			filterRange = 500;
@@ -206,7 +214,7 @@ public class KalmanFilter implements Filter {
 	 * @param S,Q,Pt  */
 	public RealMatrix propagateTransposedCovariance(RealMatrix s2, RealMatrix q2, RealMatrix Pt) {
 		RealMatrix Pt1 = Pt.add(Pt.multiply(s2.transpose())); // Sparse level 3
-		return Pt1.add((s2).multiply(Pt1)).add(q2); // Sparse Level 3
+		return Pt1.add(s2.multiply(Pt1)).add(q2);             // Sparse Level 3
 	}
 	
 	/**
@@ -214,10 +222,9 @@ public class KalmanFilter implements Filter {
 	 */
 	@Override
 	public RealVector filter( double time, Pedestal measurements[] ) {
-		this._time = time;
 		//Prediction update (a priori)		
 		long msTimeAdvOld = _msecAdv;
-		this._msecAdv = StrictMath.round((this._time - this._timePrev)*1000);
+		this._msecAdv = StrictMath.round((time - this._timePrev)*1000);
 		if(_msecAdv < 10 ) _msecAdv = 20;
 		if(_msecAdv!=msTimeAdvOld) {
 			
@@ -234,7 +241,7 @@ public class KalmanFilter implements Filter {
 			_P.setEntry(7, 7, 200); 
 			_P.setEntry(8, 8, 200); 
 			//filterRange = 20000;
-			System.out.println("This is when initialized S:"+_time);
+			System.out.println("This is when initialized S:"+time);
 		}
 
 		filterRange = StrictMath.hypot(StrictMath.hypot(_x.getEntry(0), _x.getEntry(1)),_x.getEntry(2));
@@ -243,45 +250,54 @@ public class KalmanFilter implements Filter {
 		_x_ = propagateState( _S, _x );
 		_Pt_ = propagateTransposedCovariance( _S,  _Q, _P );
 		
+		
 		//Compile measurement: {(H|z),R}
-        
 		int mp = 0;		
-		for (int n=0; n<measurements.length; n++) {
-			
+		_position = new TVector(_x_.getSubVector(0, 3)); //get filter state position (local coordinates)
+		for (int n=0; n<measurements.length; n++) {			
 //			transportReliable = bernouliDeviate(); // simulate leaky measurement transport...
 //			if (pedestals[n].getMapAZ() && pedestals[n].getMapEL() && transportReliable) {
-			if(n==0) System.out.println(measurements[n].getSystemId()+" Filter Range: "+ filterRange +"\n");
 			if (measurements[n].getMapAZ() && measurements[n].getMapEL()) {
-				TVector pedLoc = new TVector(measurements[n].getLocalCoordinates()); // location from fusion origin
-				double pedestalRange = filterRange - measurements[n].getAperture_i().unit().getInnerProduct(pedLoc);
-				System.out.println(measurements[n].getSystemId()+" Pedestal Range: "+ pedestalRange +"\n");
+				
+				TVector pedLoc = new TVector(measurements[n].getLocalCoordinates()); //get pedestal location from fusion origin				
+				//double pedestalRange = measurements[n].getAperture_i().unit().getInnerProduct(new TVector(pedLoc).subtract(_position));
+				double pedestalRange = (new TVector(_position).subtract(pedLoc)).getInnerProduct(measurements[n].getAperture_i().unit());
+				
+				////double pedestalRange = 1;
+				System.out.println(measurements[n].getSystemId()+" predicted range to target: "+ pedestalRange +"\n");
 
-				// add rows to H, z vector, and diag(R)  (pairs for this case)!!!!
+				
+				
+				// add rows to H, z vector, and diag(R)  (projection of pairs for this case)!!!!
 				TVector seJ = new TVector( measurements[n].getAperture_j().unit().divide(pedestalRange)); 
 				TVector seK = new TVector( measurements[n].getAperture_k().unit().divide(pedestalRange));				
 				double hM[][] = { {seJ.getX(),seJ.getY(),seJ.getZ()} 
-						         ,{seJ.getX(),seJ.getY(),seJ.getZ()} };
+						         ,{seK.getX(),seK.getY(),seK.getZ()} };
 				
 				_H.setSubMatrix(hM,mp,0 );
-				_z.setEntry(mp,  seJ.getInnerProduct(pedLoc)); //radians measurement error AZ
-				_z.setEntry(mp+1, seK.getInnerProduct(pedLoc)); //radians measurement error EL
+				
+				_z.setEntry(mp,  new TVector(pedLoc).getInnerProduct(seJ)); //@radians measurement error AZ
+				_z.setEntry(mp+1, new TVector(pedLoc).getInnerProduct(seK)); //@radians measurement error EL
 				_R.setEntry(mp, mp, measurements[n].getDeviationAZ().getRadians());
 				_R.setEntry(mp+1, mp+1, measurements[n].getDeviationEL().getRadians());
 				mp+=2;
-
-			}
-			this._timePrev = this._time;
-			
+			}			
 		}
+		this._timePrev = time;
 		
 		//RealVector rD = MatrixUtils.createRealVector(rDiagnonal).getSubVector(0, mp-1);
 		//RealMatrix R = MatrixUtils.createRealDiagonalMatrix(rD.toArray());	
 		if (mp > 0) {
+			_F = productHP( //F := F.getSubMatrix(0, mp - 1, 0, 8)
+					_H.getSubMatrix(0, mp - 1, 0, 8)
+					,_Pt_
+					);
+
 			_K_T = updateTransposedKalmanGain( //Kt = Kt.getSubMatrix( 0, 8,0, mp - 1)
 					_H.getSubMatrix(0, mp - 1, 0, 8)
 					,_R.getSubMatrix(0, mp - 1, 0, mp - 1)
 					,_Pt_
-					, _F.getSubMatrix( 0, 8,0, mp - 1)
+					, _F.getSubMatrix(0, mp - 1, 0, 8)
 			);
 			//H.getSubMatrix(0, mp - 1, 0, 8)
 			//z.getSubVector(0, mp -1);
@@ -303,7 +319,7 @@ public class KalmanFilter implements Filter {
 			
 			_P = updateTransposedCovariance(
 					_K_T.getSubMatrix( 0, mp - 1,0, 8) 
-					,_H.getSubMatrix(0, mp - 1, 0, 8)
+					,_F.getSubMatrix(0, mp - 1, 0, 8)
 					,_Pt_);
 //		r_OT = LocalCoordinates(T)
 //		Vector3 eI = measurements[n].getAperture_i();

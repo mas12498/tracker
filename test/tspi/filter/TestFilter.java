@@ -28,7 +28,8 @@ class TestFilter {
 //		RealVector  w = a.preMultiply(v);
 		
 		Pedestal pedestals[];
-		File in = new File("/home/mike/photon/workspace/github/tracker/data/pedestalsFilter1.csv");
+		File in = new File("/home/mike/pedestalsFilter");
+//		File in = new File("/home/mike/photon/workspace/github/tracker/data/pedestalsFilter1.csv");
 //		File in = new File("H:/git/mas12498/tracker/data/pedestalsIncrement.csv");
 		File out = null;//new File("/home/mike/photon/workspace/github/tracker/data/testfilter.csv");
 //		File in = new File("C:\\Users\\Casey Shields\\eclipse-workspace\\tracker\\data\\pedestalsIncrement.csv");
@@ -47,10 +48,12 @@ class TestFilter {
 		}
 		
 		// create the Trajectory model
-		Trajectory trajectory = new Kinematic( 0.0, // t0
-				3135932.588, -5444754.209, 1103864.549, // p0
-				0.0, 0.0, 0.0, // v0
-				0.0, 0.0, 0.0 ); // a0 
+		Trajectory trajectory = new Kinematic( 
+				0.0                                    	// t0
+				,3135932.588, -5444754.209, 1103864.549 // p0
+				,0.0, 0.0, 0.0 							// v0
+				,0.0, 0.0, 0.0 							// a0 
+				); 
 //		Trajectory trajectory = new Kinematic( 0.0, // t0
 //				3146814.7105773017, 0.0, 0.0, // p0
 //				0.0, 300.0, 0.0, // v0
@@ -81,7 +84,7 @@ class TestFilter {
 		model = new PedestalModel();
 		model.load( file );
 		
-		// convert pedestal model a primitive array
+		// convert pedestal model to a primitive array
 		ArrayList<Pedestal> list = model.asList();
 		Pedestal pedestals[] = new Pedestal[list.size()];
 		list.toArray(pedestals);
@@ -125,7 +128,7 @@ class TestFilter {
 			trajectory.simulateTrack( t, pedestals, random );
 			
 			// update the filter with the noisy measurements
-			RealVector state = filter.filter(t, pedestals);
+			RealVector state = filter.filter(t, pedestals).copy(); // just added a copy to make sure I wasn't clobbering any leaked state...
 			
 			// compare the measurements
 			state.subtract( truth );

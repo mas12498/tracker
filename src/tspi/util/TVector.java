@@ -3,6 +3,7 @@
  */
 package tspi.util;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealVector;
 
@@ -40,20 +41,37 @@ public class TVector extends rotation.Vector3 {
 		super(v[n],v[n+1],v[n+2]);
 	}
 	
-	//RealVector
+	//Apache: RealVector 
+	public TVector(ArrayRealVector v) {
+		super(v.getEntry(0),v.getEntry(1),v.getEntry(2));
+	}
+	
+	//Apache: ArrayRealVector(n:n+2) sub-array
+	public TVector(ArrayRealVector v, int n) {
+		super(v.getEntry(n),v.getEntry(n+1),v.getEntry(n+2));
+	}
+	
+	//gsl: RealVector 
 	public TVector(RealVector v) {
 		super(v.getEntry(0),v.getEntry(1),v.getEntry(2));
 	}
 	
-	//RealVector(n:n+2) sub-array
+	//gsl: RealVector(n:n+2) sub-array
 	public TVector(RealVector v, int n) {
 		super(v.getEntry(n),v.getEntry(n+1),v.getEntry(n+2));
 	}
 	
 	
+	
+	
 	//Factories:
 	
-	//RealVector
+	//Apache: ArrayRealVector
+	public ArrayRealVector arrayRealVector() {
+		return new ArrayRealVector(this.doubleArray());
+	}
+
+	//gsl: RealVector
 	public RealVector realVector() {
 		return MatrixUtils.createRealVector(this.doubleArray());
 	}
@@ -67,7 +85,15 @@ public class TVector extends rotation.Vector3 {
 	
     //Writes:
 	
-	//RealVector(n:n+2) sub-array
+	//Apache: ArrayRealVector(n:n+2) sub-array
+	public ArrayRealVector toArray(ArrayRealVector r,int n) {
+		r.setEntry(n, this.getX());
+		r.setEntry(n+1, this.getY());
+		r.setEntry(n+2, this.getZ());
+		return r;
+	}	
+	
+	//gsl: RealVector(n:n+2) sub-array
 	public RealVector toArray(RealVector r,int n) {
 		r.setEntry(n, this.getX());
 		r.setEntry(n+1, this.getY());
@@ -84,7 +110,15 @@ public class TVector extends rotation.Vector3 {
 	}
 	
 	//More Setters:
+
+	//ArrayRealVector(n:n+2) sub-array
+	public void set(ArrayRealVector r,int n) {
+		this.setX(r.getEntry(n));
+		this.setY(r.getEntry(n+1));
+		this.setZ(r.getEntry(n+2));
+	}	
 	
+		
 	//RealVector(n:n+2) sub-array
 	public void set(RealVector r,int n) {
 		this.setX(r.getEntry(n));

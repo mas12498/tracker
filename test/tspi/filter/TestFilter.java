@@ -12,6 +12,7 @@ import org.apache.commons.math3.linear.RealVector;
 import tspi.model.Pedestal;
 import tspi.model.PedestalModel;
 import tspi.model.Polar;
+import tspi.util.TVector;
 
 /** Exercise the filter */
 class TestFilter {
@@ -20,56 +21,73 @@ class TestFilter {
 	static Random random = new Random(1);
 
 	public static void main(String args[]) {
-//		double[]vd = {1,2,3};
-//		double[][] ad = {{1,0,1},{0,1,2},{0,0,3}};
-//		RealVector v = MatrixUtils.createRealVector(vd);
-//		RealMatrix a = MatrixUtils.createRealMatrix(ad);
-//		RealVector y = a.operate(v);
-//		RealVector  w = a.preMultiply(v);
 		
 		Pedestal pedestals[];
-		File in = new File("/home/mike/pedestalsFilter");
+		//File in = new File("H:/filterPedestals001.csv");		
+		File in = new File("H:/filterPedestals010.csv");		
+		//File in = new File("H:/filterPedestals.csv");		
+//		File in = new File("/home/mike/pedestalsFilter010.csv");
 //		File in = new File("/home/mike/photon/workspace/github/tracker/data/pedestalsFilter1.csv");
 //		File in = new File("H:/git/mas12498/tracker/data/pedestalsIncrement.csv");
-		File out = null;//new File("/home/mike/photon/workspace/github/tracker/data/testfilter.csv");
 //		File in = new File("C:\\Users\\Casey Shields\\eclipse-workspace\\tracker\\data\\pedestalsIncrement.csv");
+		File out = null;//new File("/home/mike/photon/workspace/github/tracker/data/testfilter.csv");
 //		File out = null;//new File("./tracker/data/testFilter.csv");
+		
 		PrintStream stream = System.out;
-
-		// initialize IO
+		
+				
+		//Set up track profile:
+		double t0 = 0.0;   //seconds initial frame time
+		double dt = 0.020; //seconds interval between frames
+		int Nt = 500;      //number of frames		
+		//Profile Kinematics starting reference:
+		TVector pos0 = new TVector(3135932.588, -5444754.209, 1103864.549); //position EFG m
+		TVector vel0 = new TVector(0.0, 10.0, 0.0);                         //velocity EFG m/s
+		TVector acc0 = new TVector(0.0, 0.0, 2.0);                          //acceleration EFG m/s/s		
+		//ProcessNoise for track profile 	
+		double processNoise = 10; 	//Q m/s/s		
+		//initial track filter cueing: track start offset parameters
+		TVector pOff = new TVector(800,-600,-1300);     //position discrepency m
+		TVector vOff = new TVector(80,-60,-30);         //velocity discrepency m/s
+		TVector zero = new TVector(0.0, 0.0, 0.0);      //acceleration NOT cued... set to zero.
+		
+		
+		// create the target trajectory
+		Trajectory trajectory = new Kinematic(
+				t0,
+				pos0.arrayRealVector(),
+				vel0.arrayRealVector(),
+				acc0.arrayRealVector());
+				
+		// create filter starting cue:
+		Kinematic cue = new Kinematic(
+				t0,
+				pos0.arrayRealVector().add(pOff.realVector()),
+				vel0.arrayRealVector().add(vOff.realVector()),
+				zero.arrayRealVector());	
+		
+		// initialize track filter IO
 		try {
+			
 			if (out!=null) 
 				stream = new PrintStream( new FileOutputStream(out) );
+			
 			pedestals = loadPedestals(in);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
 		}
-		
-		// create the Trajectory model
-		Trajectory trajectory = new Kinematic( 
-				0.0                                    	// t0
-				,3135932.588, -5444754.209, 1103864.549 // p0
-				,0.0, 0.0, 0.0 							// v0
-				,0.0, 0.0, 0.0 							// a0 
-				); 
-//		Trajectory trajectory = new Kinematic( 0.0, // t0
-//				3146814.7105773017, 0.0, 0.0, // p0
-//				0.0, 300.0, 0.0, // v0
-//				-10.0, 0.0, 0.0 ); // a0 
-		// moving west over intersection of meridian and equator at about 700m altitude?
-		// we're in meters right? TODO I should just use the EFG classes to construct this correctly...
-				
-		// create the filter
-//		Filter cheat = new CheatFilter( trajectory );
-				
-		// TODO add the real filter
-		Filter kalman = new KalmanFilter( pedestals );
+	
+		// create filter track from pedestal array
+		Filter kalman = new KalmanFilter( pedestals , cue, processNoise);
+//		//Filter cheat = new CheatFilter( trajectory );
+
+
 		
 		// test the filter
-		//demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream );
-		demoFilter( kalman, trajectory, pedestals, 0.0, 0.02, 500, stream );
+		demoFilter( kalman, trajectory, pedestals, 0.0, dt, Nt, stream );
+//		//demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream ); //defined below as trivial truth passer...
 		
 		// dispose IO
 		stream.close();
@@ -77,7 +95,9 @@ class TestFilter {
 	
 	
 	
-	/** Read an array of pedestals from the given file */
+	
+	
+	/** Read an array of modeled pedestals from the given file */
 	public static Pedestal[] loadPedestals(File file) throws Exception {
 		// use the pedestal model to parse the file
 		PedestalModel model;
@@ -89,16 +109,17 @@ class TestFilter {
 		Pedestal pedestals[] = new Pedestal[list.size()];
 		list.toArray(pedestals);
 
-		//Assume first pedestal is origin
+		//Assume first pedestal in file is filter origin
 		Pedestal.setOrigin(pedestals[0].getLocation());
 		System.out.println("ORIGIN:" + Pedestal.getOrigin().toString(3));
-		//Compute local coordinates wrt origin defined 
+		
+		//Compute local coordinates wrt filter origin defined 
 		int pNum = pedestals.length;
 		for (int p = 0; p < pNum; p++) {
 			pedestals[p].setLocalOriginCoordinates();
 		}
 		
-		
+		//return list with pedestals located and filter origin defined:
 		return pedestals;
 	}
 	

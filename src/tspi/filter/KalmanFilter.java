@@ -23,7 +23,7 @@ public class KalmanFilter implements Filter {
 	double filterRange;
 	
 	//Simple Filter process noise model for acceleration error: ~3g
-	double _processNoise = 30;
+	double _processNoise; // = 30;
 	
 	Pedestal pedestals[]; //list of pedestals 
 	
@@ -42,53 +42,49 @@ public class KalmanFilter implements Filter {
 	RealVector _x;
 	RealMatrix _P;
 	
-	//a priori filter state place hold
+	//a priori filter state place hold (before measurements applied)
 	RealVector _x_;
-	RealMatrix _Pt_;
+	RealMatrix _P_;
 	
-	//transition state update matrix:   (9,9) [initSparseUpdateS]
+	
+	//transition state update matrix:   [S: I+S == A]
 	RealMatrix _S;
 	
-	//process noise update matrix:      (9,9)
+	//process noise update matrix:      
 	RealMatrix _Q;
 	
 	//Kalman gain and working matrices...
-	RealMatrix _K_T; //Kalman gain and blending matrix.
-	RealMatrix _F; //Optimal observability.
-	//RealMatrix G; //Cov measurement update matrix.
+	RealMatrix _K_T; //Kalman gain & blending matrix.
+	RealMatrix _F;   //Cov part-update matrix.
 
-	//measurements: az and el differences from tracking Filter in EFG
+	//measurements: az and el projected differences from tracking Filter location in EFG
 	RealVector _z;
 	
-	/**observation matrix H -- map from state-space x to measurement innovations of z*/
+	//observation matrix H -- mapping from state-space x to measurement innovations of z
 	RealMatrix _H;
 		
-	//innovations w vector -- residuals for updating apriori filter
+	//innovations w  -- vector residual used for updating apriori filter
 	RealVector _w;
 	
-	//measurement noise update:
+	//measurement noise: Modeled envelope of Gaussian measurement noise
 	RealMatrix _R;
 		
 	//constructor from pedestals list 
-	public KalmanFilter( Pedestal pedestals[] ) {
-			
-//		this._time = 0.0;
-		
-		
+	public KalmanFilter( Pedestal pedestals[] , Kinematic cue, double processNoise) {
+		this._processNoise = processNoise;	
 		//potential measurement pedestals listed (including origin and non fusion sensors)
 		this.pedestals = pedestals; //reference to external array list...
-		int nMeas = pedestals.length*2;
+		int nMeas = pedestals.length*2; //potentially both az and el sensors used for selected pedestals
 		
 		//Kalman Filter exported outputs:
 		this.state = new ArrayRealVector(9);		
 		this.covariance = new Array2DRowRealMatrix(9, 9); //P matrix
 		
 		//internal filter state	and COV place hold
-		this._x = new ArrayRealVector(9);
-		//trial initiation starting point... really done elsewhere MAS:
-		  _x.setEntry(0,-5003.827);
-		  _x.setEntry(1,-4492.756);
-		  _x.setEntry(2, 3616.001);
+		this._x = new ArrayRealVector(9);	
+		//trial initiation of cued position and velocity... 
+		  _x.setSubVector(0, cue.getPosition(0));
+		  _x.setSubVector(0, cue.getVelocity(0));
 		  
 		this._position	= 	new TVector(Vector3.EMPTY);
 		  
@@ -96,7 +92,7 @@ public class KalmanFilter implements Filter {
 		
 		//a priori internal filter state and COV place hold
 		this._x_ = new ArrayRealVector(9);
-		this._Pt_ = MatrixUtils.createRealMatrix(9,9);
+		this._P_ = MatrixUtils.createRealMatrix(9,9);
 		
 		//dense transition state update matrix S:  
 		this._S =  MatrixUtils.createRealMatrix(9,9);
@@ -153,18 +149,37 @@ public class KalmanFilter implements Filter {
     	T.setSubMatrix(subDiagonal.getData(), 0, 6);
     	return T; //transition matrix cast to sparse!
     }
+    
+    public RealMatrix init_P() {
+    	double diag[] = {100000,100000,100000,1000,1000,1000,200,200,200};
+    	return MatrixUtils.createRealDiagonalMatrix(diag);
+    }
+    
+    public RealVector init_x() {
+    	TVector position = new TVector(3135932.588, -5444754.209, 1103864.549);
+    	TVector velocity = new TVector(0,0,0);
+    	
+    	double[] x = new double[9];
+    	RealVector v = MatrixUtils.createRealVector(x);
+    	v.setSubVector(0, position.realVector());
+    	v.setSubVector(0, velocity.realVector());
+    	return v;
+    }
+    
 	
 	/** 
 	 * first part of similarity transform...HP of HPH'
 	 * Return F:= H P_
-	 * @param H,P_   */
+	 * @param H,P_   
+	 * */
 	public RealMatrix productHP( RealMatrix H, RealMatrix P_ ) {
 		return H.multiply(P_);                                                                             //level 3
 	}
 	   
 	/** 
 	 * Kt: update the transpose of the Kalman gain and blending matrix K
-	 * @param H,R,P_ : (F)  */
+	 * @param H,R,P_ : (F)  
+	 * */
 	public RealMatrix updateTransposedKalmanGain( RealMatrix H, RealMatrix R, RealMatrix P_, RealMatrix F ) {  
 		//level 3
 		return new QRDecomposition( F.copy().multiply(H.transpose()).add(R) ).getSolver().solve(F);		//LA JAMA Style
@@ -231,15 +246,8 @@ public class KalmanFilter implements Filter {
 			_S = initSparseUpdateS(((double) _msecAdv)*0.001);
 		
 			//this for filter re-Starts after a divergence, too.	
-			_P.setEntry(0, 0, 100000); 
-			_P.setEntry(1, 1, 100000); 
-			_P.setEntry(2, 2, 100000); 
-			_P.setEntry(3, 3, 1000); 
-			_P.setEntry(4, 4, 1000); 
-			_P.setEntry(5, 5, 1000); 
-			_P.setEntry(6, 6, 200); 
-			_P.setEntry(7, 7, 200); 
-			_P.setEntry(8, 8, 200); 
+			_P = init_P();
+			
 			//filterRange = 20000;
 			System.out.println("This is when initialized S:"+time);
 		}
@@ -248,7 +256,7 @@ public class KalmanFilter implements Filter {
 		if(filterRange < 100) filterRange = 1000;
 		
 		_x_ = propagateState( _S, _x );
-		_Pt_ = propagateTransposedCovariance( _S,  _Q, _P );
+		_P_ = propagateTransposedCovariance( _S,  _Q, _P );
 		
 		
 		//Compile measurement: {(H|z),R}
@@ -290,13 +298,13 @@ public class KalmanFilter implements Filter {
 		if (mp > 0) {
 			_F = productHP( //F := F.getSubMatrix(0, mp - 1, 0, 8)
 					_H.getSubMatrix(0, mp - 1, 0, 8)
-					,_Pt_
+					,_P_
 					);
 
 			_K_T = updateTransposedKalmanGain( //Kt = Kt.getSubMatrix( 0, 8,0, mp - 1)
 					_H.getSubMatrix(0, mp - 1, 0, 8)
 					,_R.getSubMatrix(0, mp - 1, 0, mp - 1)
-					,_Pt_
+					,_P_
 					, _F.getSubMatrix(0, mp - 1, 0, 8)
 			);
 			//H.getSubMatrix(0, mp - 1, 0, 8)
@@ -320,7 +328,7 @@ public class KalmanFilter implements Filter {
 			_P = updateTransposedCovariance(
 					_K_T.getSubMatrix( 0, mp - 1,0, 8) 
 					,_F.getSubMatrix(0, mp - 1, 0, 8)
-					,_Pt_);
+					,_P_);
 //		r_OT = LocalCoordinates(T)
 //		Vector3 eI = measurements[n].getAperture_i();
 //		double zI = eI.getInnerProduct(pedLoc) + eI.getInnerProduct(r_OT);

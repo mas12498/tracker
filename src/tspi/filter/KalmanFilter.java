@@ -70,7 +70,7 @@ public class KalmanFilter implements Filter {
 	RealMatrix _R;
 		
 	//constructor from pedestals list 
-	public KalmanFilter( Pedestal pedestals[] , Kinematic cue, double processNoise) {
+	public KalmanFilter( Pedestal pedestals[] , TVector pos0, TVector vel0, double processNoise) {
 		this._processNoise = processNoise;	
 		//potential measurement pedestals listed (including origin and non fusion sensors)
 		this.pedestals = pedestals; //reference to external array list...
@@ -83,8 +83,8 @@ public class KalmanFilter implements Filter {
 		//internal filter state	and COV place hold
 		this._x = new ArrayRealVector(9);	
 		//trial initiation of cued position and velocity... 
-		  _x.setSubVector(0, cue.getPosition(0));
-		  _x.setSubVector(0, cue.getVelocity(0));
+		  _x.setSubVector(0,  pos0.realVector());
+		  _x.setSubVector(3,  vel0.realVector());
 		  
 		this._position	= 	new TVector(Vector3.EMPTY);
 		  

@@ -24,8 +24,8 @@ class TestFilter {
 		
 		Pedestal pedestals[];
 		//File in = new File("H:/filterPedestals001.csv");		
-		File in = new File("H:/filterPedestals010.csv");		
-		//File in = new File("H:/filterPedestals.csv");		
+		//File in = new File("H:/filterPedestals010.csv");		
+		File in = new File("H:/filterPedestals.csv");		
 //		File in = new File("/home/mike/pedestalsFilter010.csv");
 //		File in = new File("/home/mike/photon/workspace/github/tracker/data/pedestalsFilter1.csv");
 //		File in = new File("H:/git/mas12498/tracker/data/pedestalsIncrement.csv");
@@ -34,38 +34,6 @@ class TestFilter {
 //		File out = null;//new File("./tracker/data/testFilter.csv");
 		
 		PrintStream stream = System.out;
-		
-				
-		//Set up track profile:
-		double t0 = 0.0;   //seconds initial frame time
-		double dt = 0.020; //seconds interval between frames
-		int Nt = 500;      //number of frames		
-		//Profile Kinematics starting reference:
-		TVector pos0 = new TVector(3135932.588, -5444754.209, 1103864.549); //position EFG m
-		TVector vel0 = new TVector(0.0, 10.0, 0.0);                         //velocity EFG m/s
-		TVector acc0 = new TVector(0.0, 0.0, 2.0);                          //acceleration EFG m/s/s		
-		//ProcessNoise for track profile 	
-		double processNoise = 10; 	//Q m/s/s		
-		//initial track filter cueing: track start offset parameters
-		TVector pOff = new TVector(800,-600,-1300);     //position discrepency m
-		TVector vOff = new TVector(80,-60,-30);         //velocity discrepency m/s
-		TVector zero = new TVector(0.0, 0.0, 0.0);      //acceleration NOT cued... set to zero.
-		
-		
-		// create the target trajectory
-		Trajectory trajectory = new Kinematic(
-				t0,
-				pos0.arrayRealVector(),
-				vel0.arrayRealVector(),
-				acc0.arrayRealVector());
-				
-		// create filter starting cue:
-		Kinematic cue = new Kinematic(
-				t0,
-				pos0.arrayRealVector().add(pOff.realVector()),
-				vel0.arrayRealVector().add(vOff.realVector()),
-				zero.arrayRealVector());	
-		
 		// initialize track filter IO
 		try {
 			
@@ -78,9 +46,41 @@ class TestFilter {
 			e.printStackTrace();
 			return;
 		}
-	
+		
+				
+		//Set up track profile:
+		double t0 = 0.0;   //seconds initial frame time
+		double dt = 0.020; //seconds interval between frames
+		int Nt = 500;      //number of frames		
+		//Profile Kinematics starting reference:
+		TVector pos0 = new TVector(3135932.588, -5444754.209, 1103864.549); //geocentric position EFG m
+		TVector vel0 = new TVector(0.0, 10.0, 0.0);                         //velocity EFG m/s
+		TVector acc0 = new TVector(0.0, 0.0, 2.0);                          //acceleration EFG m/s/s		
+		//ProcessNoise for track profile 	
+		double processNoise = 10; 	//Q m/s/s		
+		//track cueing offsets: 
+		TVector pOff = new TVector(800,-600,-1000);  //position cueing discrepency m
+		TVector vOff = new TVector(80,-60,-30);      //velocity cueing discrepency m/s
+		//initial track filter edits
+		TVector p0 = new TVector(pOff.add(pos0).subtract(Pedestal.getOrigin()));     //init filter position
+		TVector v0 = new TVector(vOff);                                              //init filter velocity
+		
+		// create the target trajectory
+		Trajectory trajectory = new Kinematic(
+				t0,
+				pos0.arrayRealVector(),
+				vel0.arrayRealVector(),
+				acc0.arrayRealVector());
+				
+//		// create filter starting cue:
+//		Kinematic cue = new Kinematic(
+//				0,
+//				new TVector(pos0).arrayRealVector().add(pOff.realVector()),
+//				new TVector(vel0).arrayRealVector().add(vOff.realVector()),
+//				zero.arrayRealVector());	
+			
 		// create filter track from pedestal array
-		Filter kalman = new KalmanFilter( pedestals , cue, processNoise);
+		Filter kalman = new KalmanFilter( pedestals , p0, v0, processNoise);
 //		//Filter cheat = new CheatFilter( trajectory );
 
 

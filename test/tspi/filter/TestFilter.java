@@ -51,7 +51,7 @@ class TestFilter {
 		//Set up track profile:
 		double t0 = 0.0;   //seconds initial frame time
 		double dt = 0.020; //seconds interval between frames
-		int Nt = 500;      //number of frames		
+		int Nt = 1000;      //number of frames		
 		//Profile Kinematics starting reference:
 		TVector pos0 = new TVector(3135932.588, -5444754.209, 1103864.549); //geocentric position EFG m
 		TVector vel0 = new TVector(0.0, 10.0, 0.0);                         //velocity EFG m/s
@@ -89,6 +89,7 @@ class TestFilter {
 		demoFilter( kalman, trajectory, pedestals, 0.0, dt, Nt, stream );
 //		//demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream ); //defined below as trivial truth passer...
 		
+		//System.out.println(BLAS.getInstance().getClass().getName());
 		// dispose IO
 		stream.close();
 	}

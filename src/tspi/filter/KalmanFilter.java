@@ -55,8 +55,8 @@ public class KalmanFilter implements Filter {
 	
 	//Kalman gain and working matrices...
 	RealMatrix _Kt; //Kalman gain & blending matrix.
-	RealMatrix _F;   //Cov part-update matrix.
-	RealMatrix _G;   //Cov part-update matrix.
+	RealMatrix _D;   //Cov part-update matrix.
+	RealMatrix _E;   //Cov part-update matrix.
 
 	//measurements: az and el projected differences from tracking Filter location in EFG
 	RealVector _z;
@@ -105,9 +105,9 @@ public class KalmanFilter implements Filter {
 		
 		//transposed Kalman gain and partial working matrices...envelopes
 		this._Kt = MatrixUtils.createRealMatrix(nMeas,9); //Kalman gain and blending matrix.
-		this._F  = MatrixUtils.createRealMatrix(nMeas,9); //Optimal observability.
+		this._D  = MatrixUtils.createRealMatrix(nMeas,9); //Optimal observability.
 
-		this._G  = MatrixUtils.createRealMatrix(nMeas,nMeas); //Optimal observability.
+		this._E  = MatrixUtils.createRealMatrix(nMeas,nMeas); //Optimal observability.
 
 		//measurements: az and el differences from tracking Filter in EFG
 		this._z = new ArrayRealVector(nMeas);
@@ -291,20 +291,21 @@ public class KalmanFilter implements Filter {
 				// add rows to H, z vector, and diag(R)  (projection of pairs for this case)!!!!
 				
 				//Ped 'n' observations matrix
-				TVector seJ = new TVector( measurements[n].getAperture_j().unit().divide(pedestalRange)); 
-				TVector seK = new TVector( measurements[n].getAperture_k().unit().divide(pedestalRange)); 			
-				double hM[][] = { {seJ.getX(),seJ.getY(),seJ.getZ()} 
-						         ,{seK.getX(),seK.getY(),seK.getZ()} };
+				TVector varJ = new TVector( measurements[n].getAperture_j().unit().divide(pedestalRange)); 
+				TVector varK = new TVector( measurements[n].getAperture_k().unit().divide(pedestalRange)); 			
+				double hM[][] = { {varJ.getX(),varJ.getY(),varJ.getZ()} 
+						         ,{varK.getX(),varK.getY(),varK.getZ()} };
 				_H.setSubMatrix(hM,mp,0 );
 				
 				//Ped 'n' measurements
-				_z.setEntry(mp,  new TVector(pedLoc).getInnerProduct(seJ)); //@radians tracke error AZ
-				_z.setEntry(mp+1, new TVector(pedLoc).getInnerProduct(seK)); //@radians track error EL
+				_z.setEntry(mp,  new TVector(pedLoc).getInnerProduct(varJ)); //@radians tracke error AZ
+				_z.setEntry(mp+1, new TVector(pedLoc).getInnerProduct(varK)); //@radians track error EL
 				
 				//Ped 'n' measurement noise model
 				_R.setEntry(mp, mp, measurements[n].getDeviationAZ().getRadians());
 				_R.setEntry(mp+1, mp+1, measurements[n].getDeviationEL().getRadians());
 				mp+=2;
+				
 			}			
 		}
 		this._timePrev = time;
@@ -312,13 +313,13 @@ public class KalmanFilter implements Filter {
 		
 		if (mp > 0) { //Have new measurements to process an update:
 			
-			_F = rightHandSideKt( //F := F.getSubMatrix(0, mp - 1, 0, 8)
+			_D = rightHandSideKt( //F := F.getSubMatrix(0, mp - 1, 0, 8)
 					_H.getSubMatrix(0, mp - 1, 0, 2)
 					,_P_.getSubMatrix(0,2,0,8)
-			);
+					);
 			
-			_G = leftHandSideKt(// F.getSubMatrix(0, mp - 1, 0,2).copy().multiply(H.transpose()).add(R)
-					_F.getSubMatrix(0, mp - 1, 0,2).copy()
+			_E = leftHandSideKt(// F.getSubMatrix(0, mp - 1, 0,2).copy().multiply(H.transpose()).add(R)
+					_D.getSubMatrix(0, mp - 1, 0,2).copy()
 					,_H.getSubMatrix(0, mp - 1, 0, 2)
 					,_R.getSubMatrix(0, mp - 1, 0, mp - 1)
 					);
@@ -326,8 +327,8 @@ public class KalmanFilter implements Filter {
 			_Kt = solveTransposedKalmanGain( //Kt = Kt.getSubMatrix( 0, 8,0, mp - 1)
 					//_H.getSubMatrix(0, mp - 1, 0, 2)
 					//,_R.getSubMatrix(0, mp - 1, 0, mp - 1)
-					_G.getSubMatrix(0, mp - 1, 0, mp - 1)
-					, _F.getSubMatrix(0, mp - 1, 0, 8)
+					_E.getSubMatrix(0, mp - 1, 0, mp - 1)
+					, _D.getSubMatrix(0, mp - 1, 0, 8)
 					);
 			
 
@@ -345,7 +346,7 @@ public class KalmanFilter implements Filter {
 					
 			_P = updateTransposedCovariance(
 					_Kt.getSubMatrix( 0, mp - 1,0, 8) 
-					,_F.getSubMatrix(0, mp - 1, 0, 8)
+					,_D.getSubMatrix(0, mp - 1, 0, 8)
 					,_P_);
 			
 //		r_OT = LocalCoordinates(T)
@@ -360,6 +361,7 @@ public class KalmanFilter implements Filter {
 		
 		covariance = _P;
 		return state;
+		
 	}
 //	@Override
 //	public RealVector filter( double time, Pedestal pedestals[] ) {
@@ -376,6 +378,8 @@ public class KalmanFilter implements Filter {
 	public Polar[] getResidualsUpdate( double dt ) {
 		return null;
 	}
+	
+	
 	public RealVector getState() {
 		return state;
 	}

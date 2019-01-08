@@ -26,6 +26,7 @@ public class TestMeasurements {
 	
 	/** Generates an example measurement file
 	 * usage: TestMeasurements <pedestal file> <output file> */
+	// TestMeasurements "C:\Users\shiel\Documents\workspace\tracker\data\pedestalsIncrement.csv" "C:\Users\shiel\Documents\workspace\tracker\data\measurementsTrajectory.csv"
 	public static void main(String[] args) {
 		
 		File pedestals = new File(args[0]);

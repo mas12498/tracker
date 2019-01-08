@@ -19,7 +19,13 @@ class TestFilter {
 	
 	// constant seed right now for reproducibility
 	static Random random = new Random(1);
-
+	
+	/** loads a constellation of pedestals,
+	 * which track a simulated trajectory,
+	 * whose perturbed outputs are fused using a Kalman filter,
+	 * whose output is written to a target file,
+	 * which is compatible with earlier increments. 
+	 * Tracker <pedestal file> <output file> */
 	public static void main(String args[]) {
 		
 		Pedestal pedestals[];
@@ -33,13 +39,11 @@ class TestFilter {
 		File out = null;//new File("/home/mike/photon/workspace/github/tracker/data/testfilter.csv");
 //		File out = null;//new File("./tracker/data/testFilter.csv");
 		
-		PrintStream stream = System.out;
 		// initialize track filter IO
+		PrintStream stream = System.out;
 		try {
-			
 			if (out!=null) 
 				stream = new PrintStream( new FileOutputStream(out) );
-			
 			pedestals = loadPedestals(in);
 			
 		} catch (Exception e) {
@@ -47,20 +51,23 @@ class TestFilter {
 			return;
 		}
 		
-				
 		//Set up track profile:
 		double t0 = 0.0;   //seconds initial frame time
 		double dt = 0.020; //seconds interval between frames
-		int Nt = 1000;      //number of frames		
+		int Nt = 1000;      //number of frames
+		
 		//Profile Kinematics starting reference:
 		TVector pos0 = new TVector(3135932.588, -5444754.209, 1103864.549); //geocentric position EFG m
 		TVector vel0 = new TVector(0.0, 10.0, 0.0);                         //velocity EFG m/s
-		TVector acc0 = new TVector(0.0, 0.0, 2.0);                          //acceleration EFG m/s/s		
+		TVector acc0 = new TVector(0.0, 0.0, 2.0);                          //acceleration EFG m/s/s
+		
 		//ProcessNoise for track profile 	
 		double processNoise = 10; 	//Q m/s/s		
+		
 		//track cueing offsets: 
 		TVector pOff = new TVector(800,-600,-1000);  //position cueing discrepency m
 		TVector vOff = new TVector(80,-60,-30);      //velocity cueing discrepency m/s
+		
 		//initial track filter edits
 		TVector p0 = new TVector(pOff.add(pos0).subtract(Pedestal.getOrigin()));     //init filter position
 		TVector v0 = new TVector(vOff);                                              //init filter velocity
@@ -72,18 +79,9 @@ class TestFilter {
 				vel0.arrayRealVector(),
 				acc0.arrayRealVector());
 				
-//		// create filter starting cue:
-//		Kinematic cue = new Kinematic(
-//				0,
-//				new TVector(pos0).arrayRealVector().add(pOff.realVector()),
-//				new TVector(vel0).arrayRealVector().add(vOff.realVector()),
-//				zero.arrayRealVector());	
-			
 		// create filter track from pedestal array
 		Filter kalman = new KalmanFilter( pedestals , p0, v0, processNoise);
 //		//Filter cheat = new CheatFilter( trajectory );
-
-
 		
 		// test the filter
 		demoFilter( kalman, trajectory, pedestals, 0.0, dt, Nt, stream );
@@ -93,10 +91,6 @@ class TestFilter {
 		// dispose IO
 		stream.close();
 	}
-	
-	
-	
-	
 	
 	/** Read an array of modeled pedestals from the given file */
 	public static Pedestal[] loadPedestals(File file) throws Exception {
@@ -122,11 +116,18 @@ class TestFilter {
 		
 		//return list with pedestals located and filter origin defined:
 		return pedestals;
-	}
+	} //TODO should extract this to some ensemble class, gathered with mass pointing and error perturbation. 
 	
-	
-		
-	/** runs a demo of the filter tracking a simple kinematic, . */
+	/** Applies the given filter to a simulated set of track data. The target's
+	 * motion is simulated using a {@link tspi.filter.Trajectory Trajectory object},
+	 * and each {@link tspi.model.Pedestal Pedestal} is pointed at the object 
+	 * and perturbed by their error model. The array of noisy pedestal
+	 * measurements are then given to the filter incrementally over an interval
+	 * of time.
+	 * TODO We want to make this into a test; how can we do that?
+	 *  - make sure tracker state is within some epsilon of the truth?
+	 *  - monitor the internal residuals of the filter?
+	*/
 	public static void demoFilter(
 			Filter filter, Trajectory trajectory, Pedestal pedestals[],
 			double t0, double dt, int n, PrintStream stream
@@ -196,16 +197,12 @@ class CheatFilter implements Filter {
 		this.cheat = hint;
 	}
 	
-	
-	
 	@Override
 	public RealVector filter(double time, Pedestal[] measurements) {
 		this.time = time;
 		//below is replaced by the filter state[?]
 		return cheat.getState(time);
 	}
-
-	
 	
 	@Override
 	public RealVector getState() {
@@ -232,3 +229,13 @@ class CheatFilter implements Filter {
 
 }
 
+// Casey: this was just an early stab at how to represent the filter cue right?
+
+//// create filter starting cue:
+//Kinematic cue = new Kinematic(
+//		0,
+//		new TVector(pos0).arrayRealVector().add(pOff.realVector()),
+//		new TVector(vel0).arrayRealVector().add(vOff.realVector()),
+//		zero.arrayRealVector());
+
+//Casey: if it would be helpful we could add the ability to compute a hint state with some bounded offset in speed, position direction or whatnot... 

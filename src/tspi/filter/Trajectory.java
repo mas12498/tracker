@@ -49,23 +49,28 @@ interface Trajectory {
 		RealVector p = this.getPosition(time);
 		Vector3 efg = new TVector( p );
 		Polar measurements[] = new Polar[pedestals.length];
+		
 		// clear H matrix AND z vector here!!!!
+		
 		for (int n=0; n<pedestals.length; n++) {
+			
 //			transportReliable = bernouliDeviate(); // simulate leaky measurement transport...
 //			if (pedestals[n].getMapAZ() && pedestals[n].getMapEL() && transportReliable) {
-			if (pedestals[n].getMapAZ() && pedestals[n].getMapEL()) {
+			
+			if (pedestals[n].getMapAZ() && pedestals[n].getMapEL()) { // CDS: why is this case here again? it will break all simulation of partial sensors...
 				pedestals[n].pointToLocation(efg);
 				measurements[n] = pedestals[n].getPerturbedLocal(random);
 				pedestals[n].pointDirection(measurements[n].getUnsignedAzimuth(), measurements[n].getElevation());
+				
 				// add rows to H matrix and z vector HERE (pairs for this case)!!!!
+				
 			} else {
 				pedestals[n].clearPedestalVector();
 			}
 		}
-
+		// CDS : I don't understand any of these notes. I just want to simulate a noisy track at this point.
+		// the filter should have nothing to do with it. do you need the value of the perturbation for some instrumentation or something?
 	}
-	
-	
 }
 
 // TODO implement a linear model, then a second order kinematic model

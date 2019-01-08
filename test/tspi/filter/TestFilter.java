@@ -116,7 +116,7 @@ class TestFilter {
 		
 		//return list with pedestals located and filter origin defined:
 		return pedestals;
-	}
+	} //TODO should extract this to some ensemble class, gathered with mass pointing and error perturbation. 
 	
 	/** Applies the given filter to a simulated set of track data. The target's
 	 * motion is simulated using a {@link tspi.filter.Trajectory Trajectory object},

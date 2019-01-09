@@ -25,7 +25,7 @@ public class KalmanFilter implements Filter {
 	//Simple Filter process noise model for acceleration error: ~3g
 	double _processNoise; // = 30;
 	
-	Pedestal pedestals[]; //list of pedestals 
+//	Pedestal pedestals[]; //list of pedestals 
 	
 	
 	final TVector _origin = new TVector(Pedestal.getOrigin());
@@ -76,7 +76,7 @@ public class KalmanFilter implements Filter {
 		this._processNoise = processNoise;	
 		
 		//potential measurement pedestals listed (including origin and non fusion sensors)
-		this.pedestals = pedestals; //reference to external array list...
+//		this.pedestals = pedestals; //reference to external array list...
 		int nMeas = pedestals.length*2; //potentially both az and el sensors used for selected pedestals
 		
 		//Kalman Filter exported outputs:

@@ -34,12 +34,20 @@ public class TestMeasurements {
 	 * usage: TestMeasurements (pedestal file) (measurement file) [tracking output]
 	 * Two arguments outputs a measurement file using a default Trajectory.
 	 * Three arguments generates a tracking solution file from the pedestal and measurement file using a default filter...*/
-	// TestMeasurements "C:\Users\shiel\Documents\workspace\tracker\data\pedestalsIncrement.csv" "C:\Users\shiel\Documents\workspace\tracker\data\measurementsTrajectory.csv" "C:\Users\shiel\Documents\workspace\tracker\data\tracking.csv" 
+	// TestMeasurements 
+	//       "C:\Users\shiel\Documents\workspace\tracker\data\pedestalsIncrement.csv" 
+	//       "C:\Users\shiel\Documents\workspace\tracker\data\measurementsTrajectory.csv" 
+	//       "C:\Users\shiel\Documents\workspace\tracker\data\tracking.csv" 
+	
+	//		"H:/filterPedestals001.csv"
+	//      "H:/measurementsTrajectory.csv"
+	//      "H:/tracking.csv" 
+	
 	public static void main(String[] args) {
 		
 		double t0 = 0.0;
-		double dt = 1.0;
-		int n = 100;
+		double dt = 0.020;
+		int n = 800;
 		
 		try {
 		

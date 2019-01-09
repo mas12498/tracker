@@ -19,6 +19,12 @@ public class Ensemble extends ArrayList<Pedestal>{
 		return null;
 	}
 	
+	public Pedestal[] toArray() {
+		Pedestal pedestal[] = new Pedestal[this.size()];
+		return super.toArray(pedestal);
+		//TODO I need to change the dependencies on Pedestal[] to Ensemble...
+	}
+	
 	/** Point each of the sensors in the ensemble at the given point, including a perturbation generated from 
 	 * the sensor's error model. */
 	public void point(Vector3 efg, Random random) {

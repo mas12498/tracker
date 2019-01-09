@@ -11,7 +11,7 @@ Tracker is a library for simulating, transforming and fusing sensor measurements
  - **EnsembleTest** : fuses pre-recorded measurements into a single solution using the original SVD solver.
    - Can also generate the measurement file by pointing the ensemble at a path in a target file 
   
- - **MonteCarloTest** : Produces a heatmap of accuracy for a given sensor ensemble using the Monte-carlo method.
+ - **MonteCarloTest** : Produces a heatmap of accuracy for a given sensor ensemble using the MonteCarlo method.
 
  - **TestFilter** : Applies a Kalman filter to a simulated ensemble tracking a second order Trajectory.
    - Can also generate target files from the filter's output.

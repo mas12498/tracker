@@ -28,31 +28,39 @@ public class TestMeasurements {
 	static Random random = new Random(1);
 	static final String separator = ", ";
 	static NumberFormat numberFormat = new DecimalFormat("0.00000000");
+	static final String usage = "usage: TestMeasurements (pedestal file) (measurement file) [tracking output]"; 
 	
 	/** Generates an example measurement file
-	 * usage: TestMeasurements <pedestal file> <output file>
-	 * Apply a filter of measurements
-	 * usage: TestMeasurements <pedestal file> <measurement file> <output> */
+	 * usage: TestMeasurements (pedestal file) (measurement file) [tracking output]
+	 * Two arguments outputs a measurement file using a default Trajectory.
+	 * Three arguments generates a tracking solution file from the pedestal and measurement file using a default filter...*/
 	// TestMeasurements "C:\Users\shiel\Documents\workspace\tracker\data\pedestalsIncrement.csv" "C:\Users\shiel\Documents\workspace\tracker\data\measurementsTrajectory.csv" "C:\Users\shiel\Documents\workspace\tracker\data\tracking.csv" 
 	public static void main(String[] args) {
 		
 		double t0 = 0.0;
 		double dt = 1.0;
 		int n = 100;
-		File pedestals = new File( args[0] );
-		File measurements = new File( args[1] );
-		File tracking = new File( args[2] );
 		
 		try {
+		
+			if (args.length!=2 && args.length!=3)
+				throw new Exception(usage);
+			
+			File pedestals = new File( args[0] );
 			Ensemble ensemble = Ensemble.load( pedestals );
 			
-			Trajectory trajectory = getTrajectory(  );
+			File measurements = new File( args[1] );
 			
-			Filter filter = getFilter( ensemble );
+			if (args.length==2) {
+				Trajectory trajectory = getTrajectory(  );
+				createMeasurements( trajectory, ensemble, t0, dt, n, measurements );
+			}
 			
-			//createMeasurements( trajectory, ensemble, t0, dt, n, measurements );
-			
-			track( ensemble, measurements, filter, tracking );
+			else if (args.length==3) {
+				File tracking = new File( args[2] );
+				Filter filter = getFilter( ensemble );
+				track( ensemble, measurements, filter, tracking );	
+			}
 			
 		} catch (Exception exception) {
 			exception.printStackTrace();

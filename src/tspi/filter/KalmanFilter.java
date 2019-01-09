@@ -273,7 +273,7 @@ public class KalmanFilter implements Filter {
 		
 		
 		//Compile measurement: {(H|z),R}
-		int mp = 0;		
+		int m = 0;		
 		_position = new TVector(_x_.getSubVector(0, 3)); //get filter state position (local coordinates)
 		for (int n=0; n<measurements.length; n++) {
 			
@@ -283,8 +283,9 @@ public class KalmanFilter implements Filter {
 			if (measurements[n].getMapAZ() && measurements[n].getMapEL()) {
 				
 				//predict pedestal 'n' measurement range:
-				TVector pedLoc = new TVector(measurements[n].getLocalCoordinates()); //get pedestal location from fusion origin				
-				double pedestalRange = (new TVector(_position).subtract(pedLoc)).getInnerProduct(measurements[n].getAperture_i().unit());
+				TVector pedLoc = new TVector(measurements[n].getLocalCoordinates()); //get pedestal location from fusion origin	
+				//compute range from pedestal to a priori target:
+				double pedestalRange = new TVector(_position).subtract(pedLoc).getAbs();
 				
 				System.out.println(measurements[n].getSystemId()+" predicted range to target: "+ pedestalRange +"\n");
 				
@@ -295,58 +296,57 @@ public class KalmanFilter implements Filter {
 				TVector varK = new TVector( measurements[n].getAperture_k().unit().divide(pedestalRange)); 			
 				double hM[][] = { {varJ.getX(),varJ.getY(),varJ.getZ()} 
 						         ,{varK.getX(),varK.getY(),varK.getZ()} };
-				_H.setSubMatrix(hM,mp,0 );
+				_H.setSubMatrix(hM,m,0 );
 				
 				//Ped 'n' measurements
-				_z.setEntry(mp,  new TVector(pedLoc).getInnerProduct(varJ)); //@radians tracke error AZ
-				_z.setEntry(mp+1, new TVector(pedLoc).getInnerProduct(varK)); //@radians track error EL
+				_z.setEntry(m,   pedLoc.getInnerProduct(varJ)); //@radians tracke error AZ
+				_z.setEntry(m+1, pedLoc.getInnerProduct(varK)); //@radians track error EL
 				
 				//Ped 'n' measurement noise model
-				_R.setEntry(mp, mp, measurements[n].getDeviationAZ().getRadians());
-				_R.setEntry(mp+1, mp+1, measurements[n].getDeviationEL().getRadians());
-				mp+=2;
+				////double sqrt2 = StrictMath.sqrt(2d);
+				_R.setEntry(m, m, measurements[n].getDeviationAZ().getRadians() );////*sqrt2);
+				_R.setEntry(m+1, m+1, measurements[n].getDeviationEL().getRadians() );////*sqrt2);
+				m+=2;
 				
 			}			
 		}
 		this._timePrev = time;
 		
 		
-		if (mp > 0) { //Have new measurements to process an update:
+		if (m > 0) { //Have new measurements to process an update:
 			
-			_D = rightHandSideKt( //F := F.getSubMatrix(0, mp - 1, 0, 8)
-					_H.getSubMatrix(0, mp - 1, 0, 2)
+			_D = rightHandSideKt( // (mx3)(3x9) == (mx9)
+					_H.getSubMatrix(0, m - 1, 0, 2)
 					,_P_.getSubMatrix(0,2,0,8)
 					);
 			
-			_E = leftHandSideKt(// F.getSubMatrix(0, mp - 1, 0,2).copy().multiply(H.transpose()).add(R)
-					_D.getSubMatrix(0, mp - 1, 0,2).copy()
-					,_H.getSubMatrix(0, mp - 1, 0, 2)
-					,_R.getSubMatrix(0, mp - 1, 0, mp - 1)
+			_E = leftHandSideKt( // (mx3)(3xm)+(mxm) == (mxm)
+					_D.getSubMatrix(0, m - 1, 0,2).copy()
+					,_H.getSubMatrix(0, m - 1, 0, 2)
+					,_R.getSubMatrix(0, m - 1, 0, m - 1)
 					);
 
-			_Kt = solveTransposedKalmanGain( //Kt = Kt.getSubMatrix( 0, 8,0, mp - 1)
-					//_H.getSubMatrix(0, mp - 1, 0, 2)
-					//,_R.getSubMatrix(0, mp - 1, 0, mp - 1)
-					_E.getSubMatrix(0, mp - 1, 0, mp - 1)
-					, _D.getSubMatrix(0, mp - 1, 0, 8)
+			_Kt = solveTransposedKalmanGain( // (mxm) \ (mxp) == (mxp)
+					_E.getSubMatrix(0, m - 1, 0, m - 1)
+					, _D.getSubMatrix(0, m - 1, 0, 8)
 					);
 			
 
-			_w = measurementInnovation(
-					_H.getSubMatrix(0, mp - 1, 0, 2)
-					, _z.getSubVector(0, mp)
+			_w = measurementInnovation( // (m) - (m,3)(3) == (m)
+					_H.getSubMatrix(0, m - 1, 0, 2)
+					, _z.getSubVector(0, m)
 					, _x_.getSubVector(0, 3)
 					);
 			
-			_x = updateState(
+			_x = updateState( // (m) + (pxm)(m) == (m)
 					_Kt
 					, _w
 					, _x_
 					);
 					
-			_P = updateTransposedCovariance(
-					_Kt.getSubMatrix( 0, mp - 1,0, 8) 
-					,_D.getSubMatrix(0, mp - 1, 0, 8)
+			_P = updateTransposedCovariance( // (9x9) - (9xm)(mx9) = (9x9)
+					_Kt.getSubMatrix( 0, m - 1,0, 8) 
+					,_D.getSubMatrix(0, m - 1, 0, 8)
 					,_P_);
 			
 //		r_OT = LocalCoordinates(T)

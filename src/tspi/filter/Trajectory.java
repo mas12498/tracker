@@ -4,9 +4,9 @@ import java.util.Random;
 
 import org.apache.commons.math3.linear.RealVector;
 
-import rotation.Vector3;
 import tspi.model.Pedestal;
 import tspi.model.Polar;
+import tspi.rotation.Vector3;
 import tspi.util.TVector;
 
 /** A parametric model of the simulated trajectory. */

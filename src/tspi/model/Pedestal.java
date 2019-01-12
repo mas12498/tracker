@@ -2,9 +2,9 @@ package tspi.model;
 
 import java.util.Random;
 
-import rotation.Angle;
-import rotation.Rotator;
-import rotation.Vector3;
+import tspi.rotation.Angle;
+import tspi.rotation.Rotator;
+import tspi.rotation.Vector3;
 
 /**  
  * Every thing native in EFG  WGS84 Cartesian frame

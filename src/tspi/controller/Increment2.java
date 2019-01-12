@@ -23,14 +23,14 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 
-import rotation.Angle;
-import rotation.Vector3;
 import tspi.model.Ellipsoid;
 import tspi.model.Pedestal;
 import tspi.model.PedestalModel;
 import tspi.model.Solution;
 import tspi.model.Target;
 import tspi.model.TargetModel;
+import tspi.rotation.Angle;
+import tspi.rotation.Vector3;
 
 /** A controller for manipulating a set of pedestals and their targets. Meant 
  * to demonstrate the deliverables of Increment 1 of the Predictive TSPI 

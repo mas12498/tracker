@@ -7,7 +7,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealVector;
 
-import rotation.Vector3;
+import tspi.rotation.Vector3;
 
 /**
  * TVector extends package rotation.Vector3 
@@ -18,7 +18,7 @@ import rotation.Vector3;
  * @author mshields
  *
  */
-public class TVector extends rotation.Vector3 {
+public class TVector extends Vector3 {
 
 	//Class Constructors:
 	

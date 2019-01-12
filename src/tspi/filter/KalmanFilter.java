@@ -7,9 +7,9 @@ import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
-import rotation.Vector3;
 import tspi.model.Pedestal;
 import tspi.model.Polar;
+import tspi.rotation.Vector3;
 import tspi.util.TVector;
 
 /** A Kalman filter for synthesizing a series of measurements into a trajectory model in near-real-time. */

@@ -8,7 +8,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 
-import rotation.Vector3;
+import tspi.rotation.Vector3;
 
 // TODO this needs to be fleshed out with system matrices, error models, etc.
 // and it probably needs a much more specific name than 'Solution'

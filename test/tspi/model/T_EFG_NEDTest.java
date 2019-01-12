@@ -4,12 +4,10 @@
 package tspi.model;
 
 import junit.framework.TestCase;
-import rotation.Angle;
-import rotation.CodedPhase;
-import rotation.Rotator;
-import rotation.Vector3;
-import tspi.model.Ellipsoid;
-import tspi.model.T_EFG_NED;
+import tspi.rotation.Angle;
+import tspi.rotation.CodedPhase;
+import tspi.rotation.Rotator;
+import tspi.rotation.Vector3;
 
 /**
  * @author mike

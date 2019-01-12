@@ -9,12 +9,12 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 
 import junit.framework.TestCase;
-import rotation.Angle;
-import rotation.CodedPhase;
-import rotation.Quaternion;
-import rotation.QuaternionMath;
-import rotation.Rotator;
-import rotation.Vector3;
+import tspi.rotation.Angle;
+import tspi.rotation.CodedPhase;
+import tspi.rotation.Quaternion;
+import tspi.rotation.QuaternionMath;
+import tspi.rotation.Rotator;
+import tspi.rotation.Vector3;
 
 
 

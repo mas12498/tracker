@@ -1,10 +1,9 @@
 package tspi.model;
-import rotation.Angle;
-import rotation.CodedPhase;
-import rotation.QuaternionMath;
-//import rotation.BasisUnit;
-import rotation.Rotator;
-import rotation.Vector3;
+import tspi.rotation.Angle;
+import tspi.rotation.CodedPhase;
+import tspi.rotation.QuaternionMath;
+import tspi.rotation.Rotator;
+import tspi.rotation.Vector3;
 
 /**
  * Stores local geodetic [WGS84] definition:<p>

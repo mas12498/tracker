@@ -13,14 +13,14 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
-import rotation.Angle;
-import rotation.Vector3;
 import tspi.model.Ellipsoid;
 import tspi.model.Pedestal;
 import tspi.model.PedestalModel;
 import tspi.model.Solution;
 import tspi.model.Target;
 import tspi.model.TargetModel;
+import tspi.rotation.Angle;
+import tspi.rotation.Vector3;
 
 // example solver arguments;
 //-solve

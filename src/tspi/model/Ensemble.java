@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
 
-import rotation.Vector3;
+import tspi.rotation.Vector3;
 
 /** A set of sensor pedestals working in concert. */
 public class Ensemble extends ArrayList<Pedestal>{

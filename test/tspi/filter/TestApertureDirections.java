@@ -3,13 +3,10 @@
  */
 package tspi.filter;
 
-import rotation.Angle;
-import rotation.CodedPhase;
-import rotation.Rotator;
 import tspi.model.Ellipsoid;
-import tspi.model.Polar;
 import tspi.model.T_EFG_FRD;
 import tspi.model.T_EFG_NED;
+import tspi.rotation.Angle;
 
 /**
  * @author mshields

@@ -10,10 +10,10 @@ import java.util.Random;
 
 import org.apache.commons.math3.linear.RealVector;
 
-import rotation.Angle;
 import tspi.model.Ensemble;
 import tspi.model.Pedestal;
 import tspi.model.Polar;
+import tspi.rotation.Angle;
 import tspi.util.TVector;
 
 //trajectory -> targets file

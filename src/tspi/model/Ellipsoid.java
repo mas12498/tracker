@@ -1,7 +1,7 @@
 package tspi.model;
 
-import rotation.Angle;
-import rotation.Vector3;
+import tspi.rotation.Angle;
+import tspi.rotation.Vector3;
 /**
  * Transfer Object for ellipsoid coordinates.
  * 

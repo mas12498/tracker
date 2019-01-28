@@ -29,7 +29,9 @@ class TestFilter {
 	public static void main(String args[]) {
 		
 		Pedestal pedestals[];
-		File in = new File("H:/filterPedestals001.csv");		
+		File in = new File("/home/mike/pedestalsFilter");
+//		File in = new File("/home/mike/git/mas12498/tracker/data/pedestalsIncrement.csv");
+		//File in = new File("H:/filterPedestals001.csv");		
 		//File in = new File("H:/filterPedestals010.csv");		
 //		File in = new File("H:/filterPedestals0005.csv");		
 //		File in = new File("H:/filterPedestals.csv");		
@@ -55,7 +57,7 @@ class TestFilter {
 		//Set up track profile:
 		double t0 = 0.0;   //seconds initial frame time
 		double dt = 0.020; //seconds interval between frames
-		int Nt = 200;      //number of frames
+		int Nt = 600;      //number of frames
 		
 		//Profile Kinematics starting reference:
 		TVector pos0 = new TVector(3135932.588, -5444754.209, 1103864.549); //geocentric position EFG m
@@ -63,7 +65,7 @@ class TestFilter {
 		TVector acc0 = new TVector(0.0, 0.0, 2.0);                          //acceleration EFG m/s/s
 		
 		//ProcessNoise for track profile 	
-		double processNoise = 6; 	//Q m/s/s		
+		double processNoise = 10; //16; 	//Q m/s/s		
 		
 		//track cueing offsets: 
 		TVector pOff = new TVector(80,-60,-100);  //position cueing discrepency m

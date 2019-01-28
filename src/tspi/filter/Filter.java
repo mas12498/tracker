@@ -26,5 +26,8 @@ public interface Filter {
 	Polar[] getResidualsUpdate( double dt );
 	RealVector getState();
 	RealMatrix getCovariance();
+	RealVector getResiduals();
+	RealVector getInnovations();
+	
 	
 }

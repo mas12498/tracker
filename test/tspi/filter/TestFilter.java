@@ -229,6 +229,15 @@ class CheatFilter implements Filter {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	public RealVector getResiduals(){
+		return null;
+	}
+	
+	public RealVector getInnovations(){
+		return null;
+	}
+	
 
 }
 

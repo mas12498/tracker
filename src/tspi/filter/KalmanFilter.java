@@ -332,6 +332,18 @@ public class KalmanFilter implements Filter {
 					, _z.getSubVector(0, m)
 					, _x.getSubVector(0, 3)
 					);
+			System.out.println("\n ***Innovations Norm = "+_w.getNorm()*StrictMath.sqrt(m-3));
+			System.out.println("\n ***Innovations = {  ");
+			for (int h=0;h<m; h++) {
+				System.out.print(_w.getEntry(h)+"\n  ");
+			}
+			System.out.println("} \n\n");
+			System.out.println("\n ***Residuals Norm = "+_e.getNorm()*StrictMath.sqrt(m-3));
+			System.out.println("\n ***Residuals = {  ");
+			for (int h=0;h<m; h++) {
+				System.out.print(_e.getEntry(h)+"\n  ");
+			}
+			System.out.println("} \n");
 			
 		}
 		
@@ -395,10 +407,19 @@ public class KalmanFilter implements Filter {
 	public RealVector getState() {
 		return state;
 	}
+	
 	public RealMatrix getCovariance() {
 		return covariance;
 	}
 	
+	public RealVector getResiduals(){
+		return _e;
+	}
+	
+	public RealVector getInnovations(){
+		return _w;
+	}
+
 //	@Override
 //	public RealVector prediction( double time ) {
 //		//TODO

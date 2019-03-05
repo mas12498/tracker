@@ -47,7 +47,7 @@ public class TestMeasurements {
 		
 		double t0 = 0.0;
 		double dt = 0.020;
-		int n = 800;
+		int n = 80;
 		
 		try {
 		

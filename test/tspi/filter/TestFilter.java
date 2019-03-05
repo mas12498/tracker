@@ -57,7 +57,7 @@ class TestFilter {
 		//Set up track profile:
 		double t0 = 0.0;   //seconds initial frame time
 		double dt = 0.020; //seconds interval between frames
-		int Nt = 600;      //number of frames
+		int Nt = 300;      //number of frames
 		
 		//Profile Kinematics starting reference:
 		TVector pos0 = new TVector(3135932.588, -5444754.209, 1103864.549); //geocentric position EFG m
@@ -65,7 +65,7 @@ class TestFilter {
 		TVector acc0 = new TVector(0.0, 0.0, 2.0);                          //acceleration EFG m/s/s
 		
 		//ProcessNoise for track profile 	
-		double processNoise = 10; //16; 	//Q m/s/s		
+		double processNoise = 16; //16; 	//Q m/s/s		
 		
 		//track cueing offsets: 
 		TVector pOff = new TVector(80,-60,-100);  //position cueing discrepency m
@@ -86,7 +86,7 @@ class TestFilter {
 		Filter kalman = new KalmanFilter( pedestals , p0, v0, processNoise);
 //		//Filter cheat = new CheatFilter( trajectory );
 		
-		// test the filter
+		// test the filter on the trajectory with pedestals...time,frameInsterval,frames,stream
 		demoFilter( kalman, trajectory, pedestals, 0.0, dt, Nt, stream );
 //		//demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream ); //defined below as trivial truth passer...
 		
@@ -94,6 +94,9 @@ class TestFilter {
 		// dispose IO
 		stream.close();
 	}
+	
+	
+	
 	
 	/** Read an array of modeled pedestals from the given file */
 	public static Pedestal[] loadPedestals(File file) throws Exception {

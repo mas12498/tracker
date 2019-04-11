@@ -57,7 +57,7 @@ class TestFilter {
 		//Set up track profile:
 		double t0 = 0.0;   //seconds initial frame time
 		double dt = 0.020; //seconds interval between frames
-		int Nt = 300;      //number of frames
+		int Nt = 600;      //number of frames
 		
 		//Profile Kinematics starting reference:
 		TVector pos0 = new TVector(3135932.588, -5444754.209, 1103864.549); //geocentric position EFG m
@@ -83,7 +83,7 @@ class TestFilter {
 				acc0.arrayRealVector());
 				
 		// create filter track from pedestal array
-		Filter kalman = new KalmanFilter( pedestals , p0, v0, processNoise);
+		Filter kalman = new KalmanFilter( pedestals ); 
 //		//Filter cheat = new CheatFilter( trajectory );
 		
 		// test the filter on the trajectory with pedestals...time,frameInsterval,frames,stream

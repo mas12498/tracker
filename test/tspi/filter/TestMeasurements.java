@@ -116,7 +116,7 @@ public class TestMeasurements {
 		TVector p0 = new TVector(pOff.add(pos0).subtract(Pedestal.getOrigin()));     //init filter position
 		TVector v0 = new TVector(vOff);     
 		
-		Filter kalman = new KalmanFilter( ensemble.toArray() , p0, v0, processNoise );
+		Filter kalman = new KalmanFilter( ensemble.toArray() ); // , p0, v0); //, processNoise );
 		
 		return kalman;
 	}

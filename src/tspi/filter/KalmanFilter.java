@@ -26,7 +26,7 @@ public class KalmanFilter implements Filter {
 	boolean _STEADY=false
 			,_MANEUVER=false
 			,_ACQUIRE=false
-			,_INIT=true;
+			,_ASSOCIATE=true;
 	
 	//Mode selection by: filter residuals
 	double _MEASUREMENT_NOISE 	= 0.00025;
@@ -42,22 +42,25 @@ public class KalmanFilter implements Filter {
 	
 	double _processNoise = _STEADY_Q;
 	double averageResidual;	// @ 16 m/s/s	suggested
+	int _CRIT_NUMBER_CONVERGE   = 4; // 5?
 	int _CRIT_NUMBER_TIGHTEN	= 4;
 	int _CRIT_NUMBER_LOOSEN		= 3;
-	int _VELOCITY_SAMPLES		= 30;
-	
+	int _ENSEMBLES_CONVERGENCE	= 30;
+	int _ENSEMBLES_DIVERGENCE	= 30;
     //edit innovations threshold of R multiplier for mode 
 	double _R_MULT_STEADY 		= 2.56;
 	double _R_MULT_MANEUVER 	= 6;
 	double _R_MULT_ACQUISITION	= 9;
+	double _R_MULT_ASSOCIATION	= 9;
 	
 	//mode statistcs support
 	int cntSteady = 0;
 	int cntInit = 0;
+	int cntDivergence = 0;
 	int cntAcquisition = 0;
 	int cntManeuver = 0;
 	int cntCoast = 0;
-	int icnt = 0;
+	int plotCount = 0;
 	
 	//Filter Cycle Globals
 	double 	_timePrev;	  // time of previous measurement frame
@@ -188,10 +191,9 @@ public class KalmanFilter implements Filter {
 	 * @param D Right Hand Side of K' 
 	 * */
 	public RealMatrix solveTransposedKalmanGain( RealMatrix E, RealMatrix D ) {  
-		return new QRDecomposition( E ).getSolver().solve(D);		//LA JAMA Style
+		return new QRDecomposition( E ).getSolver().solve(D);		//LA JAMA Style		
 //		RRQRDecomposition decomp = new RRQRDecomposition(E, 0.0001);
-//		RealMatrix Kt = decomp.getSolver().solve(D);
-//	    return Kt;	
+//		return decomp.getSolver().solve(D);	
 	}
 		
 	/** 
@@ -335,7 +337,50 @@ public class KalmanFilter implements Filter {
 		}		
 		
 		this._timePrev = time;
-		if (!_INIT) { //process measurements...
+		
+		if (_ASSOCIATE) { //measurements track convergence...
+						
+			RealMatrix a = _H.getSubMatrix(0, instr - 1, 0, 2);//copy();			
+			SingularValueDecomposition svd = new SingularValueDecomposition(a.getSubMatrix(0, instr - 1,0,2));
+			p_point = svd.getSolver().solve(_z.getSubVector(0, instr)); //proxy plot
+			_w = _z.subtract(_H.operate(p_point));
+			instr = thresh(instr, _R_MULT_ASSOCIATION);
+			
+			if(instr>=_CRIT_NUMBER_CONVERGE) { //ensemble plot convergence...[independent crit number?]
+				svd = new SingularValueDecomposition(_H.getSubMatrix(0, instr - 1,0,2));
+				p_point = svd.getSolver().solve(_z.getSubVector(0, instr)); 
+				_w = _z.subtract(_H.operate(p_point));				
+			}
+			
+			if(_w.getNorm() > _CRIT_ACQUISITION) { //ensemble plot divergence...
+				plotCount = 0;
+				v_point_prior = new ArrayRealVector(3);
+			}
+
+			if (plotCount > 0) { //improve average velocity over expanding plot associations
+				v_point.setSubVector(0,
+						v_point_prior.add(((p_point.subtract(p_point_prior).mapMultiply(50)).subtract(v_point_prior))
+								.mapMultiply(1.0 / (plotCount))));
+			}
+			
+			if (plotCount > _ENSEMBLES_CONVERGENCE) { //track acquired!!!!
+				_ASSOCIATE = false;
+				_ACQUIRE = true;
+			}
+			_x.setSubVector(0, p_point);
+			_x.setSubVector(3, v_point);
+			_x.setEntry(6, 0.0);
+			_x.setEntry(7, 0.0);
+			_x.setEntry(8, 0.0);
+			
+			//store reduced prior plot-track associations
+			p_point_prior.setSubVector(0, p_point);
+			v_point_prior.setSubVector(0, v_point);	
+			
+			plotCount = plotCount + 1;
+			cntInit = cntInit +1;	
+			
+		} else { //measurements track plot...
 			
 			//prediction updates:
 			_x_ = propagateState( _S, _x );
@@ -391,38 +436,9 @@ public class KalmanFilter implements Filter {
 				_x = _x_.copy();
 				_P = _P_.copy();
 			}
-
-
-		} else {	//INITIALIZE:
-			RealMatrix a = _H.getSubMatrix(0, instr - 1, 0, 2);//copy();
-			SingularValueDecomposition svd = new SingularValueDecomposition(a.getSubMatrix(0, instr - 1,0,2));
-			p_point = svd.getSolver().solve(_z.getSubVector(0, instr)); //_H.getRowDimension()));//6));//
-			RealVector b = _z.subtract(_H.operate(p_point));
-			if(b.getNorm() > _CRIT_ACQUISITION) {
-				icnt = 0;
-			} else {
-			}
-			if (icnt < 1) {
-				v_point_prior = new ArrayRealVector(3);
-			} else {
-				v_point.setSubVector(0,
-						v_point_prior.add(((p_point.subtract(p_point_prior).mapMultiply(50)).subtract(v_point_prior))
-								.mapMultiply(1.0 / (icnt))));
-			}
-			p_point_prior.setSubVector(0, p_point);
-			v_point_prior.setSubVector(0, v_point);
-			if (icnt > _VELOCITY_SAMPLES) {
-				_INIT = false;
-				_ACQUIRE = true;
-			}
-			_x.setSubVector(0, p_point);
-			_x.setSubVector(3, v_point);
-			_x.setEntry(6, 0.0);
-			_x.setEntry(7, 0.0);
-			_x.setEntry(8, 0.0);
-			icnt = icnt + 1;
+			
 		}
-		
+				
 		if(_STEADY) {
 			if((averageResidual <= _CRIT_STEADY)&&(instr>_CRIT_NUMBER_LOOSEN)) {
 				cntSteady = cntSteady+1;
@@ -453,12 +469,17 @@ public class KalmanFilter implements Filter {
 				_processNoise = _MANEUVER_Q;
 				cntManeuver = cntManeuver + 1;
 			} else if((averageResidual > _CRIT_ACQUISITION)||(instr<=_CRIT_NUMBER_LOOSEN)) {
+				cntDivergence = 0;
 				cntAcquisition = cntAcquisition +1;
 			} else {
+				cntDivergence = cntDivergence + 1;
+				if(cntDivergence > _ENSEMBLES_DIVERGENCE) {
+					_ACQUIRE = false;
+					_ASSOCIATE = true;
+					cntDivergence = 0;
+				}
 				cntAcquisition = cntAcquisition +1;				
 			}
-		} else { //_INIT
-			cntInit = cntInit +1;	
 		}
 		
 		// Export geocentric coordinate state of filter... could also be a forecast for
@@ -470,6 +491,9 @@ public class KalmanFilter implements Filter {
 		return _state;
 
 	}
+	
+	
+	
 	
 //	@Override
 //	public RealVector filter( double time, Pedestal pedestals[] ) {

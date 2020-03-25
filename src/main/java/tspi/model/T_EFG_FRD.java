@@ -1,9 +1,9 @@
 package tspi.model;
 
-import rotation.Angle;
-import rotation.CodedPhase;
-import rotation.Rotator;
-import rotation.Vector3;
+import tspi.rotation.Angle;
+import tspi.rotation.CodedPhase;
+import tspi.rotation.Rotator;
+import tspi.rotation.Vector3;
 
 public class T_EFG_FRD {
 	

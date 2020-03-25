@@ -1,4 +1,4 @@
-package rotation;
+package tspi.rotation;
 
 
 public class Vector3 {
@@ -7,8 +7,8 @@ public class Vector3 {
 	public static final Vector3 UNIT_I = new Vector3(1,0,0);
 	public static final Vector3 UNIT_J = new Vector3(0,1,0);
 	
-	public static final Vector3 UNIT_K = new Vector3(0,0,1);	
-	public static final Vector3 ZERO = new Vector3(0,0,0);	
+	public static final Vector3 UNIT_K = new Vector3(0,0,1);
+	public static final Vector3 ZERO = new Vector3(0,0,0);
 	protected double _x;	
 	protected double _y;	
 	protected double _z;
@@ -102,7 +102,7 @@ public class Vector3 {
 			return (halfNorm1 == 0) 
 			? 0 : (halfNorm1 < 2 && halfNorm1 > .5)  
 				?   Math.sqrt(getDeterminant())		//...no need for scaling.
-				:	halfNorm1*StrictMath.sqrt( new Vector3(this).divide(halfNorm1).getDeterminant() ) ;		
+				:	halfNorm1*StrictMath.sqrt( new Vector3(this).divide(halfNorm1).getDeterminant() ) ;
 			
 	//		return (_x > _y)
 	//			? (_x > _z)
@@ -168,7 +168,7 @@ public class Vector3 {
 	/**
 	 * (non-Javadoc)
 	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
+	 * @see Object#equals(Object)
 	 */
 	public boolean isEquivalent(Object obj, double tolerance) {
 		if (this == obj) {

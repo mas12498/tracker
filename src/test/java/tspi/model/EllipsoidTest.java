@@ -4,9 +4,8 @@
 package tspi.model;
 
 import junit.framework.TestCase;
-import rotation.Angle;
-import rotation.Vector3;
-import tspi.model.Ellipsoid;
+import tspi.rotation.Angle;
+import tspi.rotation.Vector3;
 
 /**
  * @author mike

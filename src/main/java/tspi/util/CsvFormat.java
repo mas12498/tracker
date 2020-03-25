@@ -1,8 +1,7 @@
 package tspi.util;
 
-import java.io.File;
-
 import javax.swing.table.TableModel;
+import java.io.File;
 
 
 public class CsvFormat {

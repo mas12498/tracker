@@ -1,7 +1,6 @@
 package tspi.model;
-import rotation.Angle;
-//import rotation.Principle;
-import rotation.Vector3;
+import tspi.rotation.Angle;
+import tspi.rotation.Vector3;
 
 public class Target {
 	long time;

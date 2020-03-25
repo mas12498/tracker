@@ -1,4 +1,4 @@
-package rotation;
+package tspi.rotation;
 
 /**
  * @author mike
@@ -307,7 +307,7 @@ public class Quaternion {
 	/**
 	 * (non-Javadoc)
 	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
+	 * @see Object#equals(Object)
 	 */
 	@Override
 	public boolean equals(Object obj) {
@@ -345,24 +345,24 @@ public class Quaternion {
 	 * Exponentiate: Put <b><i>e</i></b> raised to this Quaternion power <br>
 	 * (e to the t cosine absolute value of V, e to the t sine of the absolute
 	 * value of V times V normalized to V )
-	 * 
+	 *
 	 */
 	public final Quaternion exp() {
 		final double vectorMagnitude = getV().getAbs();
 		//int k = (int) StrictMath.round(vectorMagnitude/StrictMath.PI);
 		_w = StrictMath.exp(_w);
-		if (vectorMagnitude == 0) { 
+		if (vectorMagnitude == 0) {
 			// scalar case...
 			return this;
 		}
 		final double tan = StrictMath.tan(StrictMath.IEEEremainder(vectorMagnitude, Angle.STRAIGHT.getRadians()));
-		if (StrictMath.abs(tan) > 1) { 
+		if (StrictMath.abs(tan) > 1) {
 			// obtuse angle
 			final double csc = StrictMath.hypot(1, 1 / tan);
 			multiplyVectorPart(_w/(vectorMagnitude * csc));
 			_w /= (tan * csc);
 			return this;
-		} 
+		}
 		//  accute angle
 		final double sec = StrictMath.hypot(1, tan);
 		multiplyVectorPart(_w/(StrictMath.abs(vectorMagnitude / tan) * sec));
@@ -376,13 +376,13 @@ public class Quaternion {
 	 * @return Modulus --> Quaternion's Euclidian norm (magnitude).
 	 */
 	public double getAbs() {
-		final double testNorm = StrictMath.scalb(getNorm1(),-1); 
+		final double testNorm = StrictMath.scalb(getNorm1(),-1);
 		if (testNorm == 0) {
 			// ..zero Quaternion.
 			return 0d;
 		}
 		if (testNorm > 2 || testNorm < 1) {
-			// ..numerically scaled. 
+			// ..numerically scaled.
 			//return new Quaternion(this).divide(testNorm).getNorm2() * testNorm;
 			double w = _w / testNorm;
 			double x = _x / testNorm;
@@ -418,11 +418,11 @@ public class Quaternion {
 	public double getDeterminant() {
 		return  _w * _w + _x * _x + _y * _y + _z * _z;
 	}
-	
+
 
 	/**
 	 * Quaternion (City Block) 1-Norm:
-	 * 
+	 *
 	 * @return double 1-Norm
 	 */
 	public double getNorm1() {
@@ -432,7 +432,7 @@ public class Quaternion {
 
 	/**
 	 * Quaternion (Euclidean) 2-Norm:
-	 * 
+	 *
 	 * @return double 2-Norm
 	 * <p>Note: Fast abs() calculation without scaling.
 	 */
@@ -442,7 +442,7 @@ public class Quaternion {
 
 	/**
 	 * Quaternion Inf-Norm:
-	 * 
+	 *
 	 * @return double max absolute element
 	 */
 	public double getNormInf() {
@@ -473,28 +473,28 @@ public class Quaternion {
 	}
 
 
-	
+
 	/**
 	 * @return Second imaginary part basis coefficient.
 	 */
 	public double getY() {
 		return _y;
-	}	
-	
-	
+	}
+
+
 	/**
 	 * @return Third imaginary part basis coefficient.
 	 */
 	public double getZ() {
 		return _z;
 	}
-	
-	
-	
+
+
+
 	/**
 	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#hashCode()
+	 *
+	 * @see Object#hashCode()
 	 */
 	@Override
 	public int hashCode() {
@@ -514,7 +514,7 @@ public class Quaternion {
 
 	/**
 	 * Check if undefined:
-	 * 
+	 *
 	 * @return boolean [TRUE:] contains NaN.
 	 */
 	public boolean hasNan() {
@@ -524,8 +524,8 @@ public class Quaternion {
 
 	/**
 	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
+	 *
+	 * @see Object#equals(Object)
 	 */
 	public boolean isEquivalent(Object obj, double tolerance) {
 		if (this == obj)
@@ -927,7 +927,7 @@ public class Quaternion {
 	}
 
 	private final Quaternion setProduct(final double pw, final double px, final double py, final double pz,
-			final double qw, final double qx, final double qy, final double qz) {
+                                        final double qw, final double qx, final double qy, final double qz) {
 		_x = pw * qx + px * qw + py * qz - pz * qy;
 		_y = pw * qy - px * qz + py * qw + pz * qx;
 		_z = pw * qz + px * qy - py * qx + pz * qw;
@@ -953,7 +953,7 @@ public class Quaternion {
 	 * @param p 
 	 * @return this.set(new Quaternion(p).rightMultiply(Quaternion.UNIT_J));
 	 * */
-	public final void setRightMultiplyJ(final  Quaternion p) {
+	public final void setRightMultiplyJ(final Quaternion p) {
 		//make sure this does not equal p !
 		_w = -p._y;
 		_x = -p._z;

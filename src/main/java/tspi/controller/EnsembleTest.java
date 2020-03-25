@@ -1,26 +1,16 @@
 package tspi.controller;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.PrintStream;
+import tspi.model.*;
+import tspi.rotation.Angle;
+import tspi.rotation.Vector3;
+
+import java.io.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-
-import rotation.Angle;
-import rotation.Vector3;
-import tspi.model.Ellipsoid;
-import tspi.model.Pedestal;
-import tspi.model.PedestalModel;
-import tspi.model.Solution;
-import tspi.model.Target;
-import tspi.model.TargetModel;
 
 // example solver arguments;
 //-solve
@@ -209,7 +199,7 @@ public class EnsembleTest {
 	{
 		PedestalModel pedestals = new PedestalModel();
 		pedestals.load( pedestalFile );
-		EnsembleTest.solve( 
+		EnsembleTest.solve(
 				ensembleFile,
 				pedestals,
 				pedestalCount,

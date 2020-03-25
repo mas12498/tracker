@@ -1,7 +1,8 @@
 package tspi.model;
 
-import rotation.Angle;
-import rotation.Vector3;
+import tspi.rotation.Angle;
+import tspi.rotation.Vector3;
+
 /**
  * Transfer Object for ellipsoid coordinates.
  * 
@@ -96,7 +97,7 @@ public class Ellipsoid {
 	public Vector3 getGeocentric(){
 		double ellipsoidLatitudeRadians = this.getNorthLatitude().getRadians();
 		double sinEllipsoidLatitude = StrictMath.sin(ellipsoidLatitudeRadians);
-		double radiusInflatedEllipsoid = Ellipsoid._a 
+		double radiusInflatedEllipsoid = Ellipsoid._a
 				/ StrictMath.sqrt(T_EFG_NED.ONE - FLAT_FN * sinEllipsoidLatitude * sinEllipsoidLatitude);
 		double rCosEllipsoidLatitiude = (radiusInflatedEllipsoid + this.getEllipsoidHeight())
 				* StrictMath.cos(ellipsoidLatitudeRadians);
@@ -141,7 +142,7 @@ public class Ellipsoid {
 	    double t = StrictMath.sqrt( g*g  + (f - v*g)/(T_EFG_NED.TWO*g - e) ) - g;
 	
 	    /* 5.0 Set B sign to get sign of latitude and height correct */
-	    double B = (z<T_EFG_NED.ZERO)?-_b:_b;
+	    double B = (z< T_EFG_NED.ZERO)?-_b:_b;
 		    
 	    _longitude.setRadians(StrictMath.atan2( y, x ));
 	    

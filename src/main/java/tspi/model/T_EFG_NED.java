@@ -1,10 +1,6 @@
 package tspi.model;
-import rotation.Angle;
-import rotation.CodedPhase;
-import rotation.QuaternionMath;
-//import rotation.BasisUnit;
-import rotation.Rotator;
-import rotation.Vector3;
+
+import tspi.rotation.*;
 
 /**
  * Stores local geodetic [WGS84] definition:<p>
@@ -81,13 +77,13 @@ public class T_EFG_NED {
 	public static Rotator local(Angle northGeodeticLatitude, Angle eastGeodeticLongitude)
 	{
 		Angle theta = new Angle(northGeodeticLatitude).add(Angle.RIGHT).negate();
-		return QuaternionMath.eulerRotate_kj(eastGeodeticLongitude.codedPhase(),theta.codedPhase());		
+		return QuaternionMath.eulerRotate_kj(eastGeodeticLongitude.codedPhase(),theta.codedPhase());
 	}
 
 
 	public static Rotator local(CodedPhase northGeodeticLatitude, CodedPhase eastGeodeticLongitude){
 		CodedPhase theta = new CodedPhase(northGeodeticLatitude).addRight().negate();
-		return QuaternionMath.eulerRotate_kj(eastGeodeticLongitude,theta);		
+		return QuaternionMath.eulerRotate_kj(eastGeodeticLongitude,theta);
 	}
 
 

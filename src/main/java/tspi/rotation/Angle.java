@@ -1,6 +1,6 @@
-package rotation;
+package tspi.rotation;
 
-import org.junit.Assert;
+import junit.framework.Assert;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -39,14 +39,14 @@ public class Angle
 	public final static Angle STRAIGHT           = new Angle(PIRADIANS_STRAIGHT);
 	public final static Angle RIGHT              = new Angle(PIRADIANS_RIGHT);
 	public final static Angle ZERO               = new Angle(PIRADIANS_ZERO);
-	public final static Angle EMPTY              = new Angle(PIRADIANS_EMPTY);	
+	public final static Angle EMPTY              = new Angle(PIRADIANS_EMPTY);
 
 
     /** Angle static factory for int binary fractions expression of revolution. 
 	 * @param binaryAngle integer (count of fractional lsb covering arc measure).
 	 * @param numBitsRevolution byte number of significant bits required in binary circle-arc representation. */
 	public static Angle inBinaryArc(int binaryAngle, byte numBitsRevolution)
-	{ return new Angle(( StrictMath.scalb((double) binaryAngle, (byte)(1-numBitsRevolution)) )); } 
+	{ return new Angle(( StrictMath.scalb((double) binaryAngle, (byte)(1-numBitsRevolution)) )); }
 	    
 	/** Angle static factory for long binary fractions expression of revolution. 
 	 * @param binaryAngle long integer (count of fractional lsb covering arc measure).
@@ -83,7 +83,7 @@ public class Angle
  
 	/** Angle static factory. 
 	 * @param revolutions double angle measure.*/
-	public static Angle inRevolutions(double revolutions) 
+	public static Angle inRevolutions(double revolutions)
 	{ return new Angle(StrictMath.scalb(revolutions, 1)); }
  
 	@SuppressWarnings("deprecation")
@@ -92,7 +92,7 @@ public class Angle
 	{
 		//test protected functions...
 		
-		Angle test = new Angle(1/2.d);		
+		Angle test = new Angle(1/2.d);
 		Assert.assertEquals(test.getPiRadians(),1d/2,1e-17);
 		Assert.assertEquals(test.getCodedPhaseDouble(),1d,1e-15);
 		
@@ -231,7 +231,7 @@ public class Angle
 	
 	
 	/** Copy constructor. */
-	public Angle(Angle a) 
+	public Angle(Angle a)
 	{ _piRadiansAngle = a._piRadiansAngle; }
 	
 	/** Internal native constructor -- assumes PiRadians... */
@@ -255,9 +255,9 @@ public class Angle
 	}
 	
 	/** CodedPhase Factory: Create new <i>CodedPhase</i> encoded of this Angle measure. */
-	public CodedPhase codedPhase() 
+	public CodedPhase codedPhase()
 	{ // [-inf..+inf]
-		return CodedPhase.encodes(this.getCodedPhaseDouble());	
+		return CodedPhase.encodes(this.getCodedPhaseDouble());
 	}
 
 	/** Mutator. Returns this with copied sign of that. */
@@ -365,7 +365,7 @@ public class Angle
 		return this;
 	}
 	
-	public void set(Angle copy) 
+	public void set(Angle copy)
 	{ _piRadiansAngle = copy._piRadiansAngle; }
 
     /**  Set equal to measured units of angle given count units defined in straight angle.*/ 
@@ -453,7 +453,7 @@ public class Angle
 		
 	
 	/** Angle Factory: Create new <i>unsigned principle Angle</i> equal to residual of floor revolutions from this measure. */
-	public Angle unsignedPrinciple() 
+	public Angle unsignedPrinciple()
 	{ //Compactly spans principle revolution ring in pi radians: [0..2)
 		double piRadAngle = getFractionalPiRadians();   //yields: [-1..1]		
 		if(piRadAngle==PIRADIANS_ZERO) {  return inPiRadians(PIRADIANS_ZERO); } //forces positive zero

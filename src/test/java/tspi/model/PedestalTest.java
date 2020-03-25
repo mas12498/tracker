@@ -3,19 +3,12 @@
  */
 package tspi.model;
 
+import junit.framework.TestCase;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
-
-import junit.framework.TestCase;
-import rotation.Angle;
-import rotation.CodedPhase;
-import rotation.Quaternion;
-import rotation.QuaternionMath;
-import rotation.Rotator;
-import rotation.Vector3;
-
+import tspi.rotation.*;
 
 
 /**
@@ -38,7 +31,7 @@ public class PedestalTest extends TestCase {
 //		  Principle ptheta =new Principle(theta);
 //		  System.out.println("ptheta: "+ptheta.signedAngle().getDegrees());	
 		  
-		Rotator q =QuaternionMath.eulerRotate_kj(wgs84.getEastLongitude().codedPhase(), theta.codedPhase());
+		Rotator q = QuaternionMath.eulerRotate_kj(wgs84.getEastLongitude().codedPhase(), theta.codedPhase());
 
 		temp.set(wgs84);
 
@@ -114,7 +107,7 @@ public class PedestalTest extends TestCase {
 			
 			az = Angle.inDegrees(45);
 			el = Angle.inDegrees(30);
-			tw = Angle.inDegrees(0);			
+			tw = Angle.inDegrees(0);
 			System.out.println("Euler Angles {A,E,T}={ "+ az.getDegrees()+", "+ el.getDegrees()+", "+ tw.getDegrees()+" }");		
 			
 			//Operator q_AN = (Operator) QuaternionMath.exp_i(ptw.put(tw)).leftMultExpJ(pel.put(el)).leftMultExpK(paz.put(az));
@@ -216,7 +209,7 @@ public class PedestalTest extends TestCase {
 //			System.out.println("q_AN : "+q_AN.toString(5)); 
 //			System.out.println("**************************************");
 			
-			Vector3 d_AN = q_AN.getImage_i(); 
+			Vector3 d_AN = q_AN.getImage_i();
 
 			CodedPhase yaw = q_AN.getEuler_k_kji();
 			CodedPhase pitch = q_AN.getEuler_j_kji();

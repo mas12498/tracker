@@ -1,14 +1,9 @@
 package tspi.model;
 
+import org.apache.commons.math3.linear.*;
+import tspi.rotation.Vector3;
+
 import java.util.List;
-
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
-import org.apache.commons.math3.linear.SingularValueDecomposition;
-
-import rotation.Vector3;
 
 // TODO this needs to be fleshed out with system matrices, error models, etc.
 // and it probably needs a much more specific name than 'Solution'
@@ -24,7 +19,7 @@ public class Solution {
 	public int _rank;
 	private static final int DIGITS = 14;
 	
-	public Solution(List<Pedestal> pedestals) {		
+	public Solution(List<Pedestal> pedestals) {
 		
 		
 		//count pedestal sensors active in fuzed solution
@@ -59,7 +54,7 @@ public class Solution {
 		int iAz = 0; 
 		int iEl = 0;
 		int iRG = 0;
-		for(Pedestal pedestal : pedestals) {	
+		for(Pedestal pedestal : pedestals) {
 			
 //			System.out.println("Pedestal "+pedestal.getSystemId()+": q_NG="+pedestal._localFrame.getLocal().toString(5)+"  q_AG = "+pedestal._apertureFrame._orientation.toString(5));
 			
@@ -160,12 +155,12 @@ public class Solution {
 			System.out.println("COL rank: "+a.getColumnDimension()); // 3
 		SingularValueDecomposition svdPerturbed = new SingularValueDecomposition(aPerturbed.getSubMatrix(0,i-1,0, aPerturbed.getColumnDimension()-1));
 		RealVector bPerturbed = new ArrayRealVector(rhsBiased);
-		RealVector yPerturbed = svdPerturbed.getSolver().solve(bPerturbed.getSubVector(0, i));				
+		RealVector yPerturbed = svdPerturbed.getSolver().solve(bPerturbed.getSubVector(0, i));
 		//angles-only solution unweighted vector -- perturbed
 		Vector3 vectorBiased_EFG = new Vector3(yPerturbed.getEntry(0), yPerturbed.getEntry(1), yPerturbed.getEntry(2));
 				
 		i = 0;
-		for(Pedestal pedestal : pedestals) {	
+		for(Pedestal pedestal : pedestals) {
 			
 			//System.out.println("Pedestal "+pedestal.getSystemId()+": q_NG="+pedestal._localFrame.getLocal().toString(5)+"  q_AG = "+pedestal._apertureFrame._orientation.toString(5));
 			

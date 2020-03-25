@@ -1,7 +1,7 @@
 /**
  * 
  */
-package rotation;
+package tspi.rotation;
 
 /**
  * Class for encoding principle arguments of angle rotators.

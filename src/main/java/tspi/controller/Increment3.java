@@ -1,36 +1,20 @@
 package tspi.controller;
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.ArrayList;
 
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
+import tspi.model.*;
+import tspi.rotation.Angle;
+import tspi.rotation.Vector3;
+
+import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
-
-import rotation.Angle;
-import rotation.Vector3;
-import tspi.model.Ellipsoid;
-import tspi.model.Pedestal;
-import tspi.model.PedestalModel;
-import tspi.model.Solution;
-import tspi.model.Target;
-import tspi.model.TargetModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.ArrayList;
 
 /** A controller for manipulating a set of pedestals and their targets. Meant 
  * to demonstrate the deliverables of Increment 1 of the Predictive TSPI 

@@ -1,4 +1,4 @@
-package rotation;
+package tspi.rotation;
 
 public class QuaternionMath {
 	

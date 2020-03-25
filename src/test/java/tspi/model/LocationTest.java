@@ -4,14 +4,10 @@
 package tspi.model;
 
 import junit.framework.TestCase;
-import rotation.Angle;
-import rotation.CodedPhase;
-//import rotation.BasisUnit;
-import rotation.Rotator;
-import rotation.Vector3;
-import tspi.model.Ellipsoid;
-//import rotation.Principle;
-import tspi.model.T_EFG_NED;
+import tspi.rotation.Angle;
+import tspi.rotation.CodedPhase;
+import tspi.rotation.Rotator;
+import tspi.rotation.Vector3;
 
 /**
  * @author mike
@@ -48,7 +44,7 @@ public class LocationTest extends TestCase {
 //					geodetic.setEllipsoidHeight(hgt);
 					
 					System.out.println("  lat "+ phi + "  lon "+ lambda);
-					geodetic.set(Angle.inDegrees(phi),Angle.inDegrees(lambda),hgt);
+					geodetic.set(Angle.inDegrees(phi), Angle.inDegrees(lambda),hgt);
 					
 					//set Geocentric with Ellipsoid object					
 					efg.set(geodetic.getGeocentric());

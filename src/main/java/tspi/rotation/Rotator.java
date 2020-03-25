@@ -1,7 +1,7 @@
 /**
  * 
  */
-package rotation;
+package tspi.rotation;
 
 /**
  * 

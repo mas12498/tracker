@@ -1,18 +1,17 @@
 package tspi.filter;
 
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
+import tspi.model.Pedestal;
+import tspi.model.PedestalModel;
+import tspi.model.Polar;
+import tspi.util.TVector;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Random;
-
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
-
-import tspi.model.Pedestal;
-import tspi.model.PedestalModel;
-import tspi.model.Polar;
-import tspi.util.TVector;
 
 /** Exercise the filter */
 class TestFilter {
@@ -29,9 +28,12 @@ class TestFilter {
 	public static void main(String args[]) {
 		
 		Pedestal pedestals[];
+		File in = new File("/home/mike/pedestalsFilter");
+//		File in = new File("/home/mike/git/mas12498/tracker/data/pedestalsIncrement.csv");
 		//File in = new File("H:/filterPedestals001.csv");		
 		//File in = new File("H:/filterPedestals010.csv");		
-		File in = new File("H:/filterPedestals.csv");		
+//		File in = new File("H:/filterPedestals0005.csv");		
+//		File in = new File("H:/filterPedestals.csv");		
 //		File in = new File("/home/mike/pedestalsFilter010.csv");
 //		File in = new File("/home/mike/photon/workspace/github/tracker/data/pedestalsFilter1.csv");
 //		File in = new File("H:/git/mas12498/tracker/data/pedestalsIncrement.csv");
@@ -54,7 +56,7 @@ class TestFilter {
 		//Set up track profile:
 		double t0 = 0.0;   //seconds initial frame time
 		double dt = 0.020; //seconds interval between frames
-		int Nt = 1000;      //number of frames
+		int Nt = 500;      //number of frames
 		
 		//Profile Kinematics starting reference:
 		TVector pos0 = new TVector(3135932.588, -5444754.209, 1103864.549); //geocentric position EFG m
@@ -62,11 +64,11 @@ class TestFilter {
 		TVector acc0 = new TVector(0.0, 0.0, 2.0);                          //acceleration EFG m/s/s
 		
 		//ProcessNoise for track profile 	
-		double processNoise = 10; 	//Q m/s/s		
+		double processNoise = 16; //16; 	//Q m/s/s		
 		
 		//track cueing offsets: 
-		TVector pOff = new TVector(800,-600,-1000);  //position cueing discrepency m
-		TVector vOff = new TVector(80,-60,-30);      //velocity cueing discrepency m/s
+		TVector pOff = new TVector(80,-60,-100);  //position cueing discrepency m
+		TVector vOff = new TVector(8,-6,-3);      //velocity cueing discrepency m/s
 		
 		//initial track filter edits
 		TVector p0 = new TVector(pOff.add(pos0).subtract(Pedestal.getOrigin()));     //init filter position
@@ -80,10 +82,10 @@ class TestFilter {
 				acc0.arrayRealVector());
 				
 		// create filter track from pedestal array
-		Filter kalman = new KalmanFilter( pedestals , p0, v0, processNoise);
+		Filter kalman = new KalmanFilter( pedestals );
 //		//Filter cheat = new CheatFilter( trajectory );
 		
-		// test the filter
+		// test the filter on the trajectory with pedestals...time,frameInsterval,frames,stream
 		demoFilter( kalman, trajectory, pedestals, 0.0, dt, Nt, stream );
 //		//demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream ); //defined below as trivial truth passer...
 		
@@ -91,6 +93,9 @@ class TestFilter {
 		// dispose IO
 		stream.close();
 	}
+	
+	
+	
 	
 	/** Read an array of modeled pedestals from the given file */
 	public static Pedestal[] loadPedestals(File file) throws Exception {
@@ -116,11 +121,11 @@ class TestFilter {
 		
 		//return list with pedestals located and filter origin defined:
 		return pedestals;
-	}
+	} //TODO should extract this to some ensemble class, gathered with mass pointing and error perturbation. 
 	
 	/** Applies the given filter to a simulated set of track data. The target's
 	 * motion is simulated using a {@link tspi.filter.Trajectory Trajectory object},
-	 * and each {@link tspi.model.Pedestal Pedestal} is pointed at the object 
+	 * and each {@link tspi.model.Pedestal Pedestal} is pointed at the object
 	 * and perturbed by their error model. The array of noisy pedestal
 	 * measurements are then given to the filter incrementally over an interval
 	 * of time.
@@ -129,8 +134,8 @@ class TestFilter {
 	 *  - monitor the internal residuals of the filter?
 	*/
 	public static void demoFilter(
-			Filter filter, Trajectory trajectory, Pedestal pedestals[],
-			double t0, double dt, int n, PrintStream stream
+            Filter filter, Trajectory trajectory, Pedestal pedestals[],
+            double t0, double dt, int n, PrintStream stream
 	) {
 		// print the header
 		stream.append("time, S0, S1, S2, S3, S4, S5, S6, S7, S8, "
@@ -226,6 +231,15 @@ class CheatFilter implements Filter {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	public RealVector getResiduals(){
+		return null;
+	}
+	
+	public RealVector getInnovations(){
+		return null;
+	}
+	
 
 }
 

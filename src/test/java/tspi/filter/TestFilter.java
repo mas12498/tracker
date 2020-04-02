@@ -28,7 +28,7 @@ class TestFilter {
 	public static void main(String args[]) {
 		
 		Pedestal pedestals[];
-		File in = new File("/home/mike/pedestalsFilter");
+	//File in = null; //new File("/home/mike/pedestalsFilter");
 //		File in = new File("/home/mike/git/mas12498/tracker/data/pedestalsIncrement.csv");
 		//File in = new File("H:/filterPedestals001.csv");		
 		//File in = new File("H:/filterPedestals010.csv");		
@@ -38,9 +38,13 @@ class TestFilter {
 //		File in = new File("/home/mike/photon/workspace/github/tracker/data/pedestalsFilter1.csv");
 //		File in = new File("H:/git/mas12498/tracker/data/pedestalsIncrement.csv");
 //		File in = new File("C:\\Users\\Casey Shields\\eclipse-workspace\\tracker\\data\\pedestalsIncrement.csv");
-		File out = null;//new File("/home/mike/photon/workspace/github/tracker/data/testfilter.csv");
+	//File out = null; //new File("/home/mike/photon/workspace/github/tracker/data/testfilter.csv");
 //		File out = null;//new File("./tracker/data/testFilter.csv");
-		
+
+
+		File in = new File(args[0]);//pedestals file
+		File out = new File(args[1]);//filter track file
+
 		// initialize track filter IO
 		PrintStream stream = System.out;
 		try {

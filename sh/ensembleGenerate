@@ -1,0 +1,5 @@
+#! /bin/bash
+java -jar ../bin/ensembleTest.jar -Generate ../data/pedestalsEnsemble.csv ../data/referenceEnsemble.csv ../data/generatedEnsemble.csv
+# $1 : pedestalFile -- pedestals file
+# $2 : targetFile   -- target plots file
+# $3 : ensembleFile -- output measurements ensemble file (with default headers)

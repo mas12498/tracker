@@ -1,2 +1,4 @@
 #! /bin/bash
 java -jar ../bin/increment3.jar $1 $2
+# $1 : pedestals file
+# $2 : target plots file

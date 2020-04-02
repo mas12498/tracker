@@ -1,5 +1,0 @@
-id,mapRG,mapAZ,mapEL,lat(deg),lon(deg),h(m),mu_r,mu_az,mu_el,sigma_r,sigma_az,sigma_el,r,az,el
-Origin: P0,false,true,true,          10.1000000,         -60.1000000,0.0,NaN,           0.0000000,           0.0000000,NaN,           0.0040000,           0.0040000,NaN,                 NaN,                 NaN
-P1,false,true,true,          10.1000000,         -59.9000000,0.0,NaN,           0.0000000,           0.0000000,NaN,           0.0040000,           0.0040000,NaN,                 NaN,                 NaN
-P2,false,true,true,           9.9000000,         -59.9000000,0.0,NaN,           0.0000000,           0.0000000,NaN,           0.0040000,           0.0040000,NaN,                 NaN,                 NaN
-P3,false,true,true,           9.9000000,         -60.1000000,0.0,NaN,           0.0000000,           0.0000000,NaN,           0.0040000,           0.0040000,NaN,                 NaN,                 NaN

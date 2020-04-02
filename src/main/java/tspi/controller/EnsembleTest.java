@@ -12,19 +12,28 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
-// example solver arguments;
-//-solve
-//C:\\Users\\Casey\\Documents\\pedestals.csv
-//C:\\Users\\Casey\\Documents\\ensemble.csv
-//C:\\Users\\Casey\\Documents\\solution.csv
+// example test ensemble arguments;
+
 //
+//  RUN FIRST: GENERATE outputs ensembleFile
+//
+/* Test Arguments Generate Measurement Ensemble for ground pedestals */
+// -generate
+// pedestalFile.csv
+// targetFile.csv
+// ensembleFile.csv
 
-// /home/mike/repos/mike/pedestalsExample.csv
-// /home/mike/repos/mike/ensemble.csv
-// /home/mike/repos/mike/solution.csv
+//
+//  SECOND: SOLVE single point plots solutionFile
+//
+/* Test Arguments Obtain Filtered Solution for Measurement Ensemble */
+// -solve
+// pedestalFile.csv
+// ensembleFile.csv
+// solutionFile.csv
+// 4
+// true
 
-//4
-//true
 public class EnsembleTest {
 
 	protected static SimpleDateFormat dayFormat = new SimpleDateFormat("yyyy.DDD");
@@ -44,7 +53,7 @@ public class EnsembleTest {
 				File pedestalFile = new File(args[1]);//"C:\\Users\\Casey\\Documents\\pedestals.csv");
 				File targetFile = new File(args[2]);//"C:\\Users\\Casey\\Documents\\targets.csv");
 				File ensembleFile = new File(args[3]);//"C:\\Users\\Casey\\Documents\\ensemble.csv");
-				
+
 				int trials = 1;
 				
 				PrintStream ensembleStream = //System.out;
@@ -67,8 +76,8 @@ public class EnsembleTest {
 				File pedestalFile = new File(args[1]);//"C:\\Users\\Casey\\Documents\\pedestals.csv");
 				File ensembleFile = new File(args[2]);//"C:\\Users\\Casey\\Documents\\ensemble.csv");
 				File solutionFile = new File(args[3]);//"C:\\Users\\Casey\\Documents\\solution.csv");
-				int solutionCount = Integer.parseInt(args[4]);
-				boolean header = (args[5].equalsIgnoreCase("true")) ? true : false;
+				int solutionCount = Integer.parseInt(args[4]); //number of pedestals in soln
+				boolean header = (args[5].equalsIgnoreCase("true")) ? true : false; //file has column names for header.
 				
 				PrintStream solutionStream = //System.out;
 						new PrintStream(
@@ -84,9 +93,9 @@ public class EnsembleTest {
 			} else {
 				System.out.println(
 						"Usage:\n"
-						+ "EnsembleTest -generate <input pedestal path> <input targets path> <output ensemble path>\n"
+						+ "EnsembleTest -generate <input pedestal file-spec> <input targets file-spec> <output ensemble file-spec>\n"
 						+ "or\n"
-						+ "EnsembleTest -solve <input pedestal path> <input ensemble path> <ouput solution path> <solution pedestal count> <header present={true|else}>\n"
+						+ "EnsembleTest -solve <input pedestal file-spec> <input ensemble file-spec> <output solution files-spec> <pedestal count solution> <header present={true|else}>\n"
 								);
 			}
 			

@@ -1,2 +1,8 @@
 #! /bin/bash
 java -jar ../bin/monteCarlo.jar $1 $2 $3 $4 $5 $6
+# $1 : origin index of pedestals array
+# $2 : number trials Monte Carlo
+# $3 : count points grid edge dimension
+# $4 : step size between points
+# $5 : pedestals file-spec
+# $6 : grid outputs summary file-spec

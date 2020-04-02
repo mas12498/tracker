@@ -20,6 +20,16 @@ import java.util.Random;
  * with the model objects right now in interest of getting the data out...
  */
 public class MonteCarloTest {
+/**
+ * Computes Monte Carlo statistics from solutions made from Gaussian perturbations of pedestals iterating a set of ideal plots...
+ *  -- Origin is first line in pedestals file... whether is (or not) contributor of single-point solutions
+ *  -- This module loads pedestals file supplied measurement model deviations to inject noise to each pedestal los
+ * 	-- Single-point solutions for pedestals lay-down geometry.
+ *
+ * 	Usage:
+ *  MonteCarloTest originIndex, trials, count, step, <input pedestal path> <output targets path>
+ *
+ */
 
 	// note our random number generator always uses the same seed for
 	// repeatability...
@@ -65,6 +75,7 @@ public class MonteCarloTest {
 				}
 				PrintStream stream = new PrintStream(output);
 
+				//This is the single-point statistical differences output for the generated grid points:
 				testGrid(time, lat, lon, height, step, count, trials, origin, model.asList(), stream);
 
 			} else {

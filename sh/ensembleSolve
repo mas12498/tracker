@@ -1,0 +1,7 @@
+#! /bin/bash
+java -jar ../bin/ensembleTest.jar -Solve $1 $2 $3 $4 $5
+# $1 : pedestalFile  -- pedestals file
+# $2 : ensembleFile  -- measurements ensemble file
+# $3 : solutionFile  -- output file of single point plot solutions
+# $4 : solutoinCount -- number of pedestals in measurements ensemble record
+# $5 : header        -- boolean {true|false} ensemble file includes column header names 

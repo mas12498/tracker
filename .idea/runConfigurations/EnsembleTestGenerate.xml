@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="EnsembleTestGenerate" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="tspi.controller.EnsembleTest" />
+    <module name="tracker" />
+    <option name="PROGRAM_PARAMETERS" value="-generate pedestalFile.csv targetFile.csv ensembleFile.csv" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/data/EnsembleTest" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="tspi.controller.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

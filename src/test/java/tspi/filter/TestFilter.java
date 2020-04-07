@@ -2,9 +2,11 @@ package tspi.filter;
 
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import tspi.model.Ellipsoid;
 import tspi.model.Pedestal;
 import tspi.model.PedestalModel;
 import tspi.model.Polar;
+import tspi.rotation.Vector3;
 import tspi.util.TVector;
 
 import java.io.File;
@@ -43,13 +45,17 @@ class TestFilter {
 
 
 		File in = new File(args[0]);//pedestals file
-		File out = new File(args[1]);//filter track file
+		File out = new File(args[1]);//filter track-state file
+		File nav = new File(args[2]); //nav track position plots tLLh
 
 		// initialize track filter IO
 		PrintStream stream = System.out;
+		PrintStream navs = System.out;
 		try {
-			if (out!=null) 
-				stream = new PrintStream( new FileOutputStream(out) );
+			if ((out!=null)&&(nav!=null)) {
+				stream = new PrintStream(new FileOutputStream(out));
+				navs = new PrintStream(new FileOutputStream(nav));
+			}
 			pedestals = loadPedestals(in);
 			
 		} catch (Exception e) {
@@ -85,22 +91,25 @@ class TestFilter {
 				vel0.arrayRealVector(),
 				acc0.arrayRealVector());
 				
-		// create filter track from pedestal array
+		// create Kalman filter track from pedestal array
 		Filter kalman = new KalmanFilter( pedestals );
 //		//Filter cheat = new CheatFilter( trajectory );
 		
 		// test the filter on the trajectory with pedestals...time,frameInsterval,frames,stream
-		demoFilter( kalman, trajectory, pedestals, 0.0, dt, Nt, stream );
+		demoFilter( kalman, trajectory, pedestals, t0, dt, Nt, stream, navs );
 //		//demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream ); //defined below as trivial truth passer...
-		
+
+
+
 		//System.out.println(BLAS.getInstance().getClass().getName());
 		// dispose IO
+//		navs.close();
 		stream.close();
 	}
-	
-	
-	
-	
+
+
+
+
 	/** Read an array of modeled pedestals from the given file */
 	public static Pedestal[] loadPedestals(File file) throws Exception {
 		// use the pedestal model to parse the file
@@ -139,9 +148,16 @@ class TestFilter {
 	*/
 	public static void demoFilter(
             Filter filter, Trajectory trajectory, Pedestal pedestals[],
-            double t0, double dt, int n, PrintStream stream
-	) {
-		// print the header
+            double t0, double dt, int n, PrintStream stream, PrintStream navs	) {
+
+		Ellipsoid trueNav = new Ellipsoid();
+		Vector3 nav = new Vector3(Vector3.EMPTY);
+
+		// print the headers
+
+		navs.append("time, NLat, ELon, eHgt");
+		navs.println();
+
 		stream.append("time, S0, S1, S2, S3, S4, S5, S6, S7, S8, "
 				+ "dS0, dS1, dS2, dS3, dS4, dS5, dS6, dS7, dS8");
 		for (Pedestal pedestal : pedestals) {
@@ -149,12 +165,22 @@ class TestFilter {
 			stream.append( ", "+pedestal.getSystemId()+"_el");
 		}
 		stream.println();
-					
+
+
 		// generate measurements over time
 		for (double t=t0; t<t0+n*dt; t+=dt) {
 			
 			// get the true object state
 			RealVector truth = trajectory.getState( t );
+
+			// get the true nav plot
+			nav.set(truth.getEntry(0),truth.getEntry(1),truth.getEntry(2)); //functional to get LLh
+			trueNav.setGeocentric(nav);
+
+			//tabulate nav plots into csv
+			navs.append((Double.toString(t)));
+			navs.append(", "+trueNav.getNorthLatitude()+", "+trueNav.getEastLongitude()+", "+trueNav.getEllipsoidHeight()); //nav plot data
+			navs.println();
 			
 			// take perturbed measurements
 			trajectory.simulateTrack( t, pedestals, random );

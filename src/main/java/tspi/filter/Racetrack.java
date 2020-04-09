@@ -75,7 +75,35 @@ public class Racetrack implements Trajectory {
 	
 	/** v(t) = v0 + a0*t */
 	public RealVector getVelocity(double currentTime ) {
-		return new ArrayRealVector();
+		return new ArrayRealVector(new TVector(getVelocityVector(currentTime)).arrayRealVector());
+	}
+	public Vector3 getVelocityVector(double currentTime) {
+		// figure out how far along the track we are
+		double distance = ((currentTime - startTime) * velocity) % perimeter;
+
+		// linearly interpolate if on first straightaway
+		if (distance < straight)
+			return new Vector3(r2).unit().multiply(velocity);
+		else distance -= straight;
+
+		// rotate along first turn if it's there
+		if (distance < turn) {
+			double angle = Math.PI * distance / turn;
+			Vector3 v = new Vector3(r1).multiply( Math.sin(angle) )
+					.add( new Vector3(r2).multiply( Math.cos(angle) ) );
+			return v.unit().multiply(velocity);
+		} else distance -= turn;
+
+		// linearly interpolate if on second straightaway
+		if (distance < straight)
+			return new Vector3(r2).unit().multiply(-velocity);
+		else distance -= straight;
+
+		// otherwise rotate along last turn
+		double angle = Math.PI * distance / turn;
+		Vector3 v = new Vector3(r1).multiply( -Math.sin(angle) )
+				.add( new Vector3(r2).multiply( -Math.cos(angle) ) );
+		return v.unit().multiply(velocity);
 	}
 	
 	/** a(t) = a0 */

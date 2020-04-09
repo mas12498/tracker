@@ -17,8 +17,6 @@ public class TestRacetrack extends TestCase {
     double dt = racetrack.getPerimeter() / n;
 
     public void testContinuity() {
-
-
         Vector3 p0 = new Vector3( racetrack.getPositionVector(0.0) );
         double max = velocity * dt + epsilon;
         if (verbose) System.out.println( "dt="+dt+", max="+max+", epsilon="+epsilon);
@@ -29,7 +27,7 @@ public class TestRacetrack extends TestCase {
             Vector3 p1 = new Vector3( racetrack.getPositionVector(t) );
             double d = new Vector3(p1).subtract(p0).getAbs();
 
-            if(verbose) System.out.println( p0.toTupleString() + ", d="+d);
+            if(verbose) System.out.println( "t="+t+", p="+p0.toTupleString() + ", d="+d);
 
             if(d>max)
                 System.out.println("error");
@@ -44,12 +42,13 @@ public class TestRacetrack extends TestCase {
 
     public void testConstantVelocity() {
         for (double t=0; t<racetrack.getPerimeter()*2; t+=dt) {
+            Vector3 p = new Vector3( racetrack.getPositionVector(t) );
             Vector3 v = new Vector3( racetrack.getVelocityVector(t) );
             double speed = v.getAbs();
-            if(verbose) System.out.println( v.toTupleString() + ", t="+t);
+            if(verbose) System.out.println( "t="+t+", p="+p.toTupleString()+", v="+v.toTupleString());
             assertTrue(
                     "velocity must be constant",
-                    (speed - velocity <= epsilon)
+                    (Math.abs(speed - Math.abs(velocity)) <= epsilon)
             );
         }
     }

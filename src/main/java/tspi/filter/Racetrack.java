@@ -21,9 +21,9 @@ public class Racetrack implements Trajectory {
 
 		// construct some geometry
 		Vector3 up = new Vector3(0.0,0.0,1.0);
-		Vector3 d = c2.subtract(c1);
-		r1 = d.multiply(-1).crossProduct(up).unit().multiply(radius);
-		r2 = d.unit().multiply(radius);
+		Vector3 d = new Vector3(c2).subtract(c1);
+		r1 = new Vector3(d).multiply(-1).crossProduct(up).unit().multiply(radius);
+		r2 = new Vector3(d).unit().multiply(radius);
 		straight = d.getAbs();
 		turn = Math.PI * radius;
 		perimeter = 2 * turn + 2 * straight;
@@ -45,28 +45,32 @@ public class Racetrack implements Trajectory {
 		// linearly interpolate if on first straightaway
 		if (distance < straight) {
 			double k = distance/straight;
-			Vector3 p = c1.multiply(1.0-k).add( c2.multiply(k) );
+			Vector3 p = new Vector3(c1).multiply(1.0-k)
+					.add( new Vector3(c2).multiply(k) );
 			return p.add(r1);
 		} else distance -= straight;
 
 		// rotate along first turn if it's there
 		if (distance < turn) {
 			double angle = Math.PI * distance / turn;
-			Vector3 p = r1.multiply( Math.cos(angle) ).add( r2.multiply( Math.sin(angle) ) );
-			return c2.add( p );
+			Vector3 p = new Vector3(r1).multiply( Math.cos(angle) )
+					.add( new Vector3(r2).multiply( Math.sin(angle) ) );
+			return new Vector3(c2).add( p ); // TODO I could just use Vector3.slerp()...
 		} else distance -= turn;
 
 		// linearly interpolate if on second straightaway
 		if (distance < straight) {
 			double k = distance/straight;
-			Vector3 p = c1.multiply(k).add( c2.multiply(1.0-k) );
+			Vector3 p = new Vector3(c1).multiply(k)
+					.add( new Vector3(c2).multiply(1.0-k) );
 			return p.subtract(r1);
 		} else distance -= straight;
 
 		// otherwise rotate along last turn
 		double angle = Math.PI * distance / turn;
-		Vector3 p = r1.multiply( -Math.cos(angle) ).add( r2.multiply( -Math.sin(angle) ) );
-		return c1.add( p );
+		Vector3 p = new Vector3(r1).multiply( -Math.cos(angle) )
+				.add( new Vector3(r2).multiply( -Math.sin(angle) ) );
+		return new Vector3(c1).add( p );
 	}
 	
 	/** v(t) = v0 + a0*t */

@@ -4,11 +4,13 @@ import junit.framework.TestCase;
 import tspi.rotation.Vector3;
 import tspi.util.TVector;
 
-/** Trying to make some sanity tests for the 'racetrack' type target simulator. But there are some ideas here that could
- * apply to arbitrary paths from any simulator; like tests for uniform motion, or closed paths, or basic continuity checks.
- * TODO add numerical path integrals for velocity and acceleration; should be about zero for uniform, closed motion...
+/** Trying to make some sanity tests for the 'racetrack' type target simulator.
+ * There are some ideas here that could apply to arbitrary paths from any simulator;
+ * like tests for uniform motion, or closed paths, or basic continuity checks.
+ * @author Casey
  * */
 public class TestRacetrack extends TestCase {
+
     boolean verbose = true;
     double radius = 1.0;
     double velocity = 1.0;
@@ -17,94 +19,129 @@ public class TestRacetrack extends TestCase {
     Racetrack racetrack = new Racetrack(0.0, c1, c2, radius, velocity);
     double epsilon = 0.000000000001;
     int n = 5000;
-    double dt = racetrack.getPerimeter() / n;
+    double dt = racetrack.getPerimeter() / (velocity * n);
     // TODO tests methods should accept racetrack and some parameters as an argument so we can test a variety of configurations
 
-    /** Make sure successive points within some time bound are within some position bound.
-     * Should be generalized beyond just position and constant velocity cases... */
+    /** Make sure none of the piecewise-defined parts of the racetrack are disjoint */
     public void testContinuity() {
-        Vector3 p0 = new Vector3( racetrack.getPositionVector(0.0) );
-        double max = velocity * dt + epsilon;
-        if (verbose) System.out.println( "dt="+dt+", max="+max+", epsilon="+epsilon);
+        double endtime = 2 * racetrack.getPerimeter() / racetrack.getVelocity();
+        double bounds = velocity * dt + epsilon;
+        continuity(racetrack, 0, endtime, dt, bounds);
+    }
 
-        if(verbose) System.out.println(p0.toTupleString());
+    /** ensures the racetrack motion really does have uniform speed */
+    public void testConstantSpeed() {
+        double endtime = racetrack.getPerimeter() / racetrack.getVelocity();
+        uniformMotion(racetrack, 0, endtime, dt, velocity);
+    }
 
-        for (double t=dt; t<racetrack.getPerimeter()*2; t+=dt) {
-            Vector3 p1 = new Vector3( racetrack.getPositionVector(t) );
+    /** the analytic instantaneous velocity should compare well with numerical differentiation if sampled densely enough.
+     * This should be made into a general test for all trajectories, and acceleration...*/
+    public void testVelocityNumerically() {
+        // crud, I don't know, how much can we expect velocity and finite differences to agree?
+        double bound = dt*dt*velocity*velocity; // sure, let's go with that. Keep in mind this changes with sampling rates, velocity, the order of the function, etc.
+        double endtime = racetrack.getPerimeter() / racetrack.getVelocity();
+        differentiatePosition(racetrack, 0.0, endtime, dt, bound);
+    }
+
+    /** Furthermore the difference in position over an interval should match the sum of densely sampled velocities over that interval. */
+    public void testPositionNumerically() {
+        double endtime = racetrack.getPerimeter() / racetrack.getVelocity();
+        integrateVelocity(racetrack, 0, endtime, n, epsilon);
+    }
+
+    /** Make sure successive points within some time bound are within some position bound.
+     * Should be generalized to handle velocity as well... */
+    public void continuity(Racetrack path, double t0, double t1, double dt, double bound) {
+        if (verbose) System.out.println( "\nt\tPi\tPj\tPk\t|dP|");
+
+        Vector3 p0 = new Vector3( path.getPositionVector(0.0) );
+        if(verbose) System.out.println( "0.0\t"+p0.toString()+"\t0.0");
+
+        for (double t=dt; t<t1; t+=dt) {
+            Vector3 p1 = new Vector3( path.getPositionVector(t) );
             double d = new Vector3(p1).subtract(p0).getAbs();
 
-            if(verbose) System.out.println( "t="+t+", p="+p0.toTupleString() + ", d="+d);
+            if (verbose) System.out.println( t+"\t"+p0.toString()+"\t"+d);
 
-            if(d>max)
-                System.out.println("error");
-
+            if (d>bound) System.out.println("error");
             assertTrue(
                     "subsequent points violate velocity bounds at t="+t+", d="+d,
-                    (d <= max)
+                    (d <= bound)
             );
             p0 = p1;
         }
     }
 
-    /** ensures the racetrack motion really does have uniform speed */
-    public void testConstantSpeed() {
-        for (double t=0; t<racetrack.getPerimeter()*2; t+=dt) {
-            Vector3 p = new Vector3( racetrack.getPositionVector(t) );
-            Vector3 v = new Vector3( racetrack.getVelocityVector(t) );
+    /** Sample the path over the specified interval, ensuring that velocity magnitude remains constant */
+    public void uniformMotion(Racetrack path, double t0, double t1, double dt, double velocity) {
+        if (verbose) System.out.println("target speed:"+velocity+"\nt\tVi\tVj\tVk\t|dV|");
+
+        for (double t=0; t<t1; t+=dt) {
+            Vector3 v = new Vector3( path.getVelocityVector(t) );
             double speed = v.getAbs();
-            if(verbose) System.out.println( "t="+t+", p="+p.toTupleString()+", v="+v.toTupleString());
+
+            if(verbose) System.out.println( t+"\t"+v.toString()+"\t"+speed);
             assertTrue(
-                    "velocity must be constant",
+                    "velocity differs too greatly to be uniform motion",
                     (Math.abs(speed - Math.abs(velocity)) <= epsilon)
             );
         }
     }
 
-    /** the analytic instantaneous velocity should compare well with numerical differentiation.
-     * This should be made into a general test for all trajectories, and acceleration...*/
-    public void testAgainstNumericalDerivative() {
-        // crud, I don't know, how much can we expect velocity and finite differences to agree?
-        double bound = dt*dt*velocity*velocity; // sure, let's go with that. Keep in mind this changes with sampling rates, velocity, the order of the function, etc.
+    /** Sample the path over the specified interval, and ensure positional finite differences and
+     * analytic velocity agree to within a given bound. */
+    public void differentiatePosition(Racetrack path, double t0, double t1, double dt, double bound) {
+        if (verbose) System.out.println("t\tdP\tdt*V\t|dP-dt*V|");
 
         // incrementally sample motion
-        Vector3 p0 = new Vector3( racetrack.getPositionVector(0.0) );
-        for (double t=dt; t<racetrack.getPerimeter()*2; t+=dt) {
+        Vector3 p0 = new Vector3( path.getPositionVector(0.0) );
+        for (double t=dt; t<t1; t+=dt) {
 
             // compute finite difference as an estimate for velocity
-            Vector3 p1 = new Vector3( racetrack.getPositionVector(t) );
+            Vector3 p1 = new Vector3( path.getPositionVector(t) );
             Vector3 dp = new Vector3(p1).subtract(p0);
             // might consider interpolating from more points for better bounds...
 
             // use analytic velocity at endpoint as your truth
-            Vector3 v = new Vector3( racetrack.getVelocityVector(t) );
+            Vector3 v = new Vector3( path.getVelocityVector(t) ).multiply(dt);
 
             // find the error
-            Vector3 e = new Vector3(v).multiply(dt).subtract(dp);
+            Vector3 e = new Vector3(v).subtract(dp);
             double error = e.getAbs();
 
-            if(verbose) System.out.println("e="+e.toTupleString()+", ||e||="+error+", t="+t);
-            //System.out.println("p="+p1.toTupleString()+"v="+v.toTupleString()+", e="+e.toTupleString()+", t="+t);
-
+            if (verbose) System.out.println(t+"\t"+dp+"\t"+v+"\t"+error);
             assertTrue(
-                    "finite differences varied more than |e|="+bound+" from analytic velocity at t="+t+", e="+e.toTupleString(),
+                    "finite differences varied more than |e|="+bound+
+                            " from analytic velocity at t="+t+", e="+e.toTupleString(),
                     (error<bound)
             );
             p0 = p1;
-            v = new Vector3( racetrack.getVelocityVector(t) );
+            v = new Vector3( path.getVelocityVector(t) );
         }
     }
 
-    public void testClosedPath() {
-        isClosedPath(racetrack, 0, dt, racetrack.perimeter, 1e-9);
-    }
-    public void isClosedPath(Trajectory path, double ti, double dt, double tf, double bound) {
+    /**  Sample the path over the given interval, ensuring the sum of velocity agrees with the positional difference. */
+    public void integrateVelocity(Trajectory path, double t0, double t1, int samples, double bound) {
+        // compute Velocity integral using the fundamental theorem of calculus
+        Vector3 p0 = new TVector(path.getPosition(t0));
+        Vector3 p1 = new TVector(path.getPosition(t1));
+        Vector3 dp = new Vector3(p1).subtract(p0);
+
+        // Numerically integrate velocity in a naive fashion
         Vector3 vsum = new Vector3(0,0,0);
-        for (double t=ti; t<tf; t+=dt) {
-            TVector v = new TVector(path.getVelocity(t));
+        for (double k=0; k<samples; k++) {
+        // for (double t=t0; t<t1; t+=dt) { // more round-off error doing it this way...
+            double t = t0 + (k/samples)*(t1-t0);
+            Vector3 v = new TVector(path.getVelocity(t));//.multiply(dt);
             vsum.add(v);
         }
-        double error = vsum.getAbs();
-        if(verbose) System.out.println("e="+vsum.toTupleString()+", |e|="+error);
+        vsum.divide(samples);
+
+        // compare the error between the two methods
+        Vector3 e = new Vector3(dp).subtract(vsum);
+        double error = e.getAbs();
+        if (verbose) System.out.println("samples = "+samples+"\ndP = "+dp+"\nsum(dV) = "+vsum+"\n|e| = "+error);
         assertTrue(
                 "Path Integral of velocity over a circuit should be zero for a closed path",
                 error < bound

@@ -8,16 +8,16 @@ import tspi.util.TVector;
 /** Makes a circuit consisting of two straight aways, and two turns all in a plane. */
 public class Racetrack implements Trajectory {
 
-	double startTime, radius, velocity, perimeter, straight, turn;
+	double radius, velocity, startTime, perimeter, straight, turn;
 	Vector3 c1, c2, r1, r2;
 
 	public Racetrack(double startTime, Vector3 c1, Vector3 c2, double radius, double velocity) {
 		super();
-		this.startTime = startTime;
 		this.c1 = c1;
 		this.c2 = c2;
 		this.radius = radius;
 		this.velocity = velocity;
+		this.startTime = startTime;
 
 		// construct some geometry
 		Vector3 up = new Vector3(0.0,0.0,1.0);
@@ -31,6 +31,7 @@ public class Racetrack implements Trajectory {
 
 	public double getPerimeter() {return perimeter;}
 	public double getRadius() {return radius;}
+	public double getVelocity() {return velocity;}
 	public Vector3 getCenter1() {return c1;}
 	public Vector3 getCenter2() {return c2;}
 

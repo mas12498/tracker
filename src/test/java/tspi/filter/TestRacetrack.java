@@ -2,6 +2,7 @@ package tspi.filter;
 
 import junit.framework.TestCase;
 import tspi.rotation.Vector3;
+import tspi.util.TVector;
 
 /** Trying to make some sanity tests for the 'racetrack' type target simulator. But there are some ideas here that could
  * apply to arbitrary paths from any simulator; like tests for uniform motion, or closed paths, or basic continuity checks.
@@ -64,7 +65,6 @@ public class TestRacetrack extends TestCase {
     public void testAgainstNumericalDerivative() {
         // crud, I don't know, how much can we expect velocity and finite differences to agree?
         double bound = dt*dt*velocity*velocity; // sure, let's go with that. Keep in mind this changes with sampling rates, velocity, the order of the function, etc.
-        // But we should take a closer look sometime...  we also might consider implementing higher order numerical estimates
 
         // incrementally sample motion
         Vector3 p0 = new Vector3( racetrack.getPositionVector(0.0) );
@@ -73,8 +73,9 @@ public class TestRacetrack extends TestCase {
             // compute finite difference as an estimate for velocity
             Vector3 p1 = new Vector3( racetrack.getPositionVector(t) );
             Vector3 dp = new Vector3(p1).subtract(p0);
+            // might consider interpolating from more points for better bounds...
 
-            // use analytic velocity at midpoint as your truth
+            // use analytic velocity at endpoint as your truth
             Vector3 v = new Vector3( racetrack.getVelocityVector(t) );
 
             // find the error
@@ -89,8 +90,24 @@ public class TestRacetrack extends TestCase {
                     (error<bound)
             );
             p0 = p1;
-            v = new Vector3( racetrack.getVelocityVector(t) ); // might consider interpolating velocity...
+            v = new Vector3( racetrack.getVelocityVector(t) );
         }
-    } // TODO while this is a good sanity check for Trajectories in general, we could just test the transitions between racetrack piecewise defined geometries...
+    }
 
+    public void testClosedPath() {
+        isClosedPath(racetrack, 0, dt, racetrack.perimeter, 1e-9);
+    }
+    public void isClosedPath(Trajectory path, double ti, double dt, double tf, double bound) {
+        Vector3 vsum = new Vector3(0,0,0);
+        for (double t=ti; t<tf; t+=dt) {
+            TVector v = new TVector(path.getVelocity(t));
+            vsum.add(v);
+        }
+        double error = vsum.getAbs();
+        if(verbose) System.out.println("e="+vsum.toTupleString()+", |e|="+error);
+        assertTrue(
+                "Path Integral of velocity over a circuit should be zero for a closed path",
+                error < bound
+        );
+    } // NOTE we might just want to extract predicates from these tests, rather than 'assert'ive test code...
 }

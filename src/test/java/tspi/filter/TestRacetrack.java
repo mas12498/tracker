@@ -43,6 +43,11 @@ public class TestRacetrack extends TestCase {
         double endtime = racetrack.getPerimeter() / racetrack.getVelocity();
         differentiatePosition(racetrack, 0.0, endtime, dt, bound);
     }
+    public void testAccelerationNumerically() {
+        double bound = dt*velocity*velocity/radius; // max acceleration when turn starts?
+        double endtime = racetrack.getPerimeter() / racetrack.getVelocity();
+        differentiateVelocity(racetrack, 0.0, endtime, dt, bound);
+    }
 
     /** Furthermore the difference in position over an interval should match the sum of densely sampled velocities over that interval. */
     public void testPositionNumerically() {
@@ -55,7 +60,7 @@ public class TestRacetrack extends TestCase {
     public void continuity(Racetrack path, double t0, double t1, double dt, double bound) {
         if (verbose) System.out.println( "\nt\tPi\tPj\tPk\t|dP|");
 
-        Vector3 p0 = new Vector3( path.getPositionVector(0.0) );
+        Vector3 p0 = new Vector3( path.getPositionVector(t0) );
         if(verbose) System.out.println( "0.0\t"+p0.toString()+"\t0.0");
 
         for (double t=dt; t<t1; t+=dt) {
@@ -92,10 +97,10 @@ public class TestRacetrack extends TestCase {
     /** Sample the path over the specified interval, and ensure positional finite differences and
      * analytic velocity agree to within a given bound. */
     public void differentiatePosition(Racetrack path, double t0, double t1, double dt, double bound) {
-        if (verbose) System.out.println("t\tdP\tdt*V\t|dP-dt*V|");
+        if (verbose) System.out.println("t\tP(t)\tV(t)\t|dP-dt*V|");
 
         // incrementally sample motion
-        Vector3 p0 = new Vector3( path.getPositionVector(0.0) );
+        Vector3 p0 = new Vector3( path.getPositionVector(t0) );
         for (double t=dt; t<t1; t+=dt) {
 
             // compute finite difference as an estimate for velocity
@@ -104,20 +109,50 @@ public class TestRacetrack extends TestCase {
             // might consider interpolating from more points for better bounds...
 
             // use analytic velocity at endpoint as your truth
-            Vector3 v = new Vector3( path.getVelocityVector(t) ).multiply(dt);
+            Vector3 v = new Vector3( path.getVelocityVector(t) );
 
             // find the error
-            Vector3 e = new Vector3(v).subtract(dp);
+            Vector3 e = new Vector3(v).multiply(dt).subtract(dp);
             double error = e.getAbs();
 
-            if (verbose) System.out.println(t+"\t"+dp+"\t"+v+"\t"+error);
+            if (verbose) System.out.println(t+"\t"+p1+"\t"+v+"\t"+error);
             assertTrue(
                     "finite differences varied more than |e|="+bound+
                             " from analytic velocity at t="+t+", e="+e.toTupleString(),
                     (error<bound)
             );
             p0 = p1;
-            v = new Vector3( path.getVelocityVector(t) );
+//            v = new Vector3( path.getVelocityVector(t) );
+        }
+    }
+
+    public void differentiateVelocity(Racetrack path, double t0, double t1, double dt, double bound) {
+        if (verbose) System.out.println("t\tV(t)\tdt*A(t)\t|dV-dt*A|");
+
+        // incrementally sample motion
+        Vector3 v0 = new Vector3( path.getVelocityVector(t0) );
+        for (double t=dt; t<t1; t+=dt) {
+
+            // compute finite difference as an estimate for velocity
+            Vector3 v1 = new Vector3( path.getVelocityVector(t) );
+            Vector3 dv = new Vector3(v1).subtract(v0);
+            // might consider interpolating from more points for better bounds...
+
+            // use analytic velocity at endpoint as your truth
+            Vector3 a = new Vector3( path.getAccelerationVector(t) );//.multiply(dt);
+
+            // find the error
+            Vector3 e = new Vector3(a).multiply(dt).subtract(dv);
+            double error = e.getAbs();
+
+            if (verbose) System.out.println(t+"\t"+v1+"\t"+a+"\t"+error);
+            assertTrue(
+                    "finite differences varied more than |e|="+bound+
+                            " from analytic velocity at t="+t+", e="+e.toTupleString(),
+                    (error<bound)
+            );
+            v0 = v1;
+            a = new Vector3( path.getAccelerationVector(t) );
         }
     }
 

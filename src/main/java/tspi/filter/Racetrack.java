@@ -124,7 +124,7 @@ public class Racetrack implements Trajectory {
 		if (distance < turn) {
 			double angle = Math.PI * distance / turn;
 			Vector3 v = new Vector3(r1).multiply( -Math.cos(angle) )
-					.add( new Vector3(r2).multiply( Math.sin(angle) ) );
+					.add( new Vector3(r2).multiply( -Math.sin(angle) ) );
 			return v.unit().multiply(velocity*velocity/radius);
 		} else distance -= turn;
 
@@ -136,7 +136,7 @@ public class Racetrack implements Trajectory {
 		// otherwise rotate along last turn
 		double angle = Math.PI * distance / turn;
 		Vector3 v = new Vector3(r1).multiply( Math.cos(angle) )
-				.add( new Vector3(r2).multiply( -Math.sin(angle) ) );
+				.add( new Vector3(r2).multiply( Math.sin(angle) ) );
 		return v.unit().multiply(velocity*velocity/radius);
 	}
 	

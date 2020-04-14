@@ -1,6 +1,8 @@
 package tspi.filter;
 
 import junit.framework.TestCase;
+import tspi.model.Ellipsoid;
+import tspi.rotation.Angle;
 import tspi.rotation.Vector3;
 import tspi.util.TVector;
 
@@ -10,6 +12,7 @@ import tspi.util.TVector;
  * @author Casey
  * */
 public class TestRacetrack extends TestCase {
+
 
     boolean verbose = true;
     double radius = 1.0;
@@ -60,11 +63,11 @@ public class TestRacetrack extends TestCase {
     public void continuity(Racetrack path, double t0, double t1, double dt, double bound) {
         if (verbose) System.out.println( "\nt\tPi\tPj\tPk\t|dP|");
 
-        Vector3 p0 = new Vector3( path.getPositionVector(t0) );
+        Vector3 p0 = new TVector( path.getPosition(t0) );
         if(verbose) System.out.println( "0.0\t"+p0.toString()+"\t0.0");
 
         for (double t=dt; t<t1; t+=dt) {
-            Vector3 p1 = new Vector3( path.getPositionVector(t) );
+            Vector3 p1 = new TVector( path.getPosition(t) );
             double d = new Vector3(p1).subtract(p0).getAbs();
 
             if (verbose) System.out.println( t+"\t"+p0.toString()+"\t"+d);
@@ -83,7 +86,7 @@ public class TestRacetrack extends TestCase {
         if (verbose) System.out.println("target speed:"+velocity+"\nt\tVi\tVj\tVk\t|dV|");
 
         for (double t=0; t<t1; t+=dt) {
-            Vector3 v = new Vector3( path.getVelocityVector(t) );
+            Vector3 v = new TVector( path.getVelocity(t) );
             double speed = v.getAbs();
 
             if(verbose) System.out.println( t+"\t"+v.toString()+"\t"+speed);
@@ -100,16 +103,16 @@ public class TestRacetrack extends TestCase {
         if (verbose) System.out.println("t\tP(t)\tV(t)\t|dP-dt*V|");
 
         // incrementally sample motion
-        Vector3 p0 = new Vector3( path.getPositionVector(t0) );
+        Vector3 p0 = new TVector( path.getPosition(t0) );
         for (double t=dt; t<t1; t+=dt) {
 
             // compute finite difference as an estimate for velocity
-            Vector3 p1 = new Vector3( path.getPositionVector(t) );
+            Vector3 p1 = new TVector( path.getPosition(t) );
             Vector3 dp = new Vector3(p1).subtract(p0);
             // might consider interpolating from more points for better bounds...
 
             // use analytic velocity at endpoint as your truth
-            Vector3 v = new Vector3( path.getVelocityVector(t) );
+            Vector3 v = new TVector( path.getVelocity(t) );
 
             // find the error
             Vector3 e = new Vector3(v).multiply(dt).subtract(dp);
@@ -130,16 +133,16 @@ public class TestRacetrack extends TestCase {
         if (verbose) System.out.println("t\tV(t)\tdt*A(t)\t|dV-dt*A|");
 
         // incrementally sample motion
-        Vector3 v0 = new Vector3( path.getVelocityVector(t0) );
+        Vector3 v0 = new TVector( path.getVelocity(t0) );
         for (double t=dt; t<t1; t+=dt) {
 
             // compute finite difference as an estimate for velocity
-            Vector3 v1 = new Vector3( path.getVelocityVector(t) );
+            Vector3 v1 = new TVector( path.getVelocity(t) );
             Vector3 dv = new Vector3(v1).subtract(v0);
             // might consider interpolating from more points for better bounds...
 
             // use analytic velocity at endpoint as your truth
-            Vector3 a = new Vector3( path.getAccelerationVector(t) );//.multiply(dt);
+            Vector3 a = new TVector( path.getAcceleration(t) );//.multiply(dt);
 
             // find the error
             Vector3 e = new Vector3(a).multiply(dt).subtract(dv);
@@ -152,7 +155,7 @@ public class TestRacetrack extends TestCase {
                     (error<bound)
             );
             v0 = v1;
-            a = new Vector3( path.getAccelerationVector(t) );
+            a = new TVector( path.getAcceleration(t) );
         }
     }
 

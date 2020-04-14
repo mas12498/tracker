@@ -13,13 +13,14 @@ import tspi.util.TVector;
  * */
 public class TestRacetrack extends TestCase {
 
-
+    double lat=10.0, lon=-130, eh=10000;
+    Ellipsoid origin = new Ellipsoid(Angle.inDegrees(lat), Angle.inDegrees(lon), eh);
     boolean verbose = true;
     double radius = 1.0;
     double velocity = 1.0;
     Vector3 c1 = new Vector3(0,0,0);
     Vector3 c2 = new Vector3(0,2,0);
-    Racetrack racetrack = new Racetrack(0.0, c1, c2, radius, velocity);
+    Racetrack racetrack = new Racetrack(0.0, origin, c1, c2, radius, velocity);
     double epsilon = 0.000000000001;
     int n = 5000;
     double dt = racetrack.getPerimeter() / (velocity * n);

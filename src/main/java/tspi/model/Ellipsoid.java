@@ -20,7 +20,7 @@ public class Ellipsoid {
 	protected final Angle _longitude;
 	protected double _height;
 	
-	protected Ellipsoid(Angle latitude, Angle longitude, double height){
+	public Ellipsoid(Angle latitude, Angle longitude, double height){
 		_latitude = new Angle(latitude);
 		_longitude = new Angle (longitude);
 		_height = height;
@@ -54,7 +54,7 @@ public class Ellipsoid {
 	}
 
 	/**
-	 * @param set North latitude.
+	 * @param latitude North latitude.
 	 */
 	public void setNorthLatitude(Angle latitude) {
 		_latitude.set(latitude);
@@ -68,7 +68,7 @@ public class Ellipsoid {
 	}
 	
 	/**
-	 * @param set East longitude
+	 * @param longitude East longitude
 	 */
 	public void setEastLongitude(Angle longitude) {
 		this._longitude.set(longitude);
@@ -82,7 +82,7 @@ public class Ellipsoid {
 	}
 
 	/**
-	 * @param _height the _height to set
+	 * @param height the _height to set
 	 */
 	public void setEllipsoidHeight(double height) {
 		this._height = height;

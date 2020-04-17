@@ -9,7 +9,7 @@ import tspi.util.TVector;
 import java.util.Random;
 
 /** A parametric model of the simulated trajectory. */
-interface Trajectory {
+public interface Trajectory {
 	
 	RealVector getPosition(double time);
 

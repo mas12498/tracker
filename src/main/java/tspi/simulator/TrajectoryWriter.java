@@ -1,8 +1,6 @@
 package tspi.simulator;
 
 import org.apache.commons.math3.linear.RealVector;
-import tspi.filter.Racetrack;
-import tspi.filter.Trajectory;
 import tspi.model.Ellipsoid;
 import tspi.model.Ensemble;
 import tspi.model.Pedestal;

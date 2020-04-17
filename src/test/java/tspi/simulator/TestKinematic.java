@@ -1,4 +1,6 @@
-package tspi.filter;
+package tspi.simulator;
+
+import tspi.simulator.Kinematic;
 
 public class TestKinematic {
 

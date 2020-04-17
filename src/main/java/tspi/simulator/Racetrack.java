@@ -1,4 +1,4 @@
-package tspi.filter;
+package tspi.simulator;
 
 import org.apache.commons.math3.linear.RealVector;
 import tspi.model.Ellipsoid;

@@ -5,6 +5,8 @@ import tspi.model.Ensemble;
 import tspi.model.Pedestal;
 import tspi.model.Polar;
 import tspi.rotation.Angle;
+import tspi.simulator.Kinematic;
+import tspi.simulator.Trajectory;
 import tspi.util.TVector;
 
 import java.io.BufferedReader;
@@ -21,7 +23,7 @@ import java.util.Random;
 
 /** This example is for applying a Filter against the pre-recorded measurements of an ensemble.
  * It also provides the ability to generate some example measurement data using a
- * {@link tspi.filter.Trajectory Trajectory} and a Pedestal ensemble. */
+ * {@link Trajectory Trajectory} and a Pedestal ensemble. */
 public class TestMeasurements {
 
 	static Random random = new Random(1);

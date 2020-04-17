@@ -6,7 +6,7 @@
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/data/FilterTest" />
     <extension name="coverage">
       <pattern>
-        <option name="PATTERN" value="tspi.filter.*" />
+        <option name="PATTERN" value="tspi.simulator.*" />
         <option name="ENABLED" value="true" />
       </pattern>
     </extension>

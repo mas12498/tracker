@@ -1,9 +1,11 @@
-package tspi.filter;
+package tspi.simulator;
 
 import junit.framework.TestCase;
 import tspi.model.Ellipsoid;
 import tspi.rotation.Angle;
 import tspi.rotation.Vector3;
+import tspi.simulator.Racetrack;
+import tspi.simulator.Trajectory;
 import tspi.util.TVector;
 
 /** Trying to make some sanity tests for the 'racetrack' type target simulator.

@@ -7,6 +7,8 @@ import tspi.model.Pedestal;
 import tspi.model.PedestalModel;
 import tspi.model.Polar;
 import tspi.rotation.Vector3;
+import tspi.simulator.Kinematic;
+import tspi.simulator.Trajectory;
 import tspi.util.TVector;
 
 import java.io.File;
@@ -137,7 +139,7 @@ class TestFilter {
 	} //TODO should extract this to some ensemble class, gathered with mass pointing and error perturbation. 
 	
 	/** Applies the given filter to a simulated set of track data. The target's
-	 * motion is simulated using a {@link tspi.filter.Trajectory Trajectory object},
+	 * motion is simulated using a {@link Trajectory Trajectory object},
 	 * and each {@link tspi.model.Pedestal Pedestal} is pointed at the object
 	 * and perturbed by their error model. The array of noisy pedestal
 	 * measurements are then given to the filter incrementally over an interval

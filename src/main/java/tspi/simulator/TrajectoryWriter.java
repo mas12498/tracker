@@ -11,6 +11,7 @@ import tspi.rotation.Vector3;
 import tspi.util.TVector;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.Random;
 
@@ -91,10 +92,11 @@ public class TrajectoryWriter {
             writer.setSensors( ensemble );
 
             // write the trajectory profile to output
-            int n = 5000;
-            double dt = (racetrack.getPerimeter() / velocity) / n;
+            double dt = 0.02; // 50 hertz
+            int n = (int)Math.floor((racetrack.getPerimeter() / velocity) / dt); // one circuit
             Random random = new Random( 0L ); // System.nanoTime() );
-            PrintStream output = System.out; // new PrintStream();
+            File file = new File("./data/TrajectoryTest/racetrack.csv");
+            PrintStream output = new PrintStream( new FileOutputStream(file) ); // System.out;
             writer.write( start, dt, n, output, random);
 
         } catch(Exception exception) {

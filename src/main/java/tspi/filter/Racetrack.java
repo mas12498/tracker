@@ -1,10 +1,8 @@
 package tspi.filter;
 
-import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 import tspi.model.Ellipsoid;
 import tspi.model.T_EFG_NED;
-import tspi.rotation.Angle;
 import tspi.rotation.QuaternionMath;
 import tspi.rotation.Rotator;
 import tspi.rotation.Vector3;

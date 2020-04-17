@@ -21,7 +21,6 @@ public class TestRacetrack extends TestCase {
     Vector3 c1 = new Vector3(0,0,0);
     Vector3 c2 = new Vector3(0,2,0);
     Racetrack racetrack = new Racetrack(0.0, origin, c1, c2, radius, velocity);
-    double epsilon = 0.000000000001;
     int n = 5000;
     double dt = racetrack.getPerimeter() / (velocity * n);
     // TODO tests methods should accept racetrack and some parameters as an argument so we can test a variety of configurations
@@ -29,14 +28,16 @@ public class TestRacetrack extends TestCase {
     /** Make sure none of the piecewise-defined parts of the racetrack are disjoint */
     public void testContinuity() {
         double endtime = 2 * racetrack.getPerimeter() / racetrack.getVelocity();
-        double bounds = velocity * dt + epsilon;
+        double rotationEpsilon = 0.000000001;
+        double bounds = velocity * dt + rotationEpsilon;
         continuity(racetrack, 0, endtime, dt, bounds);
     }
 
     /** ensures the racetrack motion really does have uniform speed */
     public void testConstantSpeed() {
         double endtime = racetrack.getPerimeter() / racetrack.getVelocity();
-        uniformMotion(racetrack, 0, endtime, dt, velocity);
+        double epsilon = 0.000000000001;
+        uniformMotion(racetrack, 0, endtime, dt, velocity, epsilon);
     }
 
     /** the analytic instantaneous velocity should compare well with numerical differentiation if sampled densely enough.
@@ -56,6 +57,7 @@ public class TestRacetrack extends TestCase {
     /** Furthermore the difference in position over an interval should match the sum of densely sampled velocities over that interval. */
     public void testPositionNumerically() {
         double endtime = racetrack.getPerimeter() / racetrack.getVelocity();
+        double epsilon = 0.000000000001;
         integrateVelocity(racetrack, 0, endtime, n, epsilon);
     }
 
@@ -83,7 +85,7 @@ public class TestRacetrack extends TestCase {
     }
 
     /** Sample the path over the specified interval, ensuring that velocity magnitude remains constant */
-    public void uniformMotion(Racetrack path, double t0, double t1, double dt, double velocity) {
+    public void uniformMotion(Racetrack path, double t0, double t1, double dt, double velocity, double bound) {
         if (verbose) System.out.println("target speed:"+velocity+"\nt\tVi\tVj\tVk\t|dV|");
 
         for (double t=0; t<t1; t+=dt) {
@@ -93,7 +95,7 @@ public class TestRacetrack extends TestCase {
             if(verbose) System.out.println( t+"\t"+v.toString()+"\t"+speed);
             assertTrue(
                     "velocity differs too greatly to be uniform motion",
-                    (Math.abs(speed - Math.abs(velocity)) <= epsilon)
+                    (Math.abs(speed - Math.abs(velocity)) <= bound)
             );
         }
     }
@@ -156,7 +158,6 @@ public class TestRacetrack extends TestCase {
                     (error<bound)
             );
             v0 = v1;
-            a = new TVector( path.getAcceleration(t) );
         }
     }
 

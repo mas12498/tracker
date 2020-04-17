@@ -1,30 +1,32 @@
 package tspi.simulator;
 
 import org.apache.commons.math3.linear.RealVector;
+import tspi.filter.Racetrack;
 import tspi.filter.Trajectory;
+import tspi.model.Ellipsoid;
+import tspi.model.Ensemble;
 import tspi.model.Pedestal;
 import tspi.model.Polar;
+import tspi.rotation.Vector3;
 import tspi.util.TVector;
 
+import java.io.File;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.Random;
 
 /** Generates a sequence of state vectors from a Trajectory and writes them to File */
 public class TrajectoryWriter {
 
     Trajectory trajectory;
-    ArrayList<Pedestal> sensors;
+    Ensemble sensors;
 
-    public TrajectoryWriter(Trajectory trajectory) {
-        this.trajectory = trajectory;
-        this.sensors = new ArrayList<Pedestal>();
-    }
+    public TrajectoryWriter() {}
 
-    public TrajectoryWriter addSensor(Pedestal pedestal) {
-        this.sensors.add( pedestal );
-        return this;
-    }
+    public Trajectory getTrajectory() {return trajectory;}
+    public Ensemble getSensors() {return sensors;}
+
+    public void setTrajectory(Trajectory trajectory) {this.trajectory = trajectory;}
+    public void setSensors(Ensemble sensors) {this.sensors = sensors;}
 
     /** Print the required info into a CSV file with the following columns;
      * timeSec,trackE,trackF,trackG,A_mode,A_rg,A_az,A_el,B_mode,B_rg,B_az,B_el,C_mode,C_rg,C_az,Cel
@@ -32,17 +34,17 @@ public class TrajectoryWriter {
     public void write(double t0, double dt, int n, PrintStream output, Random random) {
         // sample the time interval
         for (double i=0; i<n; i++) {
-            double t = t0 + n*dt;
+            double t = t0 + dt*i;
 
             // find the current trajectory position
             RealVector position = trajectory.getPosition(t);
             TVector efg = new TVector(position);
 
             // Print the trajectory info
-            output.print( t+','
-                    +efg.getX()+','
-                    +efg.getY()+','
-                    +efg.getZ()+',' );
+            output.print( t+","
+                    +efg.getX()+","
+                    +efg.getY()+","
+                    +efg.getZ()+"," );
 
             // for every sensor
             for (int m=0; m<sensors.size(); m++) {
@@ -52,11 +54,11 @@ public class TrajectoryWriter {
                 Polar rae = pedestal.getPerturbedLocal(random);
 
                 // print the sensor's measurment;
-                int mode = 0;// TODO : what is mode?
-                output.print( mode+','
-                        +rae.getRange()+','
-                        +rae.getSignedAzimuth().getDegrees()+','
-                        +rae.getElevation().getDegrees()+',' );
+                int mode = 0; // should we add mode to the pedestal? the Trajectory?
+                output.print( mode+","
+                        +rae.getRange()+","
+                        +rae.getSignedAzimuth().getDegrees()+","
+                        +rae.getElevation().getDegrees()+"," );
             }
 
             output.println();
@@ -64,8 +66,40 @@ public class TrajectoryWriter {
     }
 
     public static void main(String[] args) {
-        Random random = new Random( System.nanoTime() );
+        try {
+            // load an ensemble of sensors
+            File pedestalFile = new File("./data/pedestalsTest100.csv");
+            Ensemble ensemble = Ensemble.load(pedestalFile);
 
+            // set the origin to the first sensor
+            Pedestal pedestal = ensemble.get(0);
+            Ellipsoid origin = pedestal.getLocationEllipsoid();
+
+            // create a racetrack above that origin
+            double start = 0.0;
+            double length = 2000;
+            double height = 10000;
+            double radius = 1000.0;
+            double velocity = 223;
+            Vector3 c1 = new Vector3(0,0,height);
+            Vector3 c2 = new Vector3(0,length,height);
+            Racetrack racetrack = new Racetrack( start, origin, c1, c2, radius, velocity);
+
+            // create the trajectory file writer
+            TrajectoryWriter writer = new TrajectoryWriter();
+            writer.setTrajectory( racetrack );
+            writer.setSensors( ensemble );
+
+            // write the trajectory profile to output
+            int n = 5000;
+            double dt = (racetrack.getPerimeter() / velocity) / n;
+            Random random = new Random( 0L ); // System.nanoTime() );
+            PrintStream output = System.out; // new PrintStream();
+            writer.write( start, dt, n, output, random);
+
+        } catch(Exception exception) {
+            exception.printStackTrace();
+        }
     }
 
 //    int steps;

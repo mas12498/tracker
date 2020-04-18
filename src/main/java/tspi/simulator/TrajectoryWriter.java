@@ -13,7 +13,8 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.Random;
 
-/** Generates a sequence of state vectors from a Trajectory and writes them to File */
+/** Generates a sequence of state vectors from a Trajectory and writes them to File.
+ * Very similar to Test Measurements but has a different Trajectory */
 public class TrajectoryWriter {
 
     Trajectory trajectory;
@@ -29,8 +30,21 @@ public class TrajectoryWriter {
 
     /** Print the required info into a CSV file with the following columns;
      * timeSec,trackE,trackF,trackG,A_mode,A_rg,A_az,A_el,B_mode,B_rg,B_az,B_el,C_mode,C_rg,C_az,Cel
-     *  0        1       2       3   4       5   6   7       8   9     10   11   12      13  14  15 */
-    public void write(double t0, double dt, int n, PrintStream output, Random random) {
+     *  0        1       2       3   4       5   6   7       8   9     10   11   12      13  14  15
+     *  Also produces a target file for checking output with Increment III;
+     *  time, NLat, ELon, eHgt*/
+    public void write(double t0, double dt, int n, PrintStream output, PrintStream targets, Random random) {
+
+        // write the header of the file
+        output.print( "timeSec, trackE, trackF, trackG");
+        for (int m=0; m<sensors.size(); m++) {
+            String id = sensors.get(m).getSystemId();
+            output.print( ", "+id+"_mode, "+id+"_rg, "+id+"_az, "+id+"_el");
+        }
+        output.println();
+
+        targets.println("time, NLat, ELon, eHgt");
+
         // sample the time interval
         for (double i=0; i<n; i++) {
             double t = t0 + dt*i;
@@ -38,6 +52,14 @@ public class TrajectoryWriter {
             // find the current trajectory position
             RealVector position = trajectory.getPosition(t);
             TVector efg = new TVector(position);
+
+            // also write out a target file
+            Ellipsoid llh = new Ellipsoid();
+            llh.setGeocentric(efg);
+            targets.println( t + ", "
+                    + llh.getEastLongitude().getDegrees() + ", "
+                    + llh.getNorthLatitude().getDegrees() + ", "
+                    + llh.getEllipsoidHeight());
 
             // Print the trajectory info
             output.print( t+","
@@ -95,7 +117,9 @@ public class TrajectoryWriter {
             Random random = new Random( 0L ); // System.nanoTime() );
             File file = new File("./data/TrajectoryTest/racetrack.csv");
             PrintStream output = new PrintStream( new FileOutputStream(file) ); // System.out;
-            writer.write( start, dt, n, output, random);
+            File targetFile = new File("./data/TrajectoryTest/target.csv");
+            PrintStream target = new PrintStream( new FileOutputStream(targetFile));
+            writer.write( start, dt, n, output, target, random);
 
         } catch(Exception exception) {
             exception.printStackTrace();

@@ -3,7 +3,7 @@ import tspi.rotation.Angle;
 import tspi.rotation.Vector3;
 
 public class Target {
-	long time;
+	double time;
 	
 	/** TARGET GEODETIC LOCATION WGS 84 ELLIPSOID [LLh] **/
 	Ellipsoid _geodeticLocation;
@@ -16,7 +16,7 @@ public class Target {
 	
 	Solution solution;
 	
-	public Target(long time, double lat, double lon, double h) {
+	public Target(double time, double lat, double lon, double h) {
 		this.time = time;
 		this._localNavFrame = new T_EFG_NED();
 		this._geodeticLocation = new Ellipsoid(Angle.inDegrees(lat), Angle.inDegrees(lon), h);
@@ -28,7 +28,7 @@ public class Target {
 
 	public T_EFG_NED getEllipsoidalCoordinates() { return this._localNavFrame; }
 	public Vector3 getGeocentricCoordinates() { return this._location; }
-	public long getTime() { return this.time; } 
+	public Double getTime() { return this.time; }
 	public Angle getLatitude() { return _geodeticLocation.getNorthLatitude(); }
 	public Angle getLongitude() { return _geodeticLocation.getEastLongitude().signedPrinciple(); }
 	public double getHeight() { return this._geodeticLocation.getEllipsoidHeight(); }

@@ -266,20 +266,23 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 	public void load(File file) throws Exception {
 		targets.clear();
 		BufferedReader reader = new BufferedReader( new FileReader(file) );
+		final String header = "time, NLat, ELon, eHgt";
 		String line = "";
-		int n=1;
+		int n=0;
 		try {
 			while( (line=reader.readLine()) != null) {
+				n++;
+				if (line.equalsIgnoreCase(header))
+					continue;
 				String cols[] = line.split(",");
 				if(cols.length==0 || (cols.length==1&&cols[0].equals("")))
 					continue;
-				Long time = Long.parseLong(cols[0].trim());
+				Double time = Double.parseDouble(cols[0].trim());
 				Double lat = Double.parseDouble(cols[1].trim());
 				Double lon = Double.parseDouble(cols[2].trim());
 				Double h = Double.parseDouble(cols[3].trim());
 				Target target = new Target(time, lat, lon, h);
 				targets.add(target);
-				n++;
 			}
 		} catch(Exception exception) {
 			
@@ -296,7 +299,7 @@ public class TargetModel extends AbstractTableModel implements Iterable<Target> 
 	public void save(File file) throws Exception {
 		PrintWriter writer = new PrintWriter(file);
 		for(Target target : targets) {
-			writer.append(Long.toString(target.getTime()));
+			writer.append(target.getTime().toString());
 			writer.append(",");
 			writer.append(target.getLatitude().toDegreesString(DIGITS));
 			writer.append(",");

@@ -18,9 +18,17 @@ public class KalmanFilter implements Filter {
 			,_MANEUVER=false
 			,_ACQUIRE=false
 			,_ASSOCIATE=true;
-	
-	//Mode selection by: filter residuals
-	double _MEASUREMENT_NOISE 	= 0.00025;
+
+	//edit normalized innovations threshold ...
+	double _R_MULT_STEADY 		= 2.56;
+	double _R_MULT_MANEUVER 	= 6;
+	double _R_MULT_ACQUISITION	= 9;
+	double _R_MULT_ASSOCIATION	= 18;
+
+
+	//Mode selection by: filter residuals ?????
+	double _MEASUREMENT_NOISE 	= 0.004; // = 0.00025;
+	// Gaussian Z_CRIT_ * _MEASUREMENT_NOISE
 	double _CRIT_STEADY 		= 1.28 * _MEASUREMENT_NOISE;
 	double _CRIT_MANEUVER 		= 2.70 * _MEASUREMENT_NOISE;
 	double _CRIT_ACQUISITION	= 6.00 * _MEASUREMENT_NOISE;
@@ -38,12 +46,8 @@ public class KalmanFilter implements Filter {
 	int _CRIT_NUMBER_LOOSEN		= 3;
 	int _ENSEMBLES_CONVERGENCE	= 30;
 	int _ENSEMBLES_DIVERGENCE	= 30;
-    //edit innovations threshold of R multiplier for mode 
-	double _R_MULT_STEADY 		= 2.56;
-	double _R_MULT_MANEUVER 	= 6;
-	double _R_MULT_ACQUISITION	= 9;
-	double _R_MULT_ASSOCIATION	= 9;
-	
+
+
 	//mode statistcs support
 	int cntSteady = 0;
 	int cntInit = 0;

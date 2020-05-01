@@ -97,9 +97,7 @@ public class KalmanFilter implements Filter {
 			
 	/** 
 	 * Construct Kalman Filter
-	 * @param pedestals used in track fusion 
-	 * @param initPosition used in track acquisition
-	 * @param initVelocity used in track acquisition
+	 * @param pedestals used in track fusion
 //MAS test filter	 * @param processNoise used in track steady state
 	 * */
 	public KalmanFilter( Pedestal pedestals[] ) {
@@ -328,7 +326,12 @@ public class KalmanFilter implements Filter {
 		}		
 		
 		this._timePrev = time;
-		
+
+		if(_ASSOCIATE) System.out.println("\n ***Associate Track*** " + time);
+		if(_ACQUIRE) System.out.println("\n ***Acquire Track*** " + time);
+		if(_MANEUVER) System.out.println("\n ***Maneuver Track*** " + time);
+		if(_STEADY) System.out.println("\n ***Steady Track*** " + time);
+
 		if (_ASSOCIATE) { //measurements track convergence...
 						
 			RealMatrix a = _H.getSubMatrix(0, instr - 1, 0, 2);//copy();

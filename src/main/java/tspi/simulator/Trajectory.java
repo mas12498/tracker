@@ -25,7 +25,7 @@ public interface Trajectory {
 	 * @param time over segment...
 	 * @param pedestals the sensors which will take measurements of the moving object, including error
 	 * @return an array containing all the pedestals' measurements of the moving object. It's
-	 * indices correspond to the indices of the pedestal array. */
+	 * indices correspond to the indices of the pedestal array and measurements contain simulated pedestal errors. */
 	default Polar[] track(double time, Pedestal[] pedestals, Random random) {
 		
 		// find the value of the parametric model at the given time
@@ -45,7 +45,7 @@ public interface Trajectory {
 	// This version actually leaves the pedestal pointed at the perturbed location?
 	default void simulateTrack(double time, Pedestal[] pedestals, Random random) {
 		// find the value of the parametric model at the given time
-		RealVector p = this.getPosition(time);
+		RealVector p = this.getPosition(time); //true trajectory point out!
 		Vector3 efg = new TVector( p );
 		Polar[] measurements = new Polar[pedestals.length];
 

@@ -2,7 +2,7 @@
   <configuration default="false" name="Increment3 - Filter 01" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="tspi.controller.Increment3" />
     <module name="tracker" />
-    <option name="PROGRAM_PARAMETERS" value="pedestalsFilter01.csv targetsIncrement.csv" />
+    <option name="PROGRAM_PARAMETERS" value="pedestalsFilter.csv navPlot.csv" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/data/FilterTest" />
     <extension name="coverage">
       <pattern>

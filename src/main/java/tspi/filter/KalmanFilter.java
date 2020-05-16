@@ -18,17 +18,9 @@ public class KalmanFilter implements Filter {
 			,_MANEUVER=false
 			,_ACQUIRE=false
 			,_ASSOCIATE=true;
-
-	//edit normalized innovations threshold ...
-	double _R_MULT_STEADY 		= 2.56;
-	double _R_MULT_MANEUVER 	= 6;
-	double _R_MULT_ACQUISITION	= 9;
-	double _R_MULT_ASSOCIATION	= 18;
-
-
-	//Mode selection by: filter residuals ?????
-	double _MEASUREMENT_NOISE 	= 0.004; // = 0.00025;
-	// Gaussian Z_CRIT_ * _MEASUREMENT_NOISE
+	
+	//Mode selection by: filter residuals
+	double _MEASUREMENT_NOISE 	= 0.00025;
 	double _CRIT_STEADY 		= 1.28 * _MEASUREMENT_NOISE;
 	double _CRIT_MANEUVER 		= 2.70 * _MEASUREMENT_NOISE;
 	double _CRIT_ACQUISITION	= 6.00 * _MEASUREMENT_NOISE;
@@ -46,8 +38,12 @@ public class KalmanFilter implements Filter {
 	int _CRIT_NUMBER_LOOSEN		= 3;
 	int _ENSEMBLES_CONVERGENCE	= 30;
 	int _ENSEMBLES_DIVERGENCE	= 30;
-
-
+    //edit innovations threshold of R multiplier for mode 
+	double _R_MULT_STEADY 		= 2.56;
+	double _R_MULT_MANEUVER 	= 6;
+	double _R_MULT_ACQUISITION	= 9;
+	double _R_MULT_ASSOCIATION	= 9;
+	
 	//mode statistcs support
 	int cntSteady = 0;
 	int cntInit = 0;
@@ -98,7 +94,9 @@ public class KalmanFilter implements Filter {
 	RealVector _e;  //residuals v  -- measurement residuals from a posteriori measurement updates
 
 	RealMatrix _R;  //measurement noise: Modeled envelope of Gaussian measurement noise
-			
+//	RealDiagonalMatrix _Rdiag;
+	RealVector _sigmaMeasurement;
+
 	/** 
 	 * Construct Kalman Filter
 	 * @param pedestals used in track fusion
@@ -124,7 +122,9 @@ public class KalmanFilter implements Filter {
 		
 		this._Q = MatrixUtils.createRealMatrix(9,9); 			//process noise matrix Q:
 		     _Q.setSubMatrix(MatrixUtils.createRealIdentityMatrix(3).scalarMultiply(_processNoise).getData(), 6, 6);
-		
+
+		this._sigmaMeasurement = new ArrayRealVector(_numMeas);
+
 		this._Kt = MatrixUtils.createRealMatrix(_numMeas,9); 		//Kalman gain & blending matrix transposed.
 		this._D  = MatrixUtils.createRealMatrix(_numMeas,9); 		//Work RHS.
 		this._E  = MatrixUtils.createRealMatrix(_numMeas,_numMeas); 	//Work LHS.
@@ -134,8 +134,10 @@ public class KalmanFilter implements Filter {
 		this.mapSensor = new int[_numMeas];
 		
 		this._H = MatrixUtils.createRealMatrix(_numMeas, 3);		//observation matrix H:
+
 		this._w = new ArrayRealVector(_numMeas); 					//innovations w: a priori measurement differences
 		this._e = new ArrayRealVector(_numMeas); 					//residuals e: a posteriori measurement differences
+
 		this._R = MatrixUtils.createRealMatrix(_numMeas, _numMeas);	// measurement noise update R:
 			
 	}
@@ -238,11 +240,13 @@ public class KalmanFilter implements Filter {
 	 * @return number of innovations in update
 	 */
 	public int thresh(int m, double modeThresholdZ) {
+		//m possible measurements reduced by map to mRow measurements
 		int mRow = 0;
 		for(int g = 0; g < m; g++) { //edit z outliers from H,R,z,w
-			if (StrictMath.abs(_w.getEntry(g)) < (modeThresholdZ * (_R.getEntry(g,g)))) {
+			if (StrictMath.abs(_w.getEntry(g)) < modeThresholdZ * _sigmaMeasurement.getEntry(g)) {//* _R.getEntry(g,g)) {
 				_H.setRowMatrix(mRow, (_H.getRowMatrix(g)));
-				_R.setEntry(mRow, mRow, _R.getEntry(g, g));
+				_sigmaMeasurement.setEntry(mRow, _sigmaMeasurement.getEntry(g));
+				_R.setEntry(mRow, mRow, _sigmaMeasurement.getEntry(g)* _sigmaMeasurement.getEntry(g));// _R.getEntry(g, g));
 				_z.setEntry(mRow, _z.getEntry(g));
 				_w.setEntry(mRow, _w.getEntry(g));
 				mapPed[mRow] = mapPed[g];
@@ -276,8 +280,9 @@ public class KalmanFilter implements Filter {
 			if (measurements[n].getMapRG()) {
 				projectI.set(measurements[n].getAperture_i().unit());
 				_H.setRow(instr, projectI.doubleArray());
-				_z.setEntry(instr, measurements[n].getLocal().getRange() + pedLoc.getInnerProduct(projectI)); // meters track projection measured																						// error
-				_R.setEntry(instr, instr, measurements[n].getDeviationRG());
+				_z.setEntry(instr, measurements[n].getLocal().getRange() + pedLoc.getInnerProduct(projectI)); // meters track projection measured
+				_sigmaMeasurement.setEntry(instr, measurements[n].getDeviationRG()); // innovation meters
+				//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationRG());
 				mapPed[instr] = n;
 				mapSensor[instr] = 2;
 				instr += 1;
@@ -289,7 +294,8 @@ public class KalmanFilter implements Filter {
 					projectJ.set(measurements[n].getAperture_j().unit().divide(priorPedRG));
 					_H.setRow(instr, projectJ.doubleArray());
 					_z.setEntry(instr, pedLoc.getInnerProduct(projectJ)); // @radians tracke error AZ
-					_R.setEntry(instr, instr, measurements[n].getDeviationAZ().getRadians());
+					_sigmaMeasurement.setEntry(instr, measurements[n].getDeviationAZ().getRadians()); // innovation radians
+					//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationAZ().getRadians());
 					mapPed[instr] = n;
 					mapSensor[instr] = 0;
 					instr += 1;
@@ -298,7 +304,8 @@ public class KalmanFilter implements Filter {
 					projectK.set(measurements[n].getAperture_k().unit().divide(priorPedRG));
 					_H.setRow(instr, projectK.doubleArray());
 					_z.setEntry(instr, pedLoc.getInnerProduct(projectK)); // @radians track error EL
-					_R.setEntry(instr, instr, measurements[n].getDeviationEL().getRadians());
+					_sigmaMeasurement.setEntry(instr, measurements[n].getDeviationEL().getRadians()); // innovation radians
+					//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationEL().getRadians());
 					mapPed[instr] = n;
 					mapSensor[instr] = 1;
 					instr += 1;
@@ -315,7 +322,7 @@ public class KalmanFilter implements Filter {
 	@Override
 	public RealVector filter(double time, Pedestal measurements[] ) {
 						
-		//Compile measurements: {(H|z),R}
+		//Compile mapped measurements: {(H|z),R}
 		int instr = formMeasurementEnsemble(measurements);
 
 		//Prediction update (a priori)		
@@ -336,12 +343,17 @@ public class KalmanFilter implements Filter {
 		if(_MANEUVER) System.out.println("\n ***Maneuver Track*** " + time);
 		if(_STEADY) System.out.println("\n ***Steady Track*** " + time);
 
+
+
+
 		if (_ASSOCIATE) { //measurements track convergence...
 						
 			RealMatrix a = _H.getSubMatrix(0, instr - 1, 0, 2);//copy();
 			SingularValueDecomposition svd = new SingularValueDecomposition(a.getSubMatrix(0, instr - 1,0,2));
 			p_point = svd.getSolver().solve(_z.getSubVector(0, instr)); //proxy plot
 			_w = _z.subtract(_H.operate(p_point));
+
+			//edited measurement set
 			instr = thresh(instr, _R_MULT_ASSOCIATION);
 			
 			if(instr>=_CRIT_NUMBER_CONVERGE) { //ensemble plot convergence...[independent crit number?]
@@ -386,7 +398,8 @@ public class KalmanFilter implements Filter {
 			_P_ = _P_.transpose().add(_P_).scalarMultiply(1/2.0); //enforce symmetry
 			_w = residuals(_H.getSubMatrix(0, instr - 1, 0, 2), _z.getSubVector(0, instr),
 					_x_.getSubVector(0, 3));
-			
+
+			//get threshed instr count....
 			if(_STEADY) {
 				instr = thresh(instr, _R_MULT_STEADY);
 			} else if(_MANEUVER) {
@@ -396,8 +409,8 @@ public class KalmanFilter implements Filter {
 			} else {
 				
 			}
-						
-			if (instr > 0) { // Have NO new measurements to process an update:
+
+			if (instr > 0) { // Have new measurements to process an update:
 
 				_D = rightHandSideKt( // (mx3)(3x9) == (mx9)
 						_H.getSubMatrix(0, instr - 1, 0, 2), _P_.getSubMatrix(0, 2, 0, 8));
@@ -436,7 +449,8 @@ public class KalmanFilter implements Filter {
 			}
 			
 		}
-				
+
+		//Auto-tuning of residuals logic
 		if(_STEADY) {
 			if((averageResidual <= _CRIT_STEADY)&&(instr>_CRIT_NUMBER_LOOSEN)) {
 				cntSteady = cntSteady+1;

@@ -21,15 +21,15 @@ public class KalmanFilter implements Filter {
 	
 	//Mode selection by: filter residuals
 	double _MEASUREMENT_NOISE 	= 0.00025;
-	double _CRIT_STEADY 		= 1.28 * _MEASUREMENT_NOISE;
-	double _CRIT_MANEUVER 		= 2.70 * _MEASUREMENT_NOISE;
-	double _CRIT_ACQUISITION	= 6.00 * _MEASUREMENT_NOISE;
+	double _CRIT_STEADY 		= 3 * _MEASUREMENT_NOISE;
+	double _CRIT_MANEUVER 		= 6 * _MEASUREMENT_NOISE;
+	double _CRIT_ACQUISITION	= 12 * _MEASUREMENT_NOISE;
 	
 	//Process noise by mode selection
-	double _PROCESS_NOISE 	= 4.0;
-	double _STEADY_Q 		= 1.28 * _PROCESS_NOISE;
-	double _MANEUVER_Q		= 2.70 * _PROCESS_NOISE;
-	double _ACQUISITION_Q	= 6.00 * _PROCESS_NOISE;
+	//double _PROCESS_NOISE 	= 4.0;
+	double _STEADY_Q 		= 5; //1.28 * _PROCESS_NOISE;
+	double _MANEUVER_Q		= 11; //2.70 * _PROCESS_NOISE;
+	double _ACQUISITION_Q	= 24; //6.00 * _PROCESS_NOISE;
 	
 	double _processNoise = _STEADY_Q;
 	double averageResidual;	// @ 16 m/s/s	suggested
@@ -39,10 +39,10 @@ public class KalmanFilter implements Filter {
 	int _ENSEMBLES_CONVERGENCE	= 30;
 	int _ENSEMBLES_DIVERGENCE	= 30;
     //edit innovations threshold of R multiplier for mode 
-	double _R_MULT_STEADY 		= 2.56;
+	double _R_MULT_STEADY 		= 3;
 	double _R_MULT_MANEUVER 	= 6;
-	double _R_MULT_ACQUISITION	= 9;
-	double _R_MULT_ASSOCIATION	= 9;
+	double _R_MULT_ACQUISITION	= 12;
+	double _R_MULT_ASSOCIATION	= 24;
 	
 	//mode statistcs support
 	int cntSteady = 0;
@@ -92,6 +92,7 @@ public class KalmanFilter implements Filter {
 
 	RealVector _w;  //innovations w  -- measurement residuals from a priori predictions
 	RealVector _e;  //residuals v  -- measurement residuals from a posteriori measurement updates
+	RealVector _eN;  //residuals v  -- measurement residuals from a posteriori measurement updates
 
 	RealMatrix _R;  //measurement noise: Modeled envelope of Gaussian measurement noise
 //	RealDiagonalMatrix _Rdiag;
@@ -137,6 +138,7 @@ public class KalmanFilter implements Filter {
 
 		this._w = new ArrayRealVector(_numMeas); 					//innovations w: a priori measurement differences
 		this._e = new ArrayRealVector(_numMeas); 					//residuals e: a posteriori measurement differences
+		this._eN = new ArrayRealVector(_numMeas); 					//residuals e: a posteriori measurement differences
 
 		this._R = MatrixUtils.createRealMatrix(_numMeas, _numMeas);	// measurement noise update R:
 			
@@ -376,6 +378,8 @@ public class KalmanFilter implements Filter {
 			if (plotCount > _ENSEMBLES_CONVERGENCE) { //track acquired!!!!
 				_ASSOCIATE = false;
 				_ACQUIRE = true;
+				System.out.println("\n *** to Acquire Track*** " + time);
+
 			}
 			_x.setSubVector(0, p_point);
 			_x.setSubVector(3, v_point);
@@ -457,6 +461,7 @@ public class KalmanFilter implements Filter {
 			} else {
 				_MANEUVER = true;
 				_STEADY = false;
+				System.out.println("\n *** to Maneuver Track*** " + time);
 				_processNoise = _MANEUVER_Q;
 				cntManeuver = cntManeuver + 1;
 			}
@@ -464,11 +469,13 @@ public class KalmanFilter implements Filter {
 			if((averageResidual <= _CRIT_STEADY)&&(instr>=_CRIT_NUMBER_TIGHTEN)) {
 				_STEADY = true;
 				_MANEUVER = false;
+				System.out.println("\n *** to STEADY Track*** " + time);
 				_processNoise = _STEADY_Q;
 				cntSteady = cntSteady + 1;
 			} else if((averageResidual > _CRIT_MANEUVER)||(instr<=_CRIT_NUMBER_LOOSEN)) {
 				_ACQUIRE = true;
 				_MANEUVER = false;
+				System.out.println("\n *** to Acquire Track*** " + time);
 				_processNoise = _MANEUVER_Q;
 				cntAcquisition = cntAcquisition + 1;
 			} else { //(_MANEUVER)
@@ -478,6 +485,7 @@ public class KalmanFilter implements Filter {
 			if((averageResidual <= _CRIT_MANEUVER)&&(instr>=_CRIT_NUMBER_TIGHTEN)) {
 				_MANEUVER = true;
 				_ACQUIRE = false;
+				System.out.println("\n *** to Maneuver Track*** " + time);
 				_processNoise = _MANEUVER_Q;
 				cntManeuver = cntManeuver + 1;
 			} else if((averageResidual > _CRIT_ACQUISITION)||(instr<=_CRIT_NUMBER_LOOSEN)) {
@@ -488,6 +496,7 @@ public class KalmanFilter implements Filter {
 				if(cntDivergence > _ENSEMBLES_DIVERGENCE) {
 					_ACQUIRE = false;
 					_ASSOCIATE = true;
+					System.out.println("\n *** to Acquire Track*** " + time);
 					cntDivergence = 0;
 				}
 				cntAcquisition = cntAcquisition +1;				

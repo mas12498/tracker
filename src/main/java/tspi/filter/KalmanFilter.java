@@ -19,31 +19,32 @@ public class KalmanFilter implements Filter {
 			,_ACQUIRE=false
 			,_ASSOCIATE=true;
 	
-	//Mode selection by: filter residuals
-	double _MEASUREMENT_NOISE 	= 0.00025;
-	double _CRIT_STEADY 		= 3 * _MEASUREMENT_NOISE;
-	double _CRIT_MANEUVER 		= 6 * _MEASUREMENT_NOISE;
-	double _CRIT_ACQUISITION	= 12 * _MEASUREMENT_NOISE;
+	//Mode selection by: normalized filter residuals
+	double _CRIT_STEADY 		= 2.56;
+	double _CRIT_MANEUVER 		= 3;
+	double _CRIT_ACQUISITION	= 9;
 	
 	//Process noise by mode selection
-	//double _PROCESS_NOISE 	= 4.0;
-	double _STEADY_Q 		= 5; //1.28 * _PROCESS_NOISE;
-	double _MANEUVER_Q		= 11; //2.70 * _PROCESS_NOISE;
-	double _ACQUISITION_Q	= 24; //6.00 * _PROCESS_NOISE;
+	double _STEADY_Q 		= 5;
+	double _MANEUVER_Q		= 11;
+	double _ACQUISITION_Q	= 24;
 	
 	double _processNoise = _STEADY_Q;
-	double averageResidual;	// @ 16 m/s/s	suggested
+//	double averageResidual;	// @ 16 m/s/s	suggested
+//	double _averageNormalizedResidual;
+	double _Z_NormalizedResidual;
 	int _CRIT_NUMBER_CONVERGE   = 4; // 5?
 	int _CRIT_NUMBER_TIGHTEN	= 4;
 	int _CRIT_NUMBER_LOOSEN		= 3;
 	int _ENSEMBLES_CONVERGENCE	= 30;
 	int _ENSEMBLES_DIVERGENCE	= 30;
+
     //edit innovations threshold of R multiplier for mode 
-	double _R_MULT_STEADY 		= 3;
-	double _R_MULT_MANEUVER 	= 6;
-	double _R_MULT_ACQUISITION	= 12;
-	double _R_MULT_ASSOCIATION	= 24;
-	
+	double _Z_EDIT_STEADY = 3;
+	double _Z_EDIT_MANEUVER = 6;
+	double _Z_EDIT_ACQUISITION = 12;
+	double _Z_EDIT_ASSOCIATION = 24;
+
 	//mode statistcs support
 	int cntSteady = 0;
 	int cntInit = 0;
@@ -52,7 +53,7 @@ public class KalmanFilter implements Filter {
 	int cntManeuver = 0;
 	int cntCoast = 0;
 	int plotCount = 0;
-	
+
 	//Filter Cycle Globals
 	double 	_timePrev;	  // time of previous measurement frame
 	long 	_msecAdv;		  // msec advance to next measurement frame
@@ -204,7 +205,11 @@ public class KalmanFilter implements Filter {
 		return z.subtract( H.operate(x));  //level 2
 	}
 
-	/** 
+	public RealVector residualsNormalized(RealMatrix H, RealVector z, RealVector x, RealVector sigma ) {
+		return z.subtract( H.operate(x)).ebeDivide(sigma);  //level 2
+	}
+
+	/**
 	 * state: The blas level 2 measurement update of x
 	 * @param K_T,w,x_   */
 	public RealVector updateState(RealMatrix K_T, RealVector w, RealVector x_ ) {
@@ -245,17 +250,18 @@ public class KalmanFilter implements Filter {
 		//m possible measurements reduced by map to mRow measurements
 		int mRow = 0;
 		for(int g = 0; g < m; g++) { //edit z outliers from H,R,z,w
+			double sigmaMeasure = _sigmaMeasurement.getEntry(g);
 			if (StrictMath.abs(_w.getEntry(g)) < modeThresholdZ * _sigmaMeasurement.getEntry(g)) {//* _R.getEntry(g,g)) {
 				_H.setRowMatrix(mRow, (_H.getRowMatrix(g)));
-				_sigmaMeasurement.setEntry(mRow, _sigmaMeasurement.getEntry(g));
-				_R.setEntry(mRow, mRow, _sigmaMeasurement.getEntry(g)* _sigmaMeasurement.getEntry(g));// _R.getEntry(g, g));
+				_sigmaMeasurement.setEntry(mRow, sigmaMeasure);
+				_R.setEntry(mRow, mRow, sigmaMeasure * sigmaMeasure );// _R.getEntry(g, g));
 				_z.setEntry(mRow, _z.getEntry(g));
 				_w.setEntry(mRow, _w.getEntry(g));
 				mapPed[mRow] = mapPed[g];
 				mapSensor[mRow] = mapSensor[g];
 				mRow = mRow +1;
 			} else {
-				System.out.println("Track measurement edit: Ped "+mapPed[g]+" Sens "+mapSensor[g] );
+				System.out.println("Track measurement edited: Ped "+mapPed[g]+" Sens "+mapSensor[g] );
 			}
 		}
 		return mRow;
@@ -356,7 +362,7 @@ public class KalmanFilter implements Filter {
 			_w = _z.subtract(_H.operate(p_point));
 
 			//edited measurement set
-			instr = thresh(instr, _R_MULT_ASSOCIATION);
+			instr = thresh(instr, _Z_EDIT_ASSOCIATION);
 			
 			if(instr>=_CRIT_NUMBER_CONVERGE) { //ensemble plot convergence...[independent crit number?]
 				svd = new SingularValueDecomposition(_H.getSubMatrix(0, instr - 1,0,2));
@@ -405,11 +411,11 @@ public class KalmanFilter implements Filter {
 
 			//get threshed instr count....
 			if(_STEADY) {
-				instr = thresh(instr, _R_MULT_STEADY);
+				instr = thresh(instr, _Z_EDIT_STEADY);
 			} else if(_MANEUVER) {
-				instr = thresh(instr, _R_MULT_MANEUVER);
+				instr = thresh(instr, _Z_EDIT_MANEUVER);
 			} else if(_ACQUIRE) {
-				instr = thresh(instr, _R_MULT_ACQUISITION);
+				instr = thresh(instr, _Z_EDIT_ACQUISITION);
 			} else {
 				
 			}
@@ -428,22 +434,48 @@ public class KalmanFilter implements Filter {
 				_P = updateTransposedCovariance( // (9x9) - (9xm)(mx9) = (9x9)
 						//_Kt.getSubMatrix(0, instr - 1, 0, 8), _D.getSubMatrix(0, instr - 1, 0, 8), _P_);
 				        _Kt.getSubMatrix(0, instr - 1, 0, 8), _D.getSubMatrix(0, instr - 1, 0, 8), _P_);
-				_e = residuals( // (m) - (m,3)(3) == (m)
-						// OR: --> _e = _w + _x - _x_
-						_H.getSubMatrix(0, instr - 1, 0, 2), _z.getSubVector(0, instr), _x.getSubVector(0, 3));
+				_e = residuals( // (m) - (m,3)(3) == (m) OR: --> _e = _w + _x - _x_
+						_H.getSubMatrix(0, instr - 1, 0, 2)
+						, _z.getSubVector(0, instr)
+						, _x.getSubVector(0, 3) );
 
-				averageResidual = _e.getSubVector(0, instr).getNorm();
-				
+				_eN = residualsNormalized( // (m) - (m,3)(3) == (m) OR: --> _e = _w + _x - _x_
+						_H.getSubMatrix(0, instr - 1, 0, 2)
+						, _z.getSubVector(0, instr)
+						, _x.getSubVector(0, 3)
+						, _sigmaMeasurement.getSubVector(0,instr)      );
+
+//				averageResidual = _e.getSubVector(0, instr).getNorm();
+
+				double sumNormalizedResiduals = 0;
+				for (int h = 0; h< instr; h++){
+					sumNormalizedResiduals += _eN.getEntry(h);
+				}
+				_Z_NormalizedResidual = sumNormalizedResiduals / StrictMath.sqrt((double) instr);
+				System.out.println(" *** Z from Normalized residuals  = " + _Z_NormalizedResidual);
+
+//				_averageNormalizedResidual = sumNormalizedResiduals/instr;
+
+//				double _rmsNormalizedResidual = _eN.getSubVector(0, instr).getNorm() / StrictMath.sqrt((double) instr);
+//				System.out.println("\n *** rms Norm res.    = " + _rmsNormalizedResidual);
+//				System.out.println(" *** average Norm res.= " + _averageNormalizedResidual);
+				//+"Innovations Norm = " + _w.getNorm() * StrictMath.sqrt(instr - 3));
+
 				System.out.println("\n ***Innovations Norm = " + _w.getNorm() * StrictMath.sqrt(instr - 3));
 				System.out.println("\n ***Innovations = {  ");
 				for (int h = 0; h < instr; h++) {
 					System.out.print(_w.getEntry(h) + "\n  ");
 				}
 				System.out.println("} \n\n");
-				System.out.println("\n ***Residuals Norm = " + _e.getNorm() * StrictMath.sqrt(instr - 3));
-				System.out.println("\n ***Residuals = {  ");
+//				System.out.println("\n ***Residuals Norm = " + _e.getNorm() * StrictMath.sqrt(instr - 3));
+//				System.out.println("\n ***Residuals = {  ");
+//				for (int h = 0; h < instr; h++) {
+//					System.out.print(_e.getEntry(h) + "\n  ");
+//				}
+//				System.out.println("} \n");
+				System.out.println("\n ***Normalized Residuals = {  ");
 				for (int h = 0; h < instr; h++) {
-					System.out.print(_e.getEntry(h) + "\n  ");
+					System.out.print(_eN.getEntry(h) + "\n  ");
 				}
 				System.out.println("} \n");
 
@@ -454,9 +486,12 @@ public class KalmanFilter implements Filter {
 			
 		}
 
-		//Auto-tuning of residuals logic
+		//Auto-tuning of normalized residuals logic
+
+		System.out.println("Z from normalized residuals = " + _Z_NormalizedResidual);
+
 		if(_STEADY) {
-			if((averageResidual <= _CRIT_STEADY)&&(instr>_CRIT_NUMBER_LOOSEN)) {
+			if((_Z_NormalizedResidual <= _CRIT_STEADY)&&(instr>_CRIT_NUMBER_LOOSEN)) {
 				cntSteady = cntSteady+1;
 			} else {
 				_MANEUVER = true;
@@ -466,13 +501,13 @@ public class KalmanFilter implements Filter {
 				cntManeuver = cntManeuver + 1;
 			}
 		} else if(_MANEUVER) {
-			if((averageResidual <= _CRIT_STEADY)&&(instr>=_CRIT_NUMBER_TIGHTEN)) {
+			if((_Z_NormalizedResidual <= _CRIT_STEADY)&&(instr>=_CRIT_NUMBER_TIGHTEN)) {
 				_STEADY = true;
 				_MANEUVER = false;
 				System.out.println("\n *** to STEADY Track*** " + time);
 				_processNoise = _STEADY_Q;
 				cntSteady = cntSteady + 1;
-			} else if((averageResidual > _CRIT_MANEUVER)||(instr<=_CRIT_NUMBER_LOOSEN)) {
+			} else if((_Z_NormalizedResidual > _CRIT_MANEUVER)||(instr<=_CRIT_NUMBER_LOOSEN)) {
 				_ACQUIRE = true;
 				_MANEUVER = false;
 				System.out.println("\n *** to Acquire Track*** " + time);
@@ -482,13 +517,13 @@ public class KalmanFilter implements Filter {
 				cntManeuver = cntManeuver + 1;
 			}
 		} else if(_ACQUIRE) {
-			if((averageResidual <= _CRIT_MANEUVER)&&(instr>=_CRIT_NUMBER_TIGHTEN)) {
+			if((_Z_NormalizedResidual <= _CRIT_MANEUVER)&&(instr>=_CRIT_NUMBER_TIGHTEN)) {
 				_MANEUVER = true;
 				_ACQUIRE = false;
 				System.out.println("\n *** to Maneuver Track*** " + time);
 				_processNoise = _MANEUVER_Q;
 				cntManeuver = cntManeuver + 1;
-			} else if((averageResidual > _CRIT_ACQUISITION)||(instr<=_CRIT_NUMBER_LOOSEN)) {
+			} else if((_Z_NormalizedResidual > _CRIT_ACQUISITION)||(instr<=_CRIT_NUMBER_LOOSEN)) {
 				cntDivergence = 0;
 				cntAcquisition = cntAcquisition +1;
 			} else {

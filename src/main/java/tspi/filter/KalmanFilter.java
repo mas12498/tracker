@@ -13,27 +13,28 @@ public class KalmanFilter implements Filter {
 	int[] mapSensor;
 	int _numMeas;
 	
-	//Track Mode filter controls
+	//Track Mode filter control booleans
 	boolean _STEADY=false
 			,_MANEUVER=false
 			,_ACQUIRE=false
 			,_ASSOCIATE=true;
 	
-	//Mode selection by: normalized filter residuals
-	double _CRIT_STEADY 		= 2.56;
-	double _CRIT_MANEUVER 		= 3;
-	double _CRIT_ACQUISITION	= 9;
-	
+	//Mode selection by: Critical standard deviations of normalized residuals
+	double _Z_STEADY = 2.56;
+	double _Z_MANEUVER = 3;
+	double _Z_ACQUISITION = 9;
+	double _Z_ASSOCIATE = 9;
+	//Latest Z statistic formed from normalized residuals
+	double _Z_NormalizedResidual;
+
 	//Process noise by mode selection
 	double _STEADY_Q 		= 5;
-	double _MANEUVER_Q		= 11;
-	double _ACQUISITION_Q	= 24;
-	
-	double _processNoise = _STEADY_Q;
-//	double averageResidual;	// @ 16 m/s/s	suggested
-//	double _averageNormalizedResidual;
-	double _Z_NormalizedResidual;
-	int _CRIT_NUMBER_CONVERGE   = 4; // 5?
+	double _MANEUVER_Q		= 10;
+	double _ACQUISITION_Q	= 20;
+	//Process noise initialization
+	double _processNoise = _ACQUISITION_Q;
+
+	int _CRIT_NUMBER_CONVERGE   = 4;
 	int _CRIT_NUMBER_TIGHTEN	= 4;
 	int _CRIT_NUMBER_LOOSEN		= 3;
 	int _ENSEMBLES_CONVERGENCE	= 30;
@@ -45,7 +46,10 @@ public class KalmanFilter implements Filter {
 	double _Z_EDIT_ACQUISITION = 12;
 	double _Z_EDIT_ASSOCIATION = 24;
 
-	//mode statistcs support
+	//Measurements Model Vector: instrument standard deviations
+	RealVector _sigmaMeasurement;
+
+	//mode performance statistics support
 	int cntSteady = 0;
 	int cntInit = 0;
 	int cntDivergence = 0;
@@ -54,9 +58,10 @@ public class KalmanFilter implements Filter {
 	int cntCoast = 0;
 	int plotCount = 0;
 
+
 	//Filter Cycle Globals
 	double 	_timePrev;	  // time of previous measurement frame
-	long 	_msecAdv;		  // msec advance to next measurement frame
+	long 	_msecAdv;	  // msec advance to next measurement frame
 	double filterRange;
 		
 	final 	TVector _origin = new TVector(Pedestal.getOrigin()); //fusion system Geocentric coordinates {EFG}
@@ -97,7 +102,6 @@ public class KalmanFilter implements Filter {
 
 	RealMatrix _R;  //measurement noise: Modeled envelope of Gaussian measurement noise
 //	RealDiagonalMatrix _Rdiag;
-	RealVector _sigmaMeasurement;
 
 	/** 
 	 * Construct Kalman Filter
@@ -370,7 +374,7 @@ public class KalmanFilter implements Filter {
 				_w = _z.subtract(_H.operate(p_point));				
 			}
 			
-			if(_w.getNorm() > _CRIT_ACQUISITION) { //ensemble plot divergence...
+			if(_w.getNorm() > _Z_ACQUISITION) { //ensemble plot divergence...
 				plotCount = 0;
 				v_point_prior = new ArrayRealVector(3);
 			}
@@ -491,7 +495,7 @@ public class KalmanFilter implements Filter {
 		System.out.println("Z from normalized residuals = " + _Z_NormalizedResidual);
 
 		if(_STEADY) {
-			if((_Z_NormalizedResidual <= _CRIT_STEADY)&&(instr>_CRIT_NUMBER_LOOSEN)) {
+			if((_Z_NormalizedResidual <= _Z_STEADY)&&(instr>_CRIT_NUMBER_LOOSEN)) {
 				cntSteady = cntSteady+1;
 			} else {
 				_MANEUVER = true;
@@ -501,13 +505,13 @@ public class KalmanFilter implements Filter {
 				cntManeuver = cntManeuver + 1;
 			}
 		} else if(_MANEUVER) {
-			if((_Z_NormalizedResidual <= _CRIT_STEADY)&&(instr>=_CRIT_NUMBER_TIGHTEN)) {
+			if((_Z_NormalizedResidual <= _Z_STEADY)&&(instr>=_CRIT_NUMBER_TIGHTEN)) {
 				_STEADY = true;
 				_MANEUVER = false;
 				System.out.println("\n *** to STEADY Track*** " + time);
 				_processNoise = _STEADY_Q;
 				cntSteady = cntSteady + 1;
-			} else if((_Z_NormalizedResidual > _CRIT_MANEUVER)||(instr<=_CRIT_NUMBER_LOOSEN)) {
+			} else if((_Z_NormalizedResidual > _Z_MANEUVER)||(instr<=_CRIT_NUMBER_LOOSEN)) {
 				_ACQUIRE = true;
 				_MANEUVER = false;
 				System.out.println("\n *** to Acquire Track*** " + time);
@@ -517,13 +521,13 @@ public class KalmanFilter implements Filter {
 				cntManeuver = cntManeuver + 1;
 			}
 		} else if(_ACQUIRE) {
-			if((_Z_NormalizedResidual <= _CRIT_MANEUVER)&&(instr>=_CRIT_NUMBER_TIGHTEN)) {
+			if((_Z_NormalizedResidual <= _Z_MANEUVER)&&(instr>=_CRIT_NUMBER_TIGHTEN)) {
 				_MANEUVER = true;
 				_ACQUIRE = false;
 				System.out.println("\n *** to Maneuver Track*** " + time);
 				_processNoise = _MANEUVER_Q;
 				cntManeuver = cntManeuver + 1;
-			} else if((_Z_NormalizedResidual > _CRIT_ACQUISITION)||(instr<=_CRIT_NUMBER_LOOSEN)) {
+			} else if((_Z_NormalizedResidual > _Z_ACQUISITION)||(instr<=_CRIT_NUMBER_LOOSEN)) {
 				cntDivergence = 0;
 				cntAcquisition = cntAcquisition +1;
 			} else {

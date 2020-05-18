@@ -171,6 +171,7 @@ class TestFilter {
 		for (Pedestal pedestal : pedestals) {
 			stream.append( ", "+pedestal.getSystemId()+"_az");
 			stream.append( ", "+pedestal.getSystemId()+"_el");
+			stream.append( ", "+pedestal.getSystemId()+"_rg"); //@MAS
 		}
 		stream.println();
 

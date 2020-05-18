@@ -50,13 +50,20 @@ public interface Trajectory {
 		Polar[] measurements = new Polar[pedestals.length];
 
 		for (int n=0; n<pedestals.length; n++) {
-			if (pedestals[n].getMapAZ() && pedestals[n].getMapEL()) { // CDS: why is this case here again? it will break all simulation of partial sensors...
+			// // Commented out do only for measurements that are part of solution...
+//			if (pedestals[n].getMapAZ() || pedestals[n].getMapEL() || pedestals[n].getMapRG()) {
+				//calculate ideal local coordinates
 				pedestals[n].pointToLocation(efg);
+				//calculate perturbed local coordinates according to biases and sigmas in pedestals file...
 				measurements[n] = pedestals[n].getPerturbedLocal(random);
-				pedestals[n].pointDirection(measurements[n].getUnsignedAzimuth(), measurements[n].getElevation());
-			} else {
-				pedestals[n].clearPedestalVector();
-			}
+					//pedestals[n].pointDirection(measurements[n].getUnsignedAzimuth(), measurements[n].getElevation());
+					//pedestals[n].getLocal().setRange(measurements[n].getRange());
+				//overwrite pedestals with simulated (perturbed) measurement vectors...
+				pedestals[n].point(measurements[n].getRange(),measurements[n].getUnsignedAzimuth(),measurements[n].getElevation());
+//			} else {
+//				//if not sensor of pedestal is used... ignore...
+//				pedestals[n].clearPedestalVector();
+//			}
 		}
 	}
 }

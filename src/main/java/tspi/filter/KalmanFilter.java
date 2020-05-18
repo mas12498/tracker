@@ -21,16 +21,16 @@ public class KalmanFilter implements Filter {
 	
 	//Mode selection by: Critical standard deviations of normalized residuals
 	double _Z_STEADY = 2.56;
-	double _Z_MANEUVER = 3;
-	double _Z_ACQUISITION = 9;
-	double _Z_ASSOCIATE = 9;
+	double _Z_MANEUVER = 6;
+	double _Z_ACQUISITION = 12;
+	double _Z_ASSOCIATE = 24;
 	//Latest Z statistic formed from normalized residuals
 	double _Z_NormalizedResidual;
 
 	//Process noise by mode selection
-	double _STEADY_Q 		= 5;
-	double _MANEUVER_Q		= 10;
-	double _ACQUISITION_Q	= 20;
+	double _STEADY_Q 		= 2.56;
+	double _MANEUVER_Q		= 6;
+	double _ACQUISITION_Q	= 12;
 	//Process noise initialization
 	double _processNoise = _ACQUISITION_Q;
 
@@ -456,32 +456,21 @@ public class KalmanFilter implements Filter {
 					sumNormalizedResiduals += _eN.getEntry(h);
 				}
 				_Z_NormalizedResidual = sumNormalizedResiduals / StrictMath.sqrt((double) instr);
-				System.out.println(" *** Z from Normalized residuals  = " + _Z_NormalizedResidual);
+				System.out.println("\n *** Z from Normalized residuals  = " + _Z_NormalizedResidual);
 
-//				_averageNormalizedResidual = sumNormalizedResiduals/instr;
 
-//				double _rmsNormalizedResidual = _eN.getSubVector(0, instr).getNorm() / StrictMath.sqrt((double) instr);
-//				System.out.println("\n *** rms Norm res.    = " + _rmsNormalizedResidual);
-//				System.out.println(" *** average Norm res.= " + _averageNormalizedResidual);
-				//+"Innovations Norm = " + _w.getNorm() * StrictMath.sqrt(instr - 3));
+				double averageNormalizedResidual = sumNormalizedResiduals/instr;
+				System.out.println(" *** ave Norm res.    = " + averageNormalizedResidual);
 
-				System.out.println("\n ***Innovations Norm = " + _w.getNorm() * StrictMath.sqrt(instr - 3));
-				System.out.println("\n ***Innovations = {  ");
+				double _rmsNormalizedResidual = _eN.getSubVector(0, instr).getNorm() / StrictMath.sqrt((double) instr);
+				System.out.println(" *** rms Norm res.    = " + _rmsNormalizedResidual);
+
+				//System.out.println("\n ***Innovations Norm = " + _w.getNorm() * StrictMath.sqrt(instr - 3));
+				System.out.println("\n ***Normalized Residuals & Residuals & Innovations & sigmas = { eN, e, w, sigma");
 				for (int h = 0; h < instr; h++) {
-					System.out.print(_w.getEntry(h) + "\n  ");
+					System.out.print("\t"+_eN.getEntry(h)+", \t"+_e.getEntry(h)+", \t"+_w.getEntry(h) + ", \t" +_sigmaMeasurement.getEntry(h)+ "\n  ");
 				}
 				System.out.println("} \n\n");
-//				System.out.println("\n ***Residuals Norm = " + _e.getNorm() * StrictMath.sqrt(instr - 3));
-//				System.out.println("\n ***Residuals = {  ");
-//				for (int h = 0; h < instr; h++) {
-//					System.out.print(_e.getEntry(h) + "\n  ");
-//				}
-//				System.out.println("} \n");
-				System.out.println("\n ***Normalized Residuals = {  ");
-				for (int h = 0; h < instr; h++) {
-					System.out.print(_eN.getEntry(h) + "\n  ");
-				}
-				System.out.println("} \n");
 
 			} else { // Have no new measurements to process an update:
 				_x = _x_.copy();

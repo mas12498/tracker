@@ -169,9 +169,9 @@ class TestFilter {
 		stream.append("time, S0, S1, S2, S3, S4, S5, S6, S7, S8, "
 				+ "dS0, dS1, dS2, dS3, dS4, dS5, dS6, dS7, dS8");
 		for (Pedestal pedestal : pedestals) {
+			stream.append( ", "+pedestal.getSystemId()+"_rg"); //@MAS
 			stream.append( ", "+pedestal.getSystemId()+"_az");
 			stream.append( ", "+pedestal.getSystemId()+"_el");
-			stream.append( ", "+pedestal.getSystemId()+"_rg"); //@MAS
 		}
 		stream.println();
 

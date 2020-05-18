@@ -54,12 +54,13 @@ public interface Trajectory {
 //			if (pedestals[n].getMapAZ() || pedestals[n].getMapEL() || pedestals[n].getMapRG()) {
 				//calculate ideal local coordinates
 				pedestals[n].pointToLocation(efg);
+				double trueRG = pedestals[n].getLocal().getRange();
 				//calculate perturbed local coordinates according to biases and sigmas in pedestals file...
 				measurements[n] = pedestals[n].getPerturbedLocal(random);
+			pedestals[n].point(measurements[n].getRange(),measurements[n].getUnsignedAzimuth(),measurements[n].getElevation());
 					//pedestals[n].pointDirection(measurements[n].getUnsignedAzimuth(), measurements[n].getElevation());
-					//pedestals[n].getLocal().setRange(measurements[n].getRange());
-				//overwrite pedestals with simulated (perturbed) measurement vectors...
-				pedestals[n].point(measurements[n].getRange(),measurements[n].getUnsignedAzimuth(),measurements[n].getElevation());
+					//pedestals[n].pointRange(measurements[n].getRange());
+					System.out.println("***** sim ped ranges true and perturbed:"+trueRG+"   "+pedestals[n].getLocal().getRange());
 //			} else {
 //				//if not sensor of pedestal is used... ignore...
 //				pedestals[n].clearPedestalVector();

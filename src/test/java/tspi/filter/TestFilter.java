@@ -69,10 +69,13 @@ class TestFilter {
 		double t0 = 0.0;   //seconds initial frame time
 		double dt = 0.020; //seconds interval between frames
 		int Nt = 500;      //number of frames
-		
+
+
+
+
 		//Profile Kinematics starting reference:
 		TVector pos0 = new TVector(3135932.588, -5444754.209, 1103864.549); //geocentric position EFG m
-		TVector vel0 = new TVector(0.0, 10.0, 0.0);                         //velocity EFG m/s
+		TVector vel0 = new TVector(0.0, 100.0, 0.0);                         //velocity EFG m/s
 		TVector acc0 = new TVector(0.0, 0.0, 2.0);                          //acceleration EFG m/s/s
 		
 		//ProcessNoise for track profile 	
@@ -85,19 +88,22 @@ class TestFilter {
 		//initial track filter edits
 		TVector p0 = new TVector(pOff.add(pos0).subtract(Pedestal.getOrigin()));     //init filter position
 		TVector v0 = new TVector(vOff);                                              //init filter velocity
-		
+
+
+
 		// create the target trajectory
 		Trajectory trajectory = new Kinematic(
 				t0,
 				pos0.arrayRealVector(),
 				vel0.arrayRealVector(),
-				acc0.arrayRealVector());
+				acc0.arrayRealVector()  );
 				
-		// create Kalman filter track from pedestal array
+		// create Kalman 'group' filter track from pedestal instruments selected... loaded ped states
 		Filter kalman = new KalmanFilter( pedestals );
 //		//Filter cheat = new CheatFilter( trajectory );
 		
-		// test the filter on the trajectory with pedestals...time,frameInsterval,frames,stream
+		// test the filter on the trajectory with pedestals simulated...time,frameInsterval,frames,stream
+		//NOTE: pedestal measurement models of simulation might want different from pedestals of filter.
 		demoFilter( kalman, trajectory, pedestals, t0, dt, Nt, stream, navs );
 //		//demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream ); //defined below as trivial truth passer...
 
@@ -163,13 +169,14 @@ class TestFilter {
 		stream.append("time, S0, S1, S2, S3, S4, S5, S6, S7, S8, "
 				+ "dS0, dS1, dS2, dS3, dS4, dS5, dS6, dS7, dS8");
 		for (Pedestal pedestal : pedestals) {
+			stream.append( ", "+pedestal.getSystemId()+"_rg"); //@MAS
 			stream.append( ", "+pedestal.getSystemId()+"_az");
 			stream.append( ", "+pedestal.getSystemId()+"_el");
 		}
 		stream.println();
 
 
-		// generate measurements over time
+		// Generate stream (measurements over time)
 		for (double t=t0; t<t0+n*dt; t+=dt) {
 			
 			// get the true object state
@@ -186,7 +193,9 @@ class TestFilter {
 			
 			// take perturbed measurements
 			trajectory.simulateTrack( t, pedestals, random );
-			
+//			// Propagate perturbed measurements... replaced 'simulateTrack' with free partial model of just 'track'...
+//			trajectory.track( t, pedestals, random );
+
 			// update the filter with the noisy measurements
 			RealVector state = filter.filter(t, pedestals).copy(); // just added a copy to make sure I wasn't clobbering any leaked state...
 			

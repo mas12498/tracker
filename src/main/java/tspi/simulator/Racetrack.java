@@ -8,7 +8,10 @@ import tspi.rotation.Rotator;
 import tspi.rotation.Vector3;
 import tspi.util.TVector;
 
-/** Makes a circuit consisting of two straight aways, and two turns all in a plane. */
+import static java.lang.StrictMath.hypot;
+
+/** Makes a racetrack circuit consisting of two straight segments, and two turn segments all in a plane
+ * defined w.r.t to local topocentric origin. */
 public class Racetrack implements Trajectory {
 
 	double radius, velocity, startTime, perimeter, straight, turn;
@@ -17,6 +20,15 @@ public class Racetrack implements Trajectory {
 	Rotator rotateLocal;
 	Vector3 racetrackEFG;
 
+	/**
+	 * racetrack constructor:
+	 * @param startTime	start time seconds for initializing race track plots
+	 * @param origin	Locate topocentric local origin ellipsoid coordinates
+	 * @param c1		racetrack turn 1 center topocentric coordinates (3-D)
+	 * @param c2		racetrack turn 2 center topocentric coordinates (3-D)
+	 * @param radius 	racetrack turn radius
+	 * @param velocity racetrack plots target velocity (positive is CCW?: negative is CW?)
+	 */
 	public Racetrack(double startTime, Ellipsoid origin, Vector3 c1, Vector3 c2, double radius, double velocity) {
 		super();
 		this.origin = origin;
@@ -27,18 +39,24 @@ public class Racetrack implements Trajectory {
 		this.startTime = startTime;
 
 		// construct some geometry
-		Vector3 up = new Vector3(0.0,0.0,1.0);
 		Vector3 d = new Vector3(c2).subtract(c1);
-		r1 = new Vector3(up).crossProduct(d).unit().multiply(radius);
-		r2 = new Vector3(d).unit().multiply(radius);
 		straight = d.getAbs();
+
+		//Vector3 up = new Vector3(0.0,0.0,1.0);
+		//r1 = new Vector3(up).crossProduct(d).unit().multiply(radius);
+		//r2 = new Vector3(d).unit().multiply(radius);
+
+		double h = radius/hypot(d.getX(),d.getY());
+		r1 = new Vector3(-d.getY()*h, d.getX()*h,0); //sparse (k X d)
+		r2 = new Vector3(d).multiply(radius/straight);
+
 		turn = Math.PI * radius;
 		perimeter = 2 * turn + 2 * straight;
 
 		// construct coordinate rotation
 		T_EFG_NED local = new T_EFG_NED();
-		local.set(origin);
-		rotateLocal = new Rotator( local.getLocal().unit() );
+		local.set(origin); //Locates racetrack topocentric coordinates origin.
+		rotateLocal = new Rotator( local.getLocal().unit() ); //unit quaternion to racetrack alignment.
 		racetrackEFG = origin.getGeocentric();
 	}
 
@@ -48,14 +66,17 @@ public class Racetrack implements Trajectory {
 	public Vector3 getCenter1() {return c1;}
 	public Vector3 getCenter2() {return c2;}
 
-	/** rotate the racetrack coordinates to an orientation tangent to a point on the surface of the ellipsoid. */
+	/** rotate the racetrack plot coordinates from local topocentric orientation
+	 * to Geocentric orientation. */
 	Vector3 rotate(Vector3 p) {
 		Vector3 s = new Vector3(p.getX(), p.getY(), -p.getZ());
 		return QuaternionMath.multiply( rotateLocal,
 				QuaternionMath.multiply( s,
 						QuaternionMath.conjugate(rotateLocal))).getV();
 	}
-	/** rotate and translate the racetrack coordinates to an orientation tangent to a point on the surface of the ellipsoid. */
+
+	/** rotate and translate the racetrack plot coordinates from local topocentric
+	 * to Geocentric plots (from center of earth). */
 	Vector3 rotateAndTranslate(Vector3 p) {
 		Vector3 s = new Vector3(p.getX(), p.getY(), -p.getZ());
 		return QuaternionMath.multiply( rotateLocal,

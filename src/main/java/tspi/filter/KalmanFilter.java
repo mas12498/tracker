@@ -20,7 +20,7 @@ public class KalmanFilter implements Filter {
 			,_ASSOCIATE=true;
 	
 	//Mode selection by: Critical standard deviations of normalized residuals
-	double _Z_STEADY = 2.56;
+	double _Z_STEADY = 3; //2.56;
 	double _Z_MANEUVER = 6;
 	double _Z_ACQUISITION = 12;
 	double _Z_ASSOCIATE = 24;
@@ -28,9 +28,9 @@ public class KalmanFilter implements Filter {
 	double _Z_NormalizedResidual;
 
 	//Process noise by mode selection
-	double _STEADY_Q 		= 2.56;
-	double _MANEUVER_Q		= 6;
-	double _ACQUISITION_Q	= 12;
+	double _STEADY_Q 		= 1;
+	double _MANEUVER_Q		= 10;
+	double _ACQUISITION_Q	= 100;
 	//Process noise initialization
 	double _processNoise = _ACQUISITION_Q;
 
@@ -41,9 +41,9 @@ public class KalmanFilter implements Filter {
 	int _ENSEMBLES_DIVERGENCE	= 30;
 
     //edit innovations threshold of R multiplier for mode 
-	double _Z_EDIT_STEADY = 3;
+	double _Z_EDIT_STEADY = 3; //2.56;
 	double _Z_EDIT_MANEUVER = 6;
-	double _Z_EDIT_ACQUISITION = 12;
+	double _Z_EDIT_ACQUISITION = 9;
 	double _Z_EDIT_ASSOCIATION = 24;
 
 	//Measurements Model Vector: instrument standard deviations
@@ -210,7 +210,7 @@ public class KalmanFilter implements Filter {
 	}
 
 	public RealVector residualsNormalized(RealMatrix H, RealVector z, RealVector x, RealVector sigma ) {
-		return z.subtract( H.operate(x)).ebeDivide(sigma);  //level 2
+		return (z.subtract( H.operate(x))).ebeDivide(sigma);  //level 2
 	}
 
 	/**
@@ -287,8 +287,10 @@ public class KalmanFilter implements Filter {
 		for (int n = 0; n < measurements.length; n++) {
 			// add rows to H, z vector, and diag(R) (projection ped sensor measurements)!!!!
 			
-			TVector pedLoc = new TVector(measurements[n].getLocalCoordinates()); // get this pedestal location
-			
+			TVector pedLoc = new TVector(measurements[n].getLocalCoordinates()); // get this n^(th) pedestal location
+
+			//Process pedestals sensor[instr]: (those mapped to filter update...)
+
 			if (measurements[n].getMapRG()) {
 				projectI.set(measurements[n].getAperture_i().unit());
 				_H.setRow(instr, projectI.doubleArray());
@@ -296,30 +298,34 @@ public class KalmanFilter implements Filter {
 				_sigmaMeasurement.setEntry(instr, measurements[n].getDeviationRG()); // innovation meters
 				//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationRG());
 				mapPed[instr] = n;
-				mapSensor[instr] = 2;
+				mapSensor[instr] = 0;
 				instr += 1;
 			}
+
 			if ((measurements[n].getMapAZ()) || (measurements[n].getMapEL())) {
+
 				double priorPedRG = new TVector(_x_.getSubVector(0, 3)).subtract(pedLoc).getAbs(); //local ped range a priori
-				System.out.println(measurements[n].getSystemId() + " predicted range to target: " + priorPedRG + "\n");
+				System.out.println(measurements[n].getSystemId() + "predicted (a priori) range to target: " + priorPedRG + "\n");
+
 				if (measurements[n].getMapAZ()) {
-					projectJ.set(measurements[n].getAperture_j().unit().divide(priorPedRG));
+					projectJ.set(measurements[n].getAperture_j().unit()); //.divide(priorPedRG));
 					_H.setRow(instr, projectJ.doubleArray());
-					_z.setEntry(instr, pedLoc.getInnerProduct(projectJ)); // @radians tracke error AZ
-					_sigmaMeasurement.setEntry(instr, measurements[n].getDeviationAZ().getRadians()); // innovation radians
+					_z.setEntry(instr, pedLoc.getInnerProduct(projectJ)); // meters track error normal->az // @radians tracke error AZ
+					_sigmaMeasurement.setEntry(instr, measurements[n].getDeviationAZ().getRadians() * priorPedRG); //innovation meters normal-az // innovation radians
 					//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationAZ().getRadians());
 					mapPed[instr] = n;
-					mapSensor[instr] = 0;
+					mapSensor[instr] = 1;
 					instr += 1;
 				}
+
 				if (measurements[n].getMapEL()) {
-					projectK.set(measurements[n].getAperture_k().unit().divide(priorPedRG));
+					projectK.set(measurements[n].getAperture_k().unit()); //.divide(priorPedRG));
 					_H.setRow(instr, projectK.doubleArray());
 					_z.setEntry(instr, pedLoc.getInnerProduct(projectK)); // @radians track error EL
-					_sigmaMeasurement.setEntry(instr, measurements[n].getDeviationEL().getRadians()); // innovation radians
+					_sigmaMeasurement.setEntry(instr, measurements[n].getDeviationEL().getRadians() * priorPedRG); // innovation radians
 					//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationEL().getRadians());
 					mapPed[instr] = n;
-					mapSensor[instr] = 1;
+					mapSensor[instr] = 2;
 					instr += 1;
 				}
 			}
@@ -363,6 +369,7 @@ public class KalmanFilter implements Filter {
 			RealMatrix a = _H.getSubMatrix(0, instr - 1, 0, 2);//copy();
 			SingularValueDecomposition svd = new SingularValueDecomposition(a.getSubMatrix(0, instr - 1,0,2));
 			p_point = svd.getSolver().solve(_z.getSubVector(0, instr)); //proxy plot
+
 			_w = _z.subtract(_H.operate(p_point));
 
 			//edited measurement set
@@ -374,7 +381,7 @@ public class KalmanFilter implements Filter {
 				_w = _z.subtract(_H.operate(p_point));				
 			}
 			
-			if(_w.getNorm() > _Z_ACQUISITION) { //ensemble plot divergence...
+			if(_w.getNorm()/StrictMath.sqrt(instr) > _Z_ACQUISITION) { //ensemble plot divergence...
 				plotCount = 0;
 				v_point_prior = new ArrayRealVector(3);
 			}
@@ -455,7 +462,7 @@ public class KalmanFilter implements Filter {
 				for (int h = 0; h< instr; h++){
 					sumNormalizedResiduals += _eN.getEntry(h);
 				}
-				_Z_NormalizedResidual = sumNormalizedResiduals / StrictMath.sqrt((double) instr);
+				_Z_NormalizedResidual = sumNormalizedResiduals / instr; /// StrictMath.sqrt((double) instr);
 				System.out.println("\n *** Z from Normalized residuals  = " + _Z_NormalizedResidual);
 
 
@@ -465,10 +472,11 @@ public class KalmanFilter implements Filter {
 				double _rmsNormalizedResidual = _eN.getSubVector(0, instr).getNorm() / StrictMath.sqrt((double) instr);
 				System.out.println(" *** rms Norm res.    = " + _rmsNormalizedResidual);
 
+
 				//System.out.println("\n ***Innovations Norm = " + _w.getNorm() * StrictMath.sqrt(instr - 3));
-				System.out.println("\n ***Normalized Residuals & Residuals & Innovations & sigmas = { eN, e, w, sigma");
+				System.out.println("\n ***Ped.Sensor Normalized Residuals & Residuals & Innovations & sigmas = { eN, e, w, sigma");
 				for (int h = 0; h < instr; h++) {
-					System.out.print("\t"+_eN.getEntry(h)+", \t"+_e.getEntry(h)+", \t"+_w.getEntry(h) + ", \t" +_sigmaMeasurement.getEntry(h)+ "\n  ");
+					System.out.print("\tP"+ mapPed[h] +":S" + mapSensor[h] + "\t"+_eN.getEntry(h)+", \t"+_e.getEntry(h)+", \t"+_w.getEntry(h) + ", \t" +_sigmaMeasurement.getEntry(h)+ "\n  ");
 				}
 				System.out.println("} \n\n");
 

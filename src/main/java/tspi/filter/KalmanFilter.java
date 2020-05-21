@@ -18,36 +18,46 @@ public class KalmanFilter implements Filter {
 			,_MANEUVER=false
 			,_ACQUIRE=false
 			,_ASSOCIATE=true;
-	
-	//Mode selection by: Critical standard deviations of normalized residuals
-	double _Z_STEADY = 3; //2.56;
-	double _Z_MANEUVER = 6;
-	double _Z_ACQUISITION = 12;
-	double _Z_ASSOCIATE = 24;
+
 	//Latest Z statistic formed from normalized residuals
 	double _Z_NormalizedResidual;
 
-	//Process noise by mode selection
+	//Filter mode determination by critical deviations of normalized residuals
+	double _Z_STEADY = 3;
+	double _Z_MANEUVER = 6;
+	double _Z_ACQUISITION = 12;
+	double _Z_ASSOCIATE = 24;
+
+	//Filter auto-tune -- Process noise Q by filter mode selection
 	double _STEADY_Q 		= 1;
 	double _MANEUVER_Q		= 10;
 	double _ACQUISITION_Q	= 100;
 	//Process noise initialization
-	double _processNoise = _ACQUISITION_Q;
+	double _autoTune_Q = _ACQUISITION_Q;
 
+	//Auto-tune aided by min input solution limits...
 	int _CRIT_NUMBER_CONVERGE   = 4;
 	int _CRIT_NUMBER_TIGHTEN	= 4;
 	int _CRIT_NUMBER_LOOSEN		= 3;
 	int _ENSEMBLES_CONVERGENCE	= 30;
 	int _ENSEMBLES_DIVERGENCE	= 30;
 
-    //edit innovations threshold of R multiplier for mode 
-	double _Z_EDIT_STEADY = 3; //2.56;
+    //innovations edit thresholds for filter inputs
+
+	double _Z_EDIT_STEADY = 3; //NOTE: _editMeasurement read from measurement model overrides.
 	double _Z_EDIT_MANEUVER = 6;
 	double _Z_EDIT_ACQUISITION = 9;
 	double _Z_EDIT_ASSOCIATION = 24;
 
-	//Measurements Model Vector: instrument standard deviations
+
+	//Measurement noise R by Cartesian measurement uncertainty (sigma^2):
+	// --Sensor measurement deviations projected at filter track point!
+	//   --Angle (radians) raw deviations scaled by track point range [to meters]
+	//   --Range raw deviations by instrument are [already] in meters
 	RealVector _sigmaMeasurement;
+	// --Edits measurement innovations by instrument from _STEADY Filter stream
+	RealVector _editThreshold; //Overrides _Z_EDIT_STEADY.
+
 
 	//mode performance statistics support
 	int cntSteady = 0;
@@ -127,9 +137,12 @@ public class KalmanFilter implements Filter {
 		this._S =  MatrixUtils.createRealMatrix(9,9);       	//transition update matrix S: Ax = x +Sx
 		
 		this._Q = MatrixUtils.createRealMatrix(9,9); 			//process noise matrix Q:
-		     _Q.setSubMatrix(MatrixUtils.createRealIdentityMatrix(3).scalarMultiply(_processNoise).getData(), 6, 6);
+		     _Q.setSubMatrix(MatrixUtils.createRealIdentityMatrix(3).scalarMultiply(_autoTune_Q).getData(), 6, 6);
 
 		this._sigmaMeasurement = new ArrayRealVector(_numMeas);
+		this._editThreshold = new ArrayRealVector(_numMeas);
+
+
 
 		this._Kt = MatrixUtils.createRealMatrix(_numMeas,9); 		//Kalman gain & blending matrix transposed.
 		this._D  = MatrixUtils.createRealMatrix(_numMeas,9); 		//Work RHS.
@@ -247,17 +260,36 @@ public class KalmanFilter implements Filter {
 	/** Edit innovations outliers...
 	 * 
 	 * @param m number of sensor instruments mapped to filter
-	 * @param modeThresholdZ critical determination of outliers
 	 * @return number of innovations in update
 	 */
-	public int thresh(int m, double modeThresholdZ) {
+	public int thresh(int m ) {
+
+		double threshold;
+
+		if(_STEADY) {
+			threshold =  _Z_EDIT_STEADY; //default thresh value later overridden.
+		} else if(_MANEUVER) {
+			threshold =  _Z_EDIT_MANEUVER;
+		} else if(_ACQUIRE) {
+			threshold =  _Z_EDIT_ACQUISITION;
+		} else if(_ASSOCIATE) { //_ASSOCIATE
+			threshold =  _Z_EDIT_ASSOCIATION;
+		} else {//
+			threshold = Double.NaN;
+			System.out.println("****** ERR! Undefined Track Filter MODE!!! ******************************");
+			System.out.println("Undetected: NOT in {_STEADY, _MANEUVER, _ACQUISITION, _ASSOCIATE}.");
+		}
+
 		//m possible measurements reduced by map to mRow measurements
+		double Z_thresh;
 		int mRow = 0;
 		for(int g = 0; g < m; g++) { //edit z outliers from H,R,z,w
+			if(_STEADY) threshold = _editThreshold.getEntry(g); //probably greater than 1, less than 3 ...
 			double sigmaMeasure = _sigmaMeasurement.getEntry(g);
-			if (StrictMath.abs(_w.getEntry(g)) < modeThresholdZ * _sigmaMeasurement.getEntry(g)) {//* _R.getEntry(g,g)) {
+			if (StrictMath.abs(_w.getEntry(g)) < threshold * _sigmaMeasurement.getEntry(g)) {//* _R.getEntry(g,g)) {
 				_H.setRowMatrix(mRow, (_H.getRowMatrix(g)));
 				_sigmaMeasurement.setEntry(mRow, sigmaMeasure);
+				_editThreshold.setEntry(mRow,_editThreshold.getEntry(g)); //
 				_R.setEntry(mRow, mRow, sigmaMeasure * sigmaMeasure );// _R.getEntry(g, g));
 				_z.setEntry(mRow, _z.getEntry(g));
 				_w.setEntry(mRow, _w.getEntry(g));
@@ -297,6 +329,7 @@ public class KalmanFilter implements Filter {
 				_z.setEntry(instr, measurements[n].getLocal().getRange() + pedLoc.getInnerProduct(projectI)); // meters track projection measured
 				_sigmaMeasurement.setEntry(instr, measurements[n].getDeviationRG()); // innovation meters
 				//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationRG());
+				_editThreshold.setEntry(instr,2.0); // thresh should be read with measurement model like measurements[n].getDeviationAZ()!!!!
 				mapPed[instr] = n;
 				mapSensor[instr] = 0;
 				instr += 1;
@@ -313,6 +346,7 @@ public class KalmanFilter implements Filter {
 					_z.setEntry(instr, pedLoc.getInnerProduct(projectJ)); // meters track error normal->az // @radians tracke error AZ
 					_sigmaMeasurement.setEntry(instr, measurements[n].getDeviationAZ().getRadians() * priorPedRG); //innovation meters normal-az // innovation radians
 					//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationAZ().getRadians());
+					_editThreshold.setEntry(instr,3.0); // thresh should be read with measurement model like measurements[n].getDeviationAZ()!!!!
 					mapPed[instr] = n;
 					mapSensor[instr] = 1;
 					instr += 1;
@@ -324,6 +358,7 @@ public class KalmanFilter implements Filter {
 					_z.setEntry(instr, pedLoc.getInnerProduct(projectK)); // @radians track error EL
 					_sigmaMeasurement.setEntry(instr, measurements[n].getDeviationEL().getRadians() * priorPedRG); // innovation radians
 					//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationEL().getRadians());
+					_editThreshold.setEntry(instr,3.0); // thresh should be read with measurement model like measurements[n].getDeviationAZ()!!!!
 					mapPed[instr] = n;
 					mapSensor[instr] = 2;
 					instr += 1;
@@ -373,8 +408,9 @@ public class KalmanFilter implements Filter {
 			_w = _z.subtract(_H.operate(p_point));
 
 			//edited measurement set
-			instr = thresh(instr, _Z_EDIT_ASSOCIATION);
-			
+			//instr = thresh(instr, _Z_EDIT_ASSOCIATION);
+			instr = thresh(instr); //requires _w
+
 			if(instr>=_CRIT_NUMBER_CONVERGE) { //ensemble plot convergence...[independent crit number?]
 				svd = new SingularValueDecomposition(_H.getSubMatrix(0, instr - 1,0,2));
 				p_point = svd.getSolver().solve(_z.getSubVector(0, instr)); 
@@ -421,16 +457,16 @@ public class KalmanFilter implements Filter {
 					_x_.getSubVector(0, 3));
 
 			//get threshed instr count....
-			if(_STEADY) {
-				instr = thresh(instr, _Z_EDIT_STEADY);
-			} else if(_MANEUVER) {
-				instr = thresh(instr, _Z_EDIT_MANEUVER);
-			} else if(_ACQUIRE) {
-				instr = thresh(instr, _Z_EDIT_ACQUISITION);
-			} else {
-				
-			}
-
+//			if(_STEADY) {
+//				instr = thresh(instr, _Z_EDIT_STEADY);
+//			} else if(_MANEUVER) {
+//				instr = thresh(instr, _Z_EDIT_MANEUVER);
+//			} else if(_ACQUIRE) {
+//				instr = thresh(instr, _Z_EDIT_ACQUISITION);
+//			} else {
+//
+//			}
+			instr = thresh(instr); //requires _w
 			if (instr > 0) { // Have new measurements to process an update:
 
 				_D = rightHandSideKt( // (mx3)(3x9) == (mx9)
@@ -498,7 +534,7 @@ public class KalmanFilter implements Filter {
 				_MANEUVER = true;
 				_STEADY = false;
 				System.out.println("\n *** to Maneuver Track*** " + time);
-				_processNoise = _MANEUVER_Q;
+				_autoTune_Q = _MANEUVER_Q;
 				cntManeuver = cntManeuver + 1;
 			}
 		} else if(_MANEUVER) {
@@ -506,13 +542,13 @@ public class KalmanFilter implements Filter {
 				_STEADY = true;
 				_MANEUVER = false;
 				System.out.println("\n *** to STEADY Track*** " + time);
-				_processNoise = _STEADY_Q;
+				_autoTune_Q = _STEADY_Q;
 				cntSteady = cntSteady + 1;
 			} else if((_Z_NormalizedResidual > _Z_MANEUVER)||(instr<=_CRIT_NUMBER_LOOSEN)) {
 				_ACQUIRE = true;
 				_MANEUVER = false;
 				System.out.println("\n *** to Acquire Track*** " + time);
-				_processNoise = _MANEUVER_Q;
+				_autoTune_Q = _MANEUVER_Q;
 				cntAcquisition = cntAcquisition + 1;
 			} else { //(_MANEUVER)
 				cntManeuver = cntManeuver + 1;
@@ -522,7 +558,7 @@ public class KalmanFilter implements Filter {
 				_MANEUVER = true;
 				_ACQUIRE = false;
 				System.out.println("\n *** to Maneuver Track*** " + time);
-				_processNoise = _MANEUVER_Q;
+				_autoTune_Q = _MANEUVER_Q;
 				cntManeuver = cntManeuver + 1;
 			} else if((_Z_NormalizedResidual > _Z_ACQUISITION)||(instr<=_CRIT_NUMBER_LOOSEN)) {
 				cntDivergence = 0;

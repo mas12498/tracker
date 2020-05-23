@@ -386,7 +386,9 @@ public class KalmanFilter implements Filter {
 
 					_H.setRow(instr, projectJ.doubleArray());
 					_z.setEntry(instr, pedLocation.getInnerProduct(projectJ)); // meters track error normal->az // @radians tracke error AZ
-					_sigmaMeasurement.setEntry(instr, ped[n].getDeviationAZ().getRadians() * filterPlot.getRange()); ////@MAS: Need '* Cos[EL]' multiplier! // innovation meters
+//					_sigmaMeasurement.setEntry(instr, ped[n].getDeviationAZ().getRadians() * filterPlot.getRange()); ////@MAS: Need '* Cos[EL]' multiplier! // innovation meters
+					_sigmaMeasurement.setEntry(instr, ped[n].getDeviationAZ().getRadians()
+							* filterPlot.getRange() * StrictMath.cos(filterPlot.getElevation().getRadians()) ); ////@MAS: Need '* Cos[EL]' multiplier! // innovation meters
 					//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationAZ().getRadians());
 					_editThreshold.setEntry(instr,3.0); // thresh should be read with measurement model like measurements[n].getDeviationAZ()!!!!
 					mapPed[instr] = n;
@@ -441,10 +443,7 @@ public class KalmanFilter implements Filter {
 		if(_STEADY) System.out.println("\n ***Steady Track*** " + time);
 
 
-
-
 		if (_ASSOCIATE) { //measurements track convergence...
-						
 			RealMatrix a = _H.getSubMatrix(0, instr - 1, 0, 2);//copy();
 			SingularValueDecomposition svd = new SingularValueDecomposition(a.getSubMatrix(0, instr - 1,0,2));
 			p_point = svd.getSolver().solve(_z.getSubVector(0, instr)); //proxy plot
@@ -543,22 +542,20 @@ public class KalmanFilter implements Filter {
 					sumNormalizedResiduals += _eN.getEntry(h);
 				}
 				_Z_NormalizedResidual = sumNormalizedResiduals / instr; /// StrictMath.sqrt((double) instr);
-				System.out.println("\n *** Z from Normalized residuals  = " + _Z_NormalizedResidual);
+				System.out.println("\n *** Z from ave Normalized residuals  = " + _Z_NormalizedResidual);
 
+//				double averageNormalizedResidual = sumNormalizedResiduals/instr;
+//				System.out.println(" *** ave Norm res.    = " + averageNormalizedResidual);
+//
+//				double _rmsNormalizedResidual = _eN.getSubVector(0, instr).getNorm() / StrictMath.sqrt((double) instr);
+//				System.out.println(" *** rms Norm res.    = " + _rmsNormalizedResidual);
 
-				double averageNormalizedResidual = sumNormalizedResiduals/instr;
-				System.out.println(" *** ave Norm res.    = " + averageNormalizedResidual);
-
-				double _rmsNormalizedResidual = _eN.getSubVector(0, instr).getNorm() / StrictMath.sqrt((double) instr);
-				System.out.println(" *** rms Norm res.    = " + _rmsNormalizedResidual);
-
-
-				//System.out.println("\n ***Innovations Norm = " + _w.getNorm() * StrictMath.sqrt(instr - 3));
-				System.out.println("\n ***Ped.Sensor Normalized Residuals & Residuals & Innovations & sigmas = { eN, e, w, sigma");
-				for (int h = 0; h < instr; h++) {
-					System.out.print("\tP"+ mapPed[h] +":S" + mapSensor[h] + "\t"+_eN.getEntry(h)+", \t"+_e.getEntry(h)+", \t"+_w.getEntry(h) + ", \t" +_sigmaMeasurement.getEntry(h)+ "\n  ");
-				}
-				System.out.println("} \n\n");
+//				//System.out.println("\n ***Innovations Norm = " + _w.getNorm() * StrictMath.sqrt(instr - 3));
+//				System.out.println("***Ped.Sensor Normalized Residuals & Residuals & Innovations & sigmas = { eN, e, w, sigma");
+//				for (int h = 0; h < instr; h++) {
+//					System.out.print("\tP"+ mapPed[h] +":S" + mapSensor[h] + "\t"+_eN.getEntry(h)+", \t"+_e.getEntry(h)+", \t"+_w.getEntry(h) + ", \t" +_sigmaMeasurement.getEntry(h)+ "\n  ");
+//				}
+//				System.out.print("   } \n");
 
 			} else { // Have no new measurements to process an update:
 				_x = _x_.copy();

@@ -2,12 +2,10 @@ package tspi.filter;
 
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-import tspi.model.Ellipsoid;
-import tspi.model.Pedestal;
-import tspi.model.PedestalModel;
-import tspi.model.Polar;
+import tspi.model.*;
 import tspi.rotation.Vector3;
 import tspi.simulator.Kinematic;
+import tspi.simulator.Racetrack;
 import tspi.simulator.Trajectory;
 import tspi.util.TVector;
 
@@ -70,9 +68,6 @@ class TestFilter {
 		double dt = 0.020; //seconds interval between frames
 		int Nt = 500;      //number of frames
 
-
-
-
 		//Profile Kinematics starting reference:
 		TVector pos0 = new TVector(3135932.588, -5444754.209, 1103864.549); //geocentric position EFG m
 		TVector vel0 = new TVector(0.0, 100.0, 0.0);                         //velocity EFG m/s
@@ -89,14 +84,23 @@ class TestFilter {
 		TVector p0 = new TVector(pOff.add(pos0).subtract(Pedestal.getOrigin()));     //init filter position
 		TVector v0 = new TVector(vOff);                                              //init filter velocity
 
-
-
 		// create the target trajectory
-		Trajectory trajectory = new Kinematic(
-				t0,
-				pos0.arrayRealVector(),
-				vel0.arrayRealVector(),
-				acc0.arrayRealVector()  );
+//		Trajectory trajectory = new Kinematic(
+//				t0,
+//				pos0.arrayRealVector(),
+//				vel0.arrayRealVector(),
+//				acc0.arrayRealVector()  );
+		Vector3 c1 = new Vector3(0.0, 0.0,0.0);
+		Vector3 c2 = new Vector3( 0.0, 0.0, 0.0 );
+		double radius = 0.0;
+		double velocity = 0.0;
+		double start = 0.0;
+
+		// set the origin to the first sensor
+		Pedestal pedestal = pedestals[0];
+		Ellipsoid origin = pedestal.getLocationEllipsoid();
+
+		Trajectory trajectory = new Racetrack( start, origin, c1, c2, radius, velocity);
 				
 		// create Kalman 'group' filter track from pedestal instruments selected... loaded ped states
 		Filter kalman = new KalmanFilter( pedestals );

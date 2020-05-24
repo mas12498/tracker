@@ -339,7 +339,7 @@ public class KalmanFilter implements Filter {
 			//Done for every pedestal in group...(1:1) with pedestal instruments...
 
 			radar.set(ped[n].getLocal()); //get this n^(th) pedestal radar coordinates for target vector plot {rae}
-			local.set(ped[n].getLocationFrame().getLocal()); //{NED} orientation rotator from {EFG}
+			local.set(ped[n].getLocationFrame().getLocal()); //local orientation rotator {NED} from {EFG}
 
 			pedLocation.set(ped[n].getLocalCoordinates()); // pedestal surveyed-location vector from local filter origin {EFG}
 

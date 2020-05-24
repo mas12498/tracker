@@ -90,25 +90,27 @@ class TestFilter {
 //				pos0.arrayRealVector(),
 //				vel0.arrayRealVector(),
 //				acc0.arrayRealVector()  );
-		Vector3 c1 = new Vector3(0.0, 0.0,0.0);
-		Vector3 c2 = new Vector3( 0.0, 0.0, 0.0 );
-		double radius = 0.0;
-		double velocity = 0.0;
+		Vector3 c1 = new Vector3(0.0, 0.0,-5000.0);
+		Vector3 c2 = new Vector3( 2000.0, 10000.0, -5000.0 );
+		double radius = 1000.0;
+		double velocity = 150.0;
 		double start = 0.0;
 
 		// set the origin to the first sensor
 		Pedestal pedestal = pedestals[0];
 		Ellipsoid origin = pedestal.getLocationEllipsoid();
 
-		Trajectory trajectory = new Racetrack( start, origin, c1, c2, radius, velocity);
-				
+		Racetrack trajectory = new Racetrack( start, origin, c1, c2, radius, velocity);
+		int n = (int)Math.floor((trajectory.getPerimeter() / velocity) / dt); // one circuit of the racetrack
+
+
 		// create Kalman 'group' filter track from pedestal instruments selected... loaded ped states
 		Filter kalman = new KalmanFilter( pedestals );
 //		//Filter cheat = new CheatFilter( trajectory );
 		
 		// test the filter on the trajectory with pedestals simulated...time,frameInsterval,frames,stream
 		//NOTE: pedestal measurement models of simulation might want different from pedestals of filter.
-		demoFilter( kalman, trajectory, pedestals, t0, dt, Nt, stream, navs );
+		demoFilter( kalman, trajectory, pedestals, t0, dt, n, stream, navs );
 //		//demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream ); //defined below as trivial truth passer...
 
 

@@ -3,8 +3,11 @@ package tspi.filter;
 import org.apache.commons.math3.linear.*;
 import tspi.model.Pedestal;
 import tspi.model.Polar;
+import tspi.rotation.Rotator;
 import tspi.rotation.Vector3;
 import tspi.util.TVector;
+
+import java.util.ArrayList;
 
 /** A Kalman filter for synthesizing a series of measurements into a trajectory model in near-real-time. */
 public class KalmanFilter implements Filter {
@@ -14,19 +17,19 @@ public class KalmanFilter implements Filter {
 	int _numMeas;
 	
 	//Track Mode filter control booleans
-	boolean _STEADY=false
-			,_MANEUVER=false
-			,_ACQUIRE=false
-			,_ASSOCIATE=true;
+	boolean _STEADY     = false
+			,_MANEUVER  = false
+			,_ACQUIRE   = false
+			,_ASSOCIATE = true;
 
 	//Latest Z statistic formed from normalized residuals
 	double _Z_NormalizedResidual;
 
 	//Filter mode determination by critical deviations of normalized residuals
-	double _Z_STEADY = 3;
-	double _Z_MANEUVER = 6;
+	double _Z_STEADY      = 3;
+	double _Z_MANEUVER    = 6;
 	double _Z_ACQUISITION = 12;
-	double _Z_ASSOCIATE = 24;
+	double _Z_ASSOCIATE   = 24;
 
 	//Filter auto-tune -- Process noise Q by filter mode selection
 	double _STEADY_Q 		= 1;
@@ -44,8 +47,8 @@ public class KalmanFilter implements Filter {
 
     //innovations edit thresholds for filter inputs
 
-	double _Z_EDIT_STEADY = 3; //NOTE: _editMeasurement read from measurement model overrides.
-	double _Z_EDIT_MANEUVER = 6;
+	double _Z_EDIT_STEADY      = 3; //NOTE: _editMeasurement read from measurement model overrides.
+	double _Z_EDIT_MANEUVER    = 6;
 	double _Z_EDIT_ACQUISITION = 9;
 	double _Z_EDIT_ASSOCIATION = 24;
 
@@ -58,6 +61,7 @@ public class KalmanFilter implements Filter {
 	// --Edits measurement innovations by instrument from _STEADY Filter stream
 	RealVector _editThreshold; //Overrides _Z_EDIT_STEADY.
 
+	ArrayList<Polar> _predictedPedestalResiduals;
 
 	//mode performance statistics support
 	int cntSteady = 0;
@@ -120,7 +124,7 @@ public class KalmanFilter implements Filter {
 	 * */
 	public KalmanFilter( Pedestal pedestals[] ) {
 		
-		this._numMeas = pedestals.length * 3; // potentially mapped rg, az and el pedestal sensors 	
+		this._numMeas = pedestals.length * 3; // potentially mapped rg, az and el pedestal sensors of group
 		
 		this._state = new ArrayRealVector(9);				//Kalman Filter exported state vector
 		
@@ -142,7 +146,7 @@ public class KalmanFilter implements Filter {
 		this._sigmaMeasurement = new ArrayRealVector(_numMeas);
 		this._editThreshold = new ArrayRealVector(_numMeas);
 
-
+		this._predictedPedestalResiduals = new ArrayList<Polar>(_numMeas);
 
 		this._Kt = MatrixUtils.createRealMatrix(_numMeas,9); 		//Kalman gain & blending matrix transposed.
 		this._D  = MatrixUtils.createRealMatrix(_numMeas,9); 		//Work RHS.
@@ -257,7 +261,9 @@ public class KalmanFilter implements Filter {
 		return P1.add(S.multiply(P1)).add(q2);             // Sparse Level 3
 	}
 	
-	/** Edit innovations outliers...
+
+
+	/** Edit logic for innovations outliers...
 	 * 
 	 * @param m number of sensor instruments mapped to filter
 	 * @return number of innovations in update
@@ -305,46 +311,84 @@ public class KalmanFilter implements Filter {
 	
 	/** form the measurement data into observation and measurements
 	 * 
-	 * @param measurements
+	 * @param ped
 	 * @return number of instruments mapped to filter
 	 */
-	public int formMeasurementEnsemble(Pedestal measurements[]) {
+	public int formMeasurementEnsemble(Pedestal ped[]) {
 		this._H = MatrixUtils.createRealMatrix(_numMeas, 3); //force zeros all structure
 		int instr = 0;		
 		this._position = new TVector(_x_.getSubVector(0, 3));
-		
+
+		//Declare local working variables...
+
+		TVector filterVector = new TVector(TVector.EMPTY);
+		TVector pedLocation = new TVector(TVector.EMPTY);
 		TVector projectI = new TVector(TVector.EMPTY);
 		TVector projectJ = new TVector(TVector.EMPTY);
 		TVector projectK = new TVector(TVector.EMPTY);
-		for (int n = 0; n < measurements.length; n++) {
+
+		Polar filterPlot = new Polar();
+		Polar radar = new Polar();
+
+		Rotator local = new Rotator();
+		Polar predictedResiduals = new Polar();
+
+		//For each pedestal in group...
+		for (int n = 0; n < ped.length; n++) {
+
+			//Done for every pedestal in group...(1:1) with pedestal instruments...
+
+			radar.set(ped[n].getLocal()); //get this n^(th) pedestal radar coordinates for target vector plot {rae}
+			local.set(ped[n].getLocationFrame().getLocal()); //local orientation rotator {NED} from {EFG}
+
+			pedLocation.set(ped[n].getLocalCoordinates()); // pedestal surveyed-location vector from local filter origin {EFG}
+
+			filterVector.set(_x_.getSubVector(0, 3).subtract( pedLocation.realVector() ),0);
+			filterPlot.set(Polar.commandLocal(filterVector, local));
+
+			//Done for every pedestal in group...(1:1) with pedestal instruments...
+			predictedResiduals.set(new Polar(
+					radar.getRange() - filterPlot.getRange()
+					,radar.getSignedAzimuth().subtract(filterPlot.getSignedAzimuth()).signedPrinciple()
+					,radar.getElevation().subtract(filterPlot.getElevation()).signedPrinciple()
+			));
+
+			_predictedPedestalResiduals.add( n, predictedResiduals );
+
+			System.out.println( "**** Pedestal Sensor Predicted Residuals ** " + ped[n].getSystemId()
+					+ "\t drg " + (_predictedPedestalResiduals.get(n)).getRange()
+					+ "\t daz " + _predictedPedestalResiduals.get(n).getSignedAzimuth().getDegrees()
+					+ "\t del " + _predictedPedestalResiduals.get(n).getElevation().getDegrees()
+					+ "\t (a priori) rg: "	+ filterPlot.getRange() );	//Process pedestals sensor[instr]: (those mapped to filter update...)
+
+			//INSTRUMENTS:
 			// add rows to H, z vector, and diag(R) (projection ped sensor measurements)!!!!
-			
-			TVector pedLoc = new TVector(measurements[n].getLocalCoordinates()); // get this n^(th) pedestal location
 
-			//Process pedestals sensor[instr]: (those mapped to filter update...)
+			if (ped[n].getMapRG()) {
 
-			if (measurements[n].getMapRG()) {
-				projectI.set(measurements[n].getAperture_i().unit());
+				projectI.set(ped[n].getAperture_i().unit());
+
 				_H.setRow(instr, projectI.doubleArray());
-				_z.setEntry(instr, measurements[n].getLocal().getRange() + pedLoc.getInnerProduct(projectI)); // meters track projection measured
-				_sigmaMeasurement.setEntry(instr, measurements[n].getDeviationRG()); // innovation meters
+				_z.setEntry(instr, radar.getRange() + pedLocation.getInnerProduct(projectI)); // meters track projection measured
+				_sigmaMeasurement.setEntry(instr, ped[n].getDeviationRG()); // innovation meters
 				//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationRG());
 				_editThreshold.setEntry(instr,2.0); // thresh should be read with measurement model like measurements[n].getDeviationAZ()!!!!
-				mapPed[instr] = n;
+				mapPed[instr] = n; //look up pedestal by instrument in filter solution
 				mapSensor[instr] = 0;
 				instr += 1;
 			}
 
-			if ((measurements[n].getMapAZ()) || (measurements[n].getMapEL())) {
+			if ((ped[n].getMapAZ()) || (ped[n].getMapEL())) {
 
-				double priorPedRG = new TVector(_x_.getSubVector(0, 3)).subtract(pedLoc).getAbs(); //local ped range a priori
-				System.out.println(measurements[n].getSystemId() + "predicted (a priori) range to target: " + priorPedRG + "\n");
+				if (ped[n].getMapAZ()) {
 
-				if (measurements[n].getMapAZ()) {
-					projectJ.set(measurements[n].getAperture_j().unit()); //.divide(priorPedRG));
+					projectJ.set(ped[n].getAperture_j().unit()); //.divide(filterPlot.getRange()));
+
 					_H.setRow(instr, projectJ.doubleArray());
-					_z.setEntry(instr, pedLoc.getInnerProduct(projectJ)); // meters track error normal->az // @radians tracke error AZ
-					_sigmaMeasurement.setEntry(instr, measurements[n].getDeviationAZ().getRadians() * priorPedRG); //innovation meters normal-az // innovation radians
+					_z.setEntry(instr, pedLocation.getInnerProduct(projectJ)); // meters track error normal->az // @radians tracke error AZ
+//					_sigmaMeasurement.setEntry(instr, ped[n].getDeviationAZ().getRadians() * filterPlot.getRange()); ////@MAS: Need '* Cos[EL]' multiplier! // innovation meters
+					_sigmaMeasurement.setEntry(instr, ped[n].getDeviationAZ().getRadians()
+							* filterPlot.getRange() * StrictMath.cos(filterPlot.getElevation().getRadians()) ); ////@MAS: Need '* Cos[EL]' multiplier! // innovation meters
 					//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationAZ().getRadians());
 					_editThreshold.setEntry(instr,3.0); // thresh should be read with measurement model like measurements[n].getDeviationAZ()!!!!
 					mapPed[instr] = n;
@@ -352,11 +396,13 @@ public class KalmanFilter implements Filter {
 					instr += 1;
 				}
 
-				if (measurements[n].getMapEL()) {
-					projectK.set(measurements[n].getAperture_k().unit()); //.divide(priorPedRG));
+				if (ped[n].getMapEL()) {
+
+					projectK.set(ped[n].getAperture_k().unit());
+
 					_H.setRow(instr, projectK.doubleArray());
-					_z.setEntry(instr, pedLoc.getInnerProduct(projectK)); // @radians track error EL
-					_sigmaMeasurement.setEntry(instr, measurements[n].getDeviationEL().getRadians() * priorPedRG); // innovation radians
+					_z.setEntry(instr, pedLocation.getInnerProduct(ped[n].getAperture_k().unit())); // @radians track error EL
+					_sigmaMeasurement.setEntry(instr, ped[n].getDeviationEL().getRadians() * filterPlot.getRange()); // innovation meters
 					//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationEL().getRadians());
 					_editThreshold.setEntry(instr,3.0); // thresh should be read with measurement model like measurements[n].getDeviationAZ()!!!!
 					mapPed[instr] = n;
@@ -397,10 +443,7 @@ public class KalmanFilter implements Filter {
 		if(_STEADY) System.out.println("\n ***Steady Track*** " + time);
 
 
-
-
 		if (_ASSOCIATE) { //measurements track convergence...
-						
 			RealMatrix a = _H.getSubMatrix(0, instr - 1, 0, 2);//copy();
 			SingularValueDecomposition svd = new SingularValueDecomposition(a.getSubMatrix(0, instr - 1,0,2));
 			p_point = svd.getSolver().solve(_z.getSubVector(0, instr)); //proxy plot
@@ -499,22 +542,20 @@ public class KalmanFilter implements Filter {
 					sumNormalizedResiduals += _eN.getEntry(h);
 				}
 				_Z_NormalizedResidual = sumNormalizedResiduals / instr; /// StrictMath.sqrt((double) instr);
-				System.out.println("\n *** Z from Normalized residuals  = " + _Z_NormalizedResidual);
+				System.out.println("\n *** Z from ave Normalized residuals  = " + _Z_NormalizedResidual);
 
+//				double averageNormalizedResidual = sumNormalizedResiduals/instr;
+//				System.out.println(" *** ave Norm res.    = " + averageNormalizedResidual);
+//
+//				double _rmsNormalizedResidual = _eN.getSubVector(0, instr).getNorm() / StrictMath.sqrt((double) instr);
+//				System.out.println(" *** rms Norm res.    = " + _rmsNormalizedResidual);
 
-				double averageNormalizedResidual = sumNormalizedResiduals/instr;
-				System.out.println(" *** ave Norm res.    = " + averageNormalizedResidual);
-
-				double _rmsNormalizedResidual = _eN.getSubVector(0, instr).getNorm() / StrictMath.sqrt((double) instr);
-				System.out.println(" *** rms Norm res.    = " + _rmsNormalizedResidual);
-
-
-				//System.out.println("\n ***Innovations Norm = " + _w.getNorm() * StrictMath.sqrt(instr - 3));
-				System.out.println("\n ***Ped.Sensor Normalized Residuals & Residuals & Innovations & sigmas = { eN, e, w, sigma");
-				for (int h = 0; h < instr; h++) {
-					System.out.print("\tP"+ mapPed[h] +":S" + mapSensor[h] + "\t"+_eN.getEntry(h)+", \t"+_e.getEntry(h)+", \t"+_w.getEntry(h) + ", \t" +_sigmaMeasurement.getEntry(h)+ "\n  ");
-				}
-				System.out.println("} \n\n");
+//				//System.out.println("\n ***Innovations Norm = " + _w.getNorm() * StrictMath.sqrt(instr - 3));
+//				System.out.println("***Ped.Sensor Normalized Residuals & Residuals & Innovations & sigmas = { eN, e, w, sigma");
+//				for (int h = 0; h < instr; h++) {
+//					System.out.print("\tP"+ mapPed[h] +":S" + mapSensor[h] + "\t"+_eN.getEntry(h)+", \t"+_e.getEntry(h)+", \t"+_w.getEntry(h) + ", \t" +_sigmaMeasurement.getEntry(h)+ "\n  ");
+//				}
+//				System.out.print("   } \n");
 
 			} else { // Have no new measurements to process an update:
 				_x = _x_.copy();

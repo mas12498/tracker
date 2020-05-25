@@ -2,12 +2,10 @@ package tspi.filter;
 
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-import tspi.model.Ellipsoid;
-import tspi.model.Pedestal;
-import tspi.model.PedestalModel;
-import tspi.model.Polar;
+import tspi.model.*;
 import tspi.rotation.Vector3;
 import tspi.simulator.Kinematic;
+import tspi.simulator.Racetrack;
 import tspi.simulator.Trajectory;
 import tspi.util.TVector;
 
@@ -70,9 +68,6 @@ class TestFilter {
 		double dt = 0.020; //seconds interval between frames
 		int Nt = 500;      //number of frames
 
-
-
-
 		//Profile Kinematics starting reference:
 		TVector pos0 = new TVector(3135932.588, -5444754.209, 1103864.549); //geocentric position EFG m
 		TVector vel0 = new TVector(0.0, 100.0, 0.0);                         //velocity EFG m/s
@@ -89,22 +84,33 @@ class TestFilter {
 		TVector p0 = new TVector(pOff.add(pos0).subtract(Pedestal.getOrigin()));     //init filter position
 		TVector v0 = new TVector(vOff);                                              //init filter velocity
 
-
-
 		// create the target trajectory
-		Trajectory trajectory = new Kinematic(
-				t0,
-				pos0.arrayRealVector(),
-				vel0.arrayRealVector(),
-				acc0.arrayRealVector()  );
-				
+//		Trajectory trajectory = new Kinematic(
+//				t0,
+//				pos0.arrayRealVector(),
+//				vel0.arrayRealVector(),
+//				acc0.arrayRealVector()  );
+		Vector3 c1 = new Vector3(0.0, 0.0,-5000.0);
+		Vector3 c2 = new Vector3( 2000.0, 10000.0, -5000.0 );
+		double radius = 1000.0;
+		double velocity = 150.0;
+		double start = 0.0;
+
+		// set the origin to the first sensor
+		Pedestal pedestal = pedestals[0];
+		Ellipsoid origin = pedestal.getLocationEllipsoid();
+
+		Racetrack trajectory = new Racetrack( start, origin, c1, c2, radius, velocity);
+		int n = (int)Math.floor((trajectory.getPerimeter() / velocity) / dt); // one circuit of the racetrack
+
+
 		// create Kalman 'group' filter track from pedestal instruments selected... loaded ped states
 		Filter kalman = new KalmanFilter( pedestals );
 //		//Filter cheat = new CheatFilter( trajectory );
 		
 		// test the filter on the trajectory with pedestals simulated...time,frameInsterval,frames,stream
 		//NOTE: pedestal measurement models of simulation might want different from pedestals of filter.
-		demoFilter( kalman, trajectory, pedestals, t0, dt, Nt, stream, navs );
+		demoFilter( kalman, trajectory, pedestals, t0, dt, n, stream, navs );
 //		//demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream ); //defined below as trivial truth passer...
 
 

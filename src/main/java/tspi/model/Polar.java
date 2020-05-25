@@ -127,7 +127,7 @@ public class Polar {
 	}
 
 
-	protected  static Polar commandLocal(Vector3 r_EFG, Rotator pedestalLocal){
+	public  static Polar commandLocal(Vector3 r_EFG, Rotator pedestalLocal){
 		Rotator los = (Rotator) new Rotator(pedestalLocal).preTilt_i(r_EFG).conjugate();
 		return new Polar(r_EFG.getAbs(), los.getEuler_k_kji().angle().signedPrinciple(), los.getEuler_j_kji().angle().signedPrinciple());
 	}

@@ -92,12 +92,10 @@ class TestFilter {
 
 		// create Kalman 'group' filter track from pedestal instruments selected... loaded ped states
 		Filter kalman = new KalmanFilter( pedestals );
-//		//Filter cheat = new CheatFilter( trajectory );
-		
+
 		// test the filter on the trajectory with pedestals simulated...time,frameInsterval,frames,stream
 		//NOTE: pedestal measurement models of simulation might want different from pedestals of filter.
 		demoFilter( kalman, trajectory, pedestals, t0, dt, n, stream, navs );
-//		//demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream ); //defined below as trivial truth passer...
 
 		// dispose IO
 //		navs.close();
@@ -173,6 +171,7 @@ class TestFilter {
 
 			// take perturbed measurements
 			trajectory.simulateTrack(t, pedestals, random);
+			//TODO start using the observation interface!
 //			// Propagate perturbed measurements... replaced 'simulateTrack' with free partial model of just 'track'...
 //			trajectory.track( t, pedestals, random );
 

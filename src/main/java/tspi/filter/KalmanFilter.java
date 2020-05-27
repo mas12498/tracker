@@ -625,52 +625,7 @@ public class KalmanFilter implements Filter {
 		return _state;
 
 	}
-	
-	
-	
-	
-//	@Override
-//	public RealVector filter( double time, Pedestal pedestals[] ) {
-//		//TODO
-//		return null;
-//	}
-	
-	/**
-	 * Return differences between filter a posteriori and rejected measurements
-	 */
-	public Polar[] getEditsPrediction(double dt ) {
-		
-		//TODO: give array of residuals of measurements from prediction a priori... 
-		return null;
-	}
-	
-	/**
-	 * Return differences between filter a posteriori and rejected measurements
-	 */
-	public Polar[] getEditsUpdate(double dt ) {
-		
-		//TODO: give array of residuals of measurements from prediction a priori... 
-		return null;
-	}
-	
-	/**
-	 * Return differences between filter a priori and measurements
-	 */
-	public Polar[] getResidualsPrediction(double dt ) {
-		
-		//TODO: give residuals of measurements from prediction a priori... 
-		return null;
-	}
-	
-	/**
-	 * Return differences between filter a posteriori and measurements
-	 */
-	public Polar[] getResidualsUpdate(double dt ) {
-		//TODO: give residuals of measurements from prediction a posteriori
-		return null;
-	}
-	
-	
+
 	public RealVector getState() {
 		return _state;
 	}
@@ -687,9 +642,4 @@ public class KalmanFilter implements Filter {
 		return _w;
 	}
 
-//	@Override
-//	public RealVector prediction( double time ) {
-//		//TODO
-//		return null;
-//	}
 }

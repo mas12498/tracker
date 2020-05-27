@@ -30,20 +30,6 @@ class TestFilter {
 	public static void main(String args[]) {
 		
 		Pedestal pedestals[];
-	//File in = null; //new File("/home/mike/pedestalsFilter");
-//		File in = new File("/home/mike/git/mas12498/tracker/data/pedestalsIncrement.csv");
-		//File in = new File("H:/filterPedestals001.csv");		
-		//File in = new File("H:/filterPedestals010.csv");		
-//		File in = new File("H:/filterPedestals0005.csv");		
-//		File in = new File("H:/filterPedestals.csv");		
-//		File in = new File("/home/mike/pedestalsFilter010.csv");
-//		File in = new File("/home/mike/photon/workspace/github/tracker/data/pedestalsFilter1.csv");
-//		File in = new File("H:/git/mas12498/tracker/data/pedestalsIncrement.csv");
-//		File in = new File("C:\\Users\\Casey Shields\\eclipse-workspace\\tracker\\data\\pedestalsIncrement.csv");
-	//File out = null; //new File("/home/mike/photon/workspace/github/tracker/data/testfilter.csv");
-//		File out = null;//new File("./tracker/data/testFilter.csv");
-
-
 		File in = new File(args[0]);//pedestals file
 		File out = new File(args[1]);//filter track-state file
 		File nav = new File(args[2]); //nav track position plots tLLh
@@ -113,16 +99,10 @@ class TestFilter {
 		demoFilter( kalman, trajectory, pedestals, t0, dt, n, stream, navs );
 //		//demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream ); //defined below as trivial truth passer...
 
-
-
-		//System.out.println(BLAS.getInstance().getClass().getName());
 		// dispose IO
 //		navs.close();
 		stream.close();
 	}
-
-
-
 
 	/** Read an array of modeled pedestals from the given file */
 	public static Pedestal[] loadPedestals(File file) throws Exception {
@@ -155,148 +135,71 @@ class TestFilter {
 	 * and each {@link tspi.model.Pedestal Pedestal} is pointed at the object
 	 * and perturbed by their error model. The array of noisy pedestal
 	 * measurements are then given to the filter incrementally over an interval
-	 * of time.
-	 * TODO We want to make this into a test; how can we do that?
-	 *  - make sure tracker state is within some epsilon of the truth?
-	 *  - monitor the internal residuals of the filter?
-	*/
+	 * of time. */
 	public static void demoFilter(
             Filter filter, Trajectory trajectory, Pedestal pedestals[],
-            double t0, double dt, int n, PrintStream stream, PrintStream navs	) {
+            double t0, double dt, int n, PrintStream stream, PrintStream navs ) {
 
 		Ellipsoid trueNav = new Ellipsoid();
 		Vector3 nav = new Vector3(Vector3.EMPTY);
 
 		// print the headers
-
 		navs.append("time, NLat, ELon, eHgt");
 		navs.println();
 
 		stream.append("time, S0, S1, S2, S3, S4, S5, S6, S7, S8, "
 				+ "dS0, dS1, dS2, dS3, dS4, dS5, dS6, dS7, dS8");
 		for (Pedestal pedestal : pedestals) {
-			stream.append( ", "+pedestal.getSystemId()+"_rg"); //@MAS
-			stream.append( ", "+pedestal.getSystemId()+"_az");
-			stream.append( ", "+pedestal.getSystemId()+"_el");
+			stream.append(", " + pedestal.getSystemId() + "_rg");
+			stream.append(", " + pedestal.getSystemId() + "_az");
+			stream.append(", " + pedestal.getSystemId() + "_el");
 		}
 		stream.println();
 
-
 		// Generate stream (measurements over time)
-		for (double t=t0; t<t0+n*dt; t+=dt) {
-			
+		for (double t = t0; t < t0 + n * dt; t += dt) {
+
 			// get the true object state
-			RealVector truth = trajectory.getState( t );
+			RealVector truth = trajectory.getState(t);
 
 			// get the true nav plot
-			nav.set(truth.getEntry(0),truth.getEntry(1),truth.getEntry(2)); //functional to get LLh
+			nav.set(truth.getEntry(0), truth.getEntry(1), truth.getEntry(2)); //functional to get LLh
 			trueNav.setGeocentric(nav);
 
 			//tabulate nav plots into csv
 			navs.append((Double.toString(t)));
-			navs.append(", "+trueNav.getNorthLatitude()+", "+trueNav.getEastLongitude()+", "+trueNav.getEllipsoidHeight()); //nav plot data
+			navs.append(", " + trueNav.getNorthLatitude() + ", " + trueNav.getEastLongitude() + ", " + trueNav.getEllipsoidHeight()); //nav plot data
 			navs.println();
-			
+
 			// take perturbed measurements
-			trajectory.simulateTrack( t, pedestals, random );
+			trajectory.simulateTrack(t, pedestals, random);
 //			// Propagate perturbed measurements... replaced 'simulateTrack' with free partial model of just 'track'...
 //			trajectory.track( t, pedestals, random );
 
 			// update the filter with the noisy measurements
 			RealVector state = filter.filter(t, pedestals).copy(); // just added a copy to make sure I wasn't clobbering any leaked state...
-			
+
 			// compare the measurements
-			state.subtract( truth );
-			
+			state.subtract(truth);
+
 			// tabulate the results into CSV
 			stream.append(Double.toString(t)); // time
-			
+
 			for (double d : truth.toArray())
-				stream.append(", "+d);// true state
-			
+				stream.append(", " + d);// true state
+
 			for (double d : state.toArray())
-				stream.append(", "+d);// state delta
-			
-			// TODO I don't think if residue is meaningful for the cheatFilter...
-			// put this back in when you're ready?
-//			Polar[] residue = filter.getResidualsPrediction(t);
-//			for(Polar polar : residue) {
-//				stream.append( ", "+polar.getSignedAzimuth() );
-//				stream.append( ", "+polar.getElevation() );
-//			} // pre
-//			
-//			residue = filter.getResidualsUpdate(t);
-//			for(Polar polar : residue) {
-//				stream.append( ", "+polar.getSignedAzimuth() );
-//				stream.append( ", "+polar.getElevation() );
-//			} // post
-			
+				stream.append(", " + d);// state delta
+
+			// Do we want to include residuals?
+//			RealVector residuals = filter.getResiduals();
+//			RealVector innovations = filter.getInnovations();
+
 			stream.println();
 		}
 		// TODO use descriptive statistics and print a summary to screen ? Use them for unit test?
+		/* Do we want to adapt this into a test? How can we do that?
+		 *  - make sure tracker state is within some epsilon of the truth?
+		 *  - monitor the internal residuals of the filter? */
 	}
-	
 }
-
-
-/** Uses the Trajectory model to get the state, therefore all errors should be zero. */
-class CheatFilter implements Filter {
-	double time;
-	Trajectory cheat;
-	
-	public CheatFilter(Trajectory hint) {
-		//just pass it thru...
-		this.cheat = hint;
-	}
-	
-	@Override
-	public RealVector filter(double time, Pedestal[] measurements) {
-		this.time = time;
-		//below is replaced by the filter state[?]
-		return cheat.getState(time);
-	}
-	
-	@Override
-	public RealVector getState() {
-		return cheat.getState(time);
-	}
-
-	@Override
-	public RealMatrix getCovariance() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Polar[] getResidualsPrediction(double dt) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Polar[] getResidualsUpdate(double dt) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	public RealVector getResiduals(){
-		return null;
-	}
-	
-	public RealVector getInnovations(){
-		return null;
-	}
-	
-
-}
-
-// Casey: this was just an early stab at how to represent the filter cue right?
-
-//// create filter starting cue:
-//Kinematic cue = new Kinematic(
-//		0,
-//		new TVector(pos0).arrayRealVector().add(pOff.realVector()),
-//		new TVector(vel0).arrayRealVector().add(vOff.realVector()),
-//		zero.arrayRealVector());
-
-//Casey: if it would be helpful we could add the ability to compute a hint state with some bounded offset in speed, position direction or whatnot... 

@@ -30,3 +30,5 @@ public interface Observations extends Iterator<Double> {
 //    /** @return the mode */
 //    public int getMode(int index);
 }
+
+//TODO move mode into pedestal and change interface to provide iterator of sensors?

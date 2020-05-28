@@ -2,16 +2,17 @@ package tspi.simulator;
 
 import org.apache.commons.math3.linear.RealVector;
 import tspi.model.Ensemble;
-import tspi.model.Pedestal;
 import tspi.model.Polar;
 import tspi.rotation.Vector3;
-import tspi.util.TVector;
 
+import javax.swing.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.Iterator;
-import java.util.Random;
 
 /** abstracts the source of observtions. */
-public interface Observations extends Iterator<Ensemble> {
+public interface Observations extends Iterator<Double> {
 
     /** @return the current time */
     public double getTime();
@@ -19,88 +20,13 @@ public interface Observations extends Iterator<Ensemble> {
     /** @return the actual location of the target, or null if not available. */
     public Vector3 getTruth();
 
-}
+    /** @return a vector of observations, whose order corresponds to the ensemble order */
+    public Polar[] getObservations();
 
-class SimulatedObservations implements Observations {
-
-    // Observation state members, updated after the iterator is advanced
-    Polar[] observations; // current observations
-    Vector3 truth; // current true target position in EFG
-    double time; // current time
-
-    // Simulation members used to generate observations
-    Ensemble sensors; // the pedestals generating observations
-    Trajectory trajectory; // the parametric definition of the simulated target
-    double t, dt; // start time and time increment
-    int i, n; // progress count
-    Random random;
-
-    public SimulatedObservations(
-            Ensemble sensors, Trajectory trajectory,
-            double start, double step, int count )
-    {
-        this.trajectory = trajectory;
-        this.sensors = sensors;
-        this.t = start;
-        this.dt = step;
-        this.n = count;
-        this.i = -1;
-        this.random = new Random(0L);
-    }
-
-    @Override
-    public double getTime() { return time; }
-
-    @Override
-    public Vector3 getTruth() { return truth; }
-
-    public Ensemble getSensors() { return sensors; }
-
-    public Polar[] getObservations() { return observations; }
-    @Override
-    public boolean hasNext() { return i < n; }
-
-    @Override
-    public Ensemble next() {
-
-        // find the current trajectory position
-        time = t + ((++i) * dt);
-        truth = new TVector( trajectory.getState( time ) );
-
-        // gather an observation from each sensor in the ensemble
-        observations = new Polar[ sensors.size() ];
-        for (int m = 0; m< sensors.size(); m++) {
-
-            // point each sensor at the true target position
-            Pedestal pedestal = sensors.get(m);
-            pedestal.pointToLocation( truth );
-
-            // add pedestal error model
-            observations[m] = pedestal.getPerturbedLocal(random);
-        }
-        return null;
-    }
-}
-
-class RecordedObservations implements  Observations {
-
-    @Override
-    public double getTime() {
-        return 0;
-    }
-
-    @Override
-    public Vector3 getTruth() {
-        return null;
-    }
-
-    @Override
-    public boolean hasNext() {
-        return false;
-    }
-
-    @Override
-    public Ensemble next() {
-        return null;
-    }
+    //TODO how much do we need to expose?
+//    /** @return the observation of the specified sensor */
+//    public Polar getObservation(int index);
+//
+//    /** @return the mode */
+//    public int getMode(int index);
 }

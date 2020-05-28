@@ -15,14 +15,14 @@ import java.util.Random;
 
 /** Generates a sequence of state vectors from a Trajectory and writes them to File.
  * Very similar to Test Measurements but has a different Trajectory */
-public class TrajectoryWriter {
+public class ObservationsWriter {
 
     Trajectory trajectory;
     Ensemble sensors;
     TVector position;
     Random random;
 
-    public TrajectoryWriter(long seed) {
+    public ObservationsWriter(long seed) {
         this.random = new Random( seed );
         this.position = null;
     }
@@ -143,7 +143,7 @@ timeSec,trackE,trackF,trackG,A_mode,A_rg,A_az,A_el,B_mode,B_rg,B_az,B_el,C_mode,
             Racetrack racetrack = new Racetrack( start, origin, c1, c2, radius, velocity);
 
             // create the trajectory file writer for the given trajectory and ensemble
-            TrajectoryWriter writer = new TrajectoryWriter( 0L ); // System.nanoTime() );
+            ObservationsWriter writer = new ObservationsWriter( 0L ); // System.nanoTime() );
             writer.setTrajectory( racetrack );
             writer.setSensors( ensemble );
 

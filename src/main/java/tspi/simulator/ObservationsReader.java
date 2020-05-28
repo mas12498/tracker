@@ -12,7 +12,7 @@ import java.io.FileReader;
 /** Provides Observations parsed from a csv observations file with the following header and columns;
  * time, [ trackE, trackF, trackG, ] (n_mode, n_rg, n_az, n_el)+
  * */
-public class RecordedObservations implements  Observations {
+public class ObservationsReader implements Observations {
 
     // current state of the observer
     double time;
@@ -29,7 +29,7 @@ public class RecordedObservations implements  Observations {
     int offset;
     Exception exception;
 
-    public RecordedObservations( File csv ) throws Exception {
+    public ObservationsReader(File csv ) throws Exception {
         file = csv;
         reader = new BufferedReader( new FileReader(csv) );
         header = reader.readLine().split(separator);
@@ -116,7 +116,7 @@ public class RecordedObservations implements  Observations {
     public static void main( String[] args ) {
         File file = new File( "./data/TrajectoryTest/racetrack.csv");
         try {
-            RecordedObservations playback = new RecordedObservations(file);
+            ObservationsReader playback = new ObservationsReader(file);
 
             while (playback.hasNext()) {
                 playback.next();

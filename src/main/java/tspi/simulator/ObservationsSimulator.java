@@ -8,7 +8,7 @@ import tspi.util.TVector;
 
 import java.util.Random;
 
-class SimulatedObservations implements Observations {
+class ObservationsSimulator implements Observations {
 
     // Observation state members, updated after the iterator is advanced
     Polar[] observations; // current observations
@@ -22,7 +22,7 @@ class SimulatedObservations implements Observations {
     int i, n; // progress count
     Random random;
 
-    public SimulatedObservations(
+    public ObservationsSimulator(
             Ensemble sensors, Trajectory trajectory,
             double start, double step, int count )
     {
@@ -64,6 +64,7 @@ class SimulatedObservations implements Observations {
 
             // add pedestal error model
             observations[m] = pedestal.getPerturbedLocal(random);
+            //pedestal.pointToLocation(); //TODO include error in pedestal pointing...
         }
 
         return new Double( time );

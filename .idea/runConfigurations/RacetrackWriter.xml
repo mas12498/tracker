@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="RacetrackWriter" type="Application" factoryName="Application">
-    <option name="MAIN_CLASS_NAME" value="tspi.simulator.TrajectoryWriter" />
+    <option name="MAIN_CLASS_NAME" value="tspi.simulator.ObservationsWriter" />
     <module name="tracker" />
     <option name="PROGRAM_PARAMETERS" value="0 0 10000 0 2000 10000 1000 223 0.02 &quot;./data/pedestalsTest100.csv&quot; &quot;./data/TrajectoryTest/racetrack.csv&quot; &quot;./data/TrajectoryTest/target.csv&quot;" />
     <method v="2">

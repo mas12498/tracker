@@ -1,38 +1,27 @@
 package tspi.simulator;
 
-import org.apache.commons.math3.linear.RealVector;
 import tspi.model.Ellipsoid;
 import tspi.model.Ensemble;
 import tspi.model.Pedestal;
 import tspi.model.Polar;
 import tspi.rotation.Vector3;
-import tspi.util.TVector;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-import java.util.Random;
 
 /** Generates a sequence of state vectors from a Trajectory and writes them to File.
  * Very similar to Test Measurements but has a different Trajectory */
 public class ObservationsWriter {
 
-    Trajectory trajectory;
-    Ensemble sensors;
-    TVector position;
-    Random random;
+    Observations observations;
 
-    public ObservationsWriter(long seed) {
-        this.random = new Random( seed );
-        this.position = null;
+    public ObservationsWriter(Observations observations) {
+        this.observations = observations;
     }
 
-    public void setTrajectory(Trajectory trajectory) {this.trajectory = trajectory;}
-    public void setSensors(Ensemble sensors) {this.sensors = sensors;}
-
-    public Trajectory getTrajectory() {return trajectory;}
-    public Ensemble getSensors() {return sensors;}
-    public Vector3 getTarget() {return position;}
+    public void setObservations(Observations observations) {this.observations = observations;}
+    public Observations getObservations() {return observations;}
 
     /** Print the required info into a CSV file with the following columns;
      * <pre>
@@ -40,71 +29,52 @@ timeSec,trackE,trackF,trackG,A_mode,A_rg,A_az,A_el,B_mode,B_rg,B_az,B_el,C_mode,
  0        1       2       3   4       5   6   7       8   9     10   11   12      13  14  15 </pre>
      * Also produces a target file for checking output with Increment III;
      * <pre>time, NLat, ELon, eHgt</pre>*/
-    public void write(double t0, double dt, int n, PrintStream output, PrintStream targets) {
+    public void write(PrintStream targetObservations, PrintStream targetTruth) {
 
-        // write the header of the file
-        output.print( "timeSec, trackE, trackF, trackG");
-        for (int m=0; m<sensors.size(); m++) {
-            String id = sensors.get(m).getSystemId();
-            output.print( ", "+id+"_mode, "+id+"_rg, "+id+"_az, "+id+"_el");
-        }
-        output.println();
+        // TODO do we really need truth with observations if we're writing a truth file? Or should we put LLH with observations?
 
-        targets.println("time, NLat, ELon, eHgt");
+        // TODO write the header of the files. Do I need an ensemble to get sensor IDs?
+//        targetObservations.print( "timeSec" );
+//        if (observations.hasTruth())
+//            targetObservations.print(", trackE, trackF, trackG");
+//        for (int m=0; m<observations.size(); m++) {
+//            String id = "S"+m; // sensors.get(m).getSystemId();
+//            targetObservations.print( ", "+id+"_mode, "+id+"_rg, "+id+"_az, "+id+"_el");
+//        }
+//        targetObservations.println();
 
-        // sample the time interval
-        for (double i=0; i<n; i++) {
-            double t = t0 + dt*i;
+        targetTruth.println("time, NLat, ELon, eHgt");
 
-            // find the current trajectory position
-            RealVector position = trajectory.getPosition(t);
-            TVector efg = new TVector(position);
+        while (observations.hasNext()) {
+            observations.next();
 
-            // also write out a target file
+            double time = observations.getTime();
+            Vector3 truth = observations.getTruth();
+            Polar[] measurements = observations.getObservations();
+            // TODO figure out where to keep mode...
+//            int[] modes = observations.getModes();
+
+            // write a record in the observations file
+            targetObservations.print(time);
+            if (truth!=null)
+                targetObservations.print(
+                        ","+truth.getX()
+                        +','+truth.getY()
+                        +','+truth.getZ() );
+            for (int n=0; n<measurements.length; n++)
+                targetObservations.print(
+                        ",0,"+measurements[n].getRange()
+                        +","+measurements[n].getSignedAzimuth()
+                        +","+measurements[n].getElevation() );
+            targetObservations.println();
+
+            // write a record in the target truth file
             Ellipsoid llh = new Ellipsoid();
-            llh.setGeocentric(efg);
-            targets.println( t + ", "
+            llh.setGeocentric(truth);
+            targetTruth.println( time + ", "
                     + llh.getEastLongitude().getDegrees() + ", "
                     + llh.getNorthLatitude().getDegrees() + ", "
                     + llh.getEllipsoidHeight());
-
-            // Print the trajectory info
-            output.print( t+","
-                    +efg.getX()+","
-                    +efg.getY()+","
-                    +efg.getZ()+"," );
-
-            // for every sensor
-            for (int m=0; m<sensors.size(); m++) {
-                // measure the trajectory, including sensor error
-                Pedestal pedestal = sensors.get(m);
-                pedestal.pointToLocation(efg);
-                Polar rae = pedestal.getPerturbedLocal(random);
-
-                // print the sensor's measurment;
-                int mode = 0; // should we add mode to the pedestal? the Trajectory?
-                output.print( mode+","
-                        +rae.getRange()+","
-                        +rae.getSignedAzimuth().getDegrees()+","
-                        +rae.getElevation().getDegrees()+"," );
-            }
-
-            output.println();
-        }
-    }
-
-    // TODO break apart some functionality for easier comprehension and wider application
-    public void update(double time) {
-        // find the current trajectory position
-        RealVector position = trajectory.getPosition(time);
-        this.position = new TVector(position);
-
-        // point each sensor at the target position
-        for (int m=0; m<sensors.size(); m++) {
-            // measure the trajectory, including sensor error
-            Pedestal pedestal = sensors.get(m);
-            pedestal.pointToLocation(this.position);
-            //Polar rae = pedestal.getPerturbedLocal(random);
         }
     }
 
@@ -142,18 +112,17 @@ timeSec,trackE,trackF,trackG,A_mode,A_rg,A_az,A_el,B_mode,B_rg,B_az,B_el,C_mode,
             // create a racetrack above that origin
             Racetrack racetrack = new Racetrack( start, origin, c1, c2, radius, velocity);
 
-            // create the trajectory file writer for the given trajectory and ensemble
-            ObservationsWriter writer = new ObservationsWriter( 0L ); // System.nanoTime() );
-            writer.setTrajectory( racetrack );
-            writer.setSensors( ensemble );
+            // create a simulation of the ensemble observing the trajectory
+            int n = (int)Math.floor((racetrack.getPerimeter() / velocity) / dt); // one circuit of the racetrack
+            ObservationsSimulator simulation = new ObservationsSimulator(ensemble, racetrack, start, dt, n);
 
             // write the trajectory profile to output
-            int n = (int)Math.floor((racetrack.getPerimeter() / velocity) / dt); // one circuit of the racetrack
+            ObservationsWriter writer = new ObservationsWriter( simulation );
             File file = new File( args[10] );
             PrintStream output = new PrintStream( new FileOutputStream(file) );
             File targetFile = new File(args[11]);
             PrintStream target = new PrintStream( new FileOutputStream(targetFile));
-            writer.write( start, dt, n, output, target );
+            writer.write( output, target );
 
         } catch(Exception exception) {
             exception.printStackTrace();

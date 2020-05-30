@@ -105,7 +105,7 @@ class TestFilter {
 
 
 		// create Kalman 'group' filter track from pedestal instruments selected... loaded ped states
-		Filter kalman = new KalmanFilter( pedestals );
+		KalmanFilter kalman = new KalmanFilter( pedestals );
 //		//Filter cheat = new CheatFilter( trajectory );
 		
 		// test the filter on the trajectory with pedestals simulated...time,frameInsterval,frames,stream
@@ -161,7 +161,7 @@ class TestFilter {
 	 *  - monitor the internal residuals of the filter?
 	*/
 	public static void demoFilter(
-            Filter filter, Trajectory trajectory, Pedestal pedestals[],
+            KalmanFilter filter, Trajectory trajectory, Pedestal pedestals[],
             double t0, double dt, int n, PrintStream stream, PrintStream navs	) {
 
 		Ellipsoid trueNav = new Ellipsoid();
@@ -237,66 +237,3 @@ class TestFilter {
 	}
 	
 }
-
-
-/** Uses the Trajectory model to get the state, therefore all errors should be zero. */
-class CheatFilter implements Filter {
-	double time;
-	Trajectory cheat;
-	
-	public CheatFilter(Trajectory hint) {
-		//just pass it thru...
-		this.cheat = hint;
-	}
-	
-	@Override
-	public RealVector filter(double time, Pedestal[] measurements) {
-		this.time = time;
-		//below is replaced by the filter state[?]
-		return cheat.getState(time);
-	}
-	
-	@Override
-	public RealVector getState() {
-		return cheat.getState(time);
-	}
-
-	@Override
-	public RealMatrix getCovariance() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Polar[] getResidualsPrediction(double dt) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Polar[] getResidualsUpdate(double dt) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	public RealVector getResiduals(){
-		return null;
-	}
-	
-	public RealVector getInnovations(){
-		return null;
-	}
-	
-
-}
-
-// Casey: this was just an early stab at how to represent the filter cue right?
-
-//// create filter starting cue:
-//Kinematic cue = new Kinematic(
-//		0,
-//		new TVector(pos0).arrayRealVector().add(pOff.realVector()),
-//		new TVector(vel0).arrayRealVector().add(vOff.realVector()),
-//		zero.arrayRealVector());
-
-//Casey: if it would be helpful we could add the ability to compute a hint state with some bounded offset in speed, position direction or whatnot... 

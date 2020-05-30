@@ -29,7 +29,18 @@ public class ObservationsReader implements Observations {
     int offset;
     Exception exception;
 
-    public ObservationsReader(File csv ) throws Exception {
+    public ObservationsReader(File csv, boolean hasTruth, int sensorCount) throws Exception {
+        file = csv;
+        reader = new BufferedReader( new FileReader(csv) );
+
+        if (hasTruth)
+            offset = 4;
+        else offset = 1;
+
+        header = new String[sensorCount + offset + (4*sensorCount)];
+    }
+
+    public ObservationsReader(File csv) throws Exception {
         file = csv;
         reader = new BufferedReader( new FileReader(csv) );
         header = reader.readLine().split(separator);
@@ -122,10 +133,8 @@ public class ObservationsReader implements Observations {
                 playback.next();
                 System.out.println( playback.getTime() );
             }
-
         } catch(Exception e) {
             e.printStackTrace();
         }
-
     }
 }

@@ -54,18 +54,13 @@ class ObservationsSimulator implements Observations {
         time = t + ((++i) * dt);
         truth = new TVector( trajectory.getState( time ) );
 
+        // point the ensemble at the target
+        sensors.point(truth, random);
+
         // gather an observation from each sensor in the ensemble
         observations = new Polar[ sensors.size() ];
-        for (int m = 0; m< sensors.size(); m++) {
-
-            // point each sensor at the true target position
-            Pedestal pedestal = sensors.get(m);
-            pedestal.pointToLocation( truth );
-
-            // add pedestal error model
-            observations[m] = pedestal.getPerturbedLocal(random);
-            //pedestal.pointToLocation(); //TODO include error in pedestal pointing...
-        }
+        for (int m = 0; m< sensors.size(); m++)
+            observations[m] = sensors.get(m).getLocal();
 
         return new Double( time );
     }

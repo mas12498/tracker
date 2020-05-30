@@ -31,10 +31,17 @@ public class Ensemble extends ArrayList<Pedestal>{
 		for (Pedestal pedestal : this) {
 			pedestal.pointToLocation(efg);
 			Polar perturbed = pedestal.getPerturbedLocal(random);
-			pedestal.pointDirection(perturbed.getUnsignedAzimuth(), perturbed.getElevation());
+			pedestal.point( perturbed.getRange(), perturbed.getUnsignedAzimuth(), perturbed.getElevation());
+			//pedestal.pointDirection( perturbed.getUnsignedAzimuth(), perturbed.getElevation() );
+			//pedestal.pointRange( perturbed.getRange() );
+
+			// this needs to be moved somewhere else...
+//			double trueRG = pedestals[n].getLocal().getRange();
+//			System.out.println("***** sim ped ranges true and perturbed:"+trueRG+"   "+pedestals[n].getLocal().getRange());
+
 		}
 	}
-	
+
 	/** Read an array of modeled pedestals from the given file */
 	public static Ensemble load(File file) throws Exception {
 		

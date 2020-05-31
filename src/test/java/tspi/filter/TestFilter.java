@@ -15,6 +15,11 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Random;
 
+// TODO TestFilter;
+// make testFilter use an ensemble instead of an array of Pedestals and PedestalModel
+// make test filter use Observations interface while driving filter.
+// add error diagnostic output to TestFilter
+
 /** Exercise the filter */
 class TestFilter {
 	
@@ -29,7 +34,7 @@ class TestFilter {
 	 * Tracker <pedestal file> <output file> */
 	public static void main(String args[]) {
 		
-		Pedestal pedestals[];
+		Ensemble pedestals;
 		File in = new File(args[0]);//pedestals file
 		File out = new File(args[1]);//filter track-state file
 		File nav = new File(args[2]); //nav track position plots tLLh
@@ -42,13 +47,12 @@ class TestFilter {
 				stream = new PrintStream(new FileOutputStream(out));
 				navs = new PrintStream(new FileOutputStream(nav));
 			}
-			pedestals = loadPedestals(in);
-			
+			pedestals = Ensemble.load(in);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
 		}
-		
+
 		//Set up track profile:
 		double t0 = 0.0;   //seconds initial frame time
 		double dt = 0.020; //seconds interval between frames
@@ -83,12 +87,12 @@ class TestFilter {
 		double start = 0.0;
 
 		// set the origin to the first sensor
-		Pedestal pedestal = pedestals[0];
+		Pedestal pedestal = pedestals.getOrigin();
 		Ellipsoid origin = pedestal.getLocationEllipsoid();
+		System.out.println("ORIGIN:" + pedestal.getLocation().toString(3));
 
 		Racetrack trajectory = new Racetrack( start, origin, c1, c2, radius, velocity);
 		int n = (int)Math.floor((trajectory.getPerimeter() / velocity) / dt); // one circuit of the racetrack
-
 
 		// create Kalman 'group' filter track from pedestal instruments selected... loaded ped states
 		Filter kalman = new KalmanFilter( pedestals );
@@ -102,32 +106,6 @@ class TestFilter {
 		stream.close();
 	}
 
-	/** Read an array of modeled pedestals from the given file */
-	public static Pedestal[] loadPedestals(File file) throws Exception {
-		// use the pedestal model to parse the file
-		PedestalModel model;
-		model = new PedestalModel();
-		model.load( file );
-		
-		// convert pedestal model to a primitive array
-		ArrayList<Pedestal> list = model.asList();
-		Pedestal pedestals[] = new Pedestal[list.size()];
-		list.toArray(pedestals);
-
-		//Assume first pedestal in file is filter origin
-		Pedestal.setOrigin(pedestals[0].getLocation());
-		System.out.println("ORIGIN:" + Pedestal.getOrigin().toString(3));
-		
-		//Compute local coordinates wrt filter origin defined 
-		int pNum = pedestals.length;
-		for (int p = 0; p < pNum; p++) {
-			pedestals[p].setLocalOriginCoordinates();
-		}
-		
-		//return list with pedestals located and filter origin defined:
-		return pedestals;
-	} //TODO should extract this to some ensemble class, gathered with mass pointing and error perturbation. 
-	
 	/** Applies the given filter to a simulated set of track data. The target's
 	 * motion is simulated using a {@link Trajectory Trajectory object},
 	 * and each {@link tspi.model.Pedestal Pedestal} is pointed at the object
@@ -135,7 +113,7 @@ class TestFilter {
 	 * measurements are then given to the filter incrementally over an interval
 	 * of time. */
 	public static void demoFilter(
-            Filter filter, Trajectory trajectory, Pedestal pedestals[],
+            Filter filter, Trajectory trajectory, Ensemble pedestals,
             double t0, double dt, int n, PrintStream stream, PrintStream navs ) {
 
 		Ellipsoid trueNav = new Ellipsoid();
@@ -170,10 +148,10 @@ class TestFilter {
 			navs.println();
 
 			// take perturbed measurements
-			trajectory.simulateTrack(t, pedestals, random);
 			//TODO start using the observation interface!
-//			// Propagate perturbed measurements... replaced 'simulateTrack' with free partial model of just 'track'...
-//			trajectory.track( t, pedestals, random );
+			RealVector p = trajectory.getPosition(t);
+			TVector efg = new TVector(p);
+			pedestals.point(efg, random);
 
 			// update the filter with the noisy measurements
 			RealVector state = filter.filter(t, pedestals).copy(); // just added a copy to make sure I wasn't clobbering any leaked state...

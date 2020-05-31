@@ -2,6 +2,7 @@ package tspi.filter;
 
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import tspi.model.Ensemble;
 import tspi.model.Pedestal;
 import tspi.model.Polar;
 
@@ -11,9 +12,9 @@ import tspi.model.Polar;
 public interface Filter {
 
 	/** Update the filter's state and covariance using a vector of pedestal measurements.
-	 * @param measurements an array of measurements in the same index order as the corresponding pedestal array
+	 * @param ensemble
 	 * @return position, velocity and acceleration at the given time. */
-	RealVector filter(double time, Pedestal measurements[]);
+	RealVector filter(double time, Ensemble ensemble);
 
 	// TODO is this still needed?
 	/* using the current model, predict the future location of the target using the

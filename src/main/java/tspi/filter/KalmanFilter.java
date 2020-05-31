@@ -1,6 +1,7 @@
 package tspi.filter;
 
 import org.apache.commons.math3.linear.*;
+import tspi.model.Ensemble;
 import tspi.model.Pedestal;
 import tspi.model.Polar;
 import tspi.rotation.Rotator;
@@ -119,12 +120,11 @@ public class KalmanFilter implements Filter {
 
 	/** 
 	 * Construct Kalman Filter
-	 * @param pedestals used in track fusion
-//MAS test filter	 * @param processNoise used in track steady state
+	 * @param ensemble A collection of Pedestals whose measurements are used by the KalmanFilter
 	 * */
-	public KalmanFilter( Pedestal pedestals[] ) {
+	public KalmanFilter( Ensemble ensemble ) {
 		
-		this._numMeas = pedestals.length * 3; // potentially mapped rg, az and el pedestal sensors of group
+		this._numMeas = ensemble.size() * 3; // potentially mapped rg, az and el pedestal sensors of group
 		
 		this._state = new ArrayRealVector(9);				//Kalman Filter exported state vector
 		
@@ -311,10 +311,10 @@ public class KalmanFilter implements Filter {
 	
 	/** form the measurement data into observation and measurements
 	 * 
-	 * @param ped
+	 * @param ensemble
 	 * @return number of instruments mapped to filter
 	 */
-	public int formMeasurementEnsemble(Pedestal ped[]) {
+	public int formMeasurementEnsemble(Ensemble ensemble) {
 		this._H = MatrixUtils.createRealMatrix(_numMeas, 3); //force zeros all structure
 		int instr = 0;		
 		this._position = new TVector(_x_.getSubVector(0, 3));
@@ -334,14 +334,14 @@ public class KalmanFilter implements Filter {
 		Polar predictedResiduals = new Polar();
 
 		//For each pedestal in group...
-		for (int n = 0; n < ped.length; n++) {
+		for (int n = 0; n < ensemble.size(); n++) {
 
 			//Done for every pedestal in group...(1:1) with pedestal instruments...
+			Pedestal pedestal = ensemble.get(n);
+			radar.set(pedestal.getLocal()); //get this n^(th) pedestal radar coordinates for target vector plot {rae}
+			local.set(pedestal.getLocationFrame().getLocal()); //local orientation rotator {NED} from {EFG}
 
-			radar.set(ped[n].getLocal()); //get this n^(th) pedestal radar coordinates for target vector plot {rae}
-			local.set(ped[n].getLocationFrame().getLocal()); //local orientation rotator {NED} from {EFG}
-
-			pedLocation.set(ped[n].getLocalCoordinates()); // pedestal surveyed-location vector from local filter origin {EFG}
+			pedLocation.set(pedestal.getLocalCoordinates()); // pedestal surveyed-location vector from local filter origin {EFG}
 
 			filterVector.set(_x_.getSubVector(0, 3).subtract( pedLocation.realVector() ),0);
 			filterPlot.set(Polar.commandLocal(filterVector, local));
@@ -355,7 +355,7 @@ public class KalmanFilter implements Filter {
 
 			_predictedPedestalResiduals.add( n, predictedResiduals );
 
-			System.out.println( "**** Pedestal Sensor Predicted Residuals ** " + ped[n].getSystemId()
+			System.out.println( "**** Pedestal Sensor Predicted Residuals ** " + pedestal.getSystemId()
 					+ "\t drg " + (_predictedPedestalResiduals.get(n)).getRange()
 					+ "\t daz " + _predictedPedestalResiduals.get(n).getSignedAzimuth().getDegrees()
 					+ "\t del " + _predictedPedestalResiduals.get(n).getElevation().getDegrees()
@@ -364,13 +364,13 @@ public class KalmanFilter implements Filter {
 			//INSTRUMENTS:
 			// add rows to H, z vector, and diag(R) (projection ped sensor measurements)!!!!
 
-			if (ped[n].getMapRG()) {
+			if (pedestal.getMapRG()) {
 
-				projectI.set(ped[n].getAperture_i().unit());
+				projectI.set(pedestal.getAperture_i().unit());
 
 				_H.setRow(instr, projectI.doubleArray());
 				_z.setEntry(instr, radar.getRange() + pedLocation.getInnerProduct(projectI)); // meters track projection measured
-				_sigmaMeasurement.setEntry(instr, ped[n].getDeviationRG()); // innovation meters
+				_sigmaMeasurement.setEntry(instr, pedestal.getDeviationRG()); // innovation meters
 				//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationRG());
 				_editThreshold.setEntry(instr,2.0); // thresh should be read with measurement model like measurements[n].getDeviationAZ()!!!!
 				mapPed[instr] = n; //look up pedestal by instrument in filter solution
@@ -378,16 +378,16 @@ public class KalmanFilter implements Filter {
 				instr += 1;
 			}
 
-			if ((ped[n].getMapAZ()) || (ped[n].getMapEL())) {
+			if ((pedestal.getMapAZ()) || (pedestal.getMapEL())) {
 
-				if (ped[n].getMapAZ()) {
+				if (pedestal.getMapAZ()) {
 
-					projectJ.set(ped[n].getAperture_j().unit()); //.divide(filterPlot.getRange()));
+					projectJ.set(pedestal.getAperture_j().unit()); //.divide(filterPlot.getRange()));
 
 					_H.setRow(instr, projectJ.doubleArray());
 					_z.setEntry(instr, pedLocation.getInnerProduct(projectJ)); // meters track error normal->az // @radians tracke error AZ
 //					_sigmaMeasurement.setEntry(instr, ped[n].getDeviationAZ().getRadians() * filterPlot.getRange()); ////@MAS: Need '* Cos[EL]' multiplier! // innovation meters
-					_sigmaMeasurement.setEntry(instr, ped[n].getDeviationAZ().getRadians()
+					_sigmaMeasurement.setEntry(instr, pedestal.getDeviationAZ().getRadians()
 							* filterPlot.getRange() * StrictMath.cos(filterPlot.getElevation().getRadians()) ); ////@MAS: Need '* Cos[EL]' multiplier! // innovation meters
 					//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationAZ().getRadians());
 					_editThreshold.setEntry(instr,3.0); // thresh should be read with measurement model like measurements[n].getDeviationAZ()!!!!
@@ -396,13 +396,13 @@ public class KalmanFilter implements Filter {
 					instr += 1;
 				}
 
-				if (ped[n].getMapEL()) {
+				if (pedestal.getMapEL()) {
 
-					projectK.set(ped[n].getAperture_k().unit());
+					projectK.set(pedestal.getAperture_k().unit());
 
 					_H.setRow(instr, projectK.doubleArray());
-					_z.setEntry(instr, pedLocation.getInnerProduct(ped[n].getAperture_k().unit())); // @radians track error EL
-					_sigmaMeasurement.setEntry(instr, ped[n].getDeviationEL().getRadians() * filterPlot.getRange()); // innovation meters
+					_z.setEntry(instr, pedLocation.getInnerProduct(pedestal.getAperture_k().unit())); // @radians track error EL
+					_sigmaMeasurement.setEntry(instr, pedestal.getDeviationEL().getRadians() * filterPlot.getRange()); // innovation meters
 					//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationEL().getRadians());
 					_editThreshold.setEntry(instr,3.0); // thresh should be read with measurement model like measurements[n].getDeviationAZ()!!!!
 					mapPed[instr] = n;
@@ -419,10 +419,10 @@ public class KalmanFilter implements Filter {
 	 * This routine updates the filter state with new pedestal measurements ...
 	 */
 	@Override
-	public RealVector filter(double time, Pedestal measurements[] ) {
+	public RealVector filter(double time, Ensemble ensemble) {
 						
 		//Compile mapped measurements: {(H|z),R}
-		int instr = formMeasurementEnsemble(measurements);
+		int instr = formMeasurementEnsemble(ensemble);
 
 		//Prediction update (a priori)		
 		long msTimeAdvOld = _msecAdv;

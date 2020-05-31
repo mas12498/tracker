@@ -31,41 +31,46 @@ timeSec,trackE,trackF,trackG,A_mode,A_rg,A_az,A_el,B_mode,B_rg,B_az,B_el,C_mode,
      * <pre>time, NLat, ELon, eHgt</pre>*/
     public void write(PrintStream targetObservations, PrintStream targetTruth) {
 
-        // TODO do we really need truth with observations if we're writing a truth file? Or should we put LLH with observations?
+        Ensemble ensemble = observations.getEnsemble();
 
-        // TODO write the header of the files. Do I need an ensemble to get sensor IDs?
-//        targetObservations.print( "timeSec" );
-//        if (observations.hasTruth())
-//            targetObservations.print(", trackE, trackF, trackG");
-//        for (int m=0; m<observations.size(); m++) {
-//            String id = "S"+m; // sensors.get(m).getSystemId();
-//            targetObservations.print( ", "+id+"_mode, "+id+"_rg, "+id+"_az, "+id+"_el");
-//        }
-//        targetObservations.println();
+        // Write the csv headers for both files
+        targetObservations.print( "timeSec" );
+        targetObservations.print(", trackE, trackF, trackG");
+        for (int m=0; m<ensemble.size(); m++) {
+            String id = ensemble.get(m).getSystemId();
+            targetObservations.print( ", "+id+"_mode, "+id+"_rg, "+id+"_az, "+id+"_el");
+        }
+        targetObservations.println();
 
         targetTruth.println("time, NLat, ELon, eHgt");
+        // TODO Should we just put true LLH in the observations file? Pretty sure this is solely for testing values using increments 1-3...
 
         while (observations.hasNext()) {
             observations.next();
 
             double time = observations.getTime();
             Vector3 truth = observations.getTruth();
-            Polar[] measurements = observations.getObservations();
-            // TODO figure out where to keep mode...
-//            int[] modes = observations.getModes();
+            ensemble = observations.getEnsemble();
 
-            // write a record in the observations file
+            // write the time and true target value
             targetObservations.print(time);
             if (truth!=null)
                 targetObservations.print(
                         ","+truth.getX()
                         +','+truth.getY()
                         +','+truth.getZ() );
-            for (int n=0; n<measurements.length; n++)
+            // TODO do we really need truth with observations if we're writing a truth file?
+
+            // write the individual pedestal sensor measurements
+            for (int n=0; n<ensemble.size(); n++) {
+                Pedestal pedestal = ensemble.get(n);
+                Polar observation = pedestal.getLocal();
                 targetObservations.print(
-                        ",0,"+measurements[n].getRange()
-                        +","+measurements[n].getSignedAzimuth()
-                        +","+measurements[n].getElevation() );
+                        ",0"// + pedestal.getMode();
+                        + "," + observation.getRange()
+                        + "," + observation.getSignedAzimuth()
+                        + "," + observation.getElevation());
+            }
             targetObservations.println();
 
             // write a record in the target truth file
@@ -84,6 +89,7 @@ timeSec,trackE,trackF,trackG,A_mode,A_rg,A_az,A_el,B_mode,B_rg,B_az,B_el,C_mode,
      * <pre>$ racetrackWriter <C1(m)> <C2(m)> <radius(m)> <velocity(m/s)> <dt(s)> <pedestalinput> <ensembleoutput> <truthoutput></pre>
      * example:
      * <pre>0 0 10000 0 2000 10000 1000 223 0.02 "./data/pedestalsTest100.csv" "./data/TrajectoryTest/racetrack.csv" "./data/TrajectoryTest/target.csv"</pre>
+     * TODO add switches for using different simulated trajectories
      *  */
     public static void main(String[] args) {
         try {

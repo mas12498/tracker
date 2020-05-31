@@ -1,8 +1,6 @@
 package tspi.simulator;
 
 import tspi.model.Ensemble;
-import tspi.model.Pedestal;
-import tspi.model.Polar;
 import tspi.rotation.Vector3;
 import tspi.util.TVector;
 
@@ -11,12 +9,11 @@ import java.util.Random;
 class ObservationsSimulator implements Observations {
 
     // Observation state members, updated after the iterator is advanced
-    Polar[] observations; // current observations
+    Ensemble sensors; // the pedestals observing the target
     Vector3 truth; // current true target position in EFG
     double time; // current time
 
     // Simulation members used to generate observations
-    Ensemble sensors; // the pedestals generating observations
     Trajectory trajectory; // the parametric definition of the simulated target
     double t, dt; // start time and time increment
     int i, n; // progress count
@@ -41,14 +38,21 @@ class ObservationsSimulator implements Observations {
     @Override
     public Vector3 getTruth() { return truth; }
 
-    public Ensemble getSensors() { return sensors; }
+    @Override
+    public Ensemble getEnsemble() { return sensors; }
 
-    public Polar[] getObservations() { return observations; }
+//    public Polar[] getObservations() {
+//        Polar[] observations = new Polar[ sensors.size() ];
+//        for (int m = 0; m< sensors.size(); m++)
+//            observations[m] = sensors.get(m).getLocal();
+//        return observations;
+//    }
+
     @Override
     public boolean hasNext() { return i < n; }
 
     @Override
-    public Double next() {
+    public Ensemble next() {
 
         // find the current trajectory position
         time = t + ((++i) * dt);
@@ -57,11 +61,6 @@ class ObservationsSimulator implements Observations {
         // point the ensemble at the target
         sensors.point(truth, random);
 
-        // gather an observation from each sensor in the ensemble
-        observations = new Polar[ sensors.size() ];
-        for (int m = 0; m< sensors.size(); m++)
-            observations[m] = sensors.get(m).getLocal();
-
-        return new Double( time );
+        return sensors;
     }
 }

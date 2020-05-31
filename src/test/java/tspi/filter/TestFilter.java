@@ -15,6 +15,11 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Random;
 
+// TODO TestFilter;
+// make testFilter use an ensemble instead of an array of Pedestals and PedestalModel
+// make test filter use Observations interface while driving filter.
+// add error diagnostic output to TestFilter
+
 /** Exercise the filter */
 class TestFilter {
 	
@@ -29,21 +34,7 @@ class TestFilter {
 	 * Tracker <pedestal file> <output file> */
 	public static void main(String args[]) {
 		
-		Pedestal pedestals[];
-	//File in = null; //new File("/home/mike/pedestalsFilter");
-//		File in = new File("/home/mike/git/mas12498/tracker/data/pedestalsIncrement.csv");
-		//File in = new File("H:/filterPedestals001.csv");		
-		//File in = new File("H:/filterPedestals010.csv");		
-//		File in = new File("H:/filterPedestals0005.csv");		
-//		File in = new File("H:/filterPedestals.csv");		
-//		File in = new File("/home/mike/pedestalsFilter010.csv");
-//		File in = new File("/home/mike/photon/workspace/github/tracker/data/pedestalsFilter1.csv");
-//		File in = new File("H:/git/mas12498/tracker/data/pedestalsIncrement.csv");
-//		File in = new File("C:\\Users\\Casey Shields\\eclipse-workspace\\tracker\\data\\pedestalsIncrement.csv");
-	//File out = null; //new File("/home/mike/photon/workspace/github/tracker/data/testfilter.csv");
-//		File out = null;//new File("./tracker/data/testFilter.csv");
-
-
+		Ensemble pedestals;
 		File in = new File(args[0]);//pedestals file
 		File out = new File(args[1]);//filter track-state file
 		File nav = new File(args[2]); //nav track position plots tLLh
@@ -56,13 +47,12 @@ class TestFilter {
 				stream = new PrintStream(new FileOutputStream(out));
 				navs = new PrintStream(new FileOutputStream(nav));
 			}
-			pedestals = loadPedestals(in);
-			
+			pedestals = Ensemble.load(in);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
 		}
-		
+
 		//Set up track profile:
 		double t0 = 0.0;   //seconds initial frame time
 		double dt = 0.020; //seconds interval between frames
@@ -97,143 +87,96 @@ class TestFilter {
 		double start = 0.0;
 
 		// set the origin to the first sensor
-		Pedestal pedestal = pedestals[0];
+		Pedestal pedestal = pedestals.getOrigin();
 		Ellipsoid origin = pedestal.getLocationEllipsoid();
+		System.out.println("ORIGIN:" + pedestal.getLocation().toString(3));
 
 		Racetrack trajectory = new Racetrack( start, origin, c1, c2, radius, velocity);
 		int n = (int)Math.floor((trajectory.getPerimeter() / velocity) / dt); // one circuit of the racetrack
 
-
 		// create Kalman 'group' filter track from pedestal instruments selected... loaded ped states
 		KalmanFilter kalman = new KalmanFilter( pedestals );
-//		//Filter cheat = new CheatFilter( trajectory );
-		
+
 		// test the filter on the trajectory with pedestals simulated...time,frameInsterval,frames,stream
 		//NOTE: pedestal measurement models of simulation might want different from pedestals of filter.
 		demoFilter( kalman, trajectory, pedestals, t0, dt, n, stream, navs );
-//		//demoFilter( cheat, trajectory, pedestals, 0.0, 0.02, 500, stream ); //defined below as trivial truth passer...
 
-
-
-		//System.out.println(BLAS.getInstance().getClass().getName());
 		// dispose IO
 //		navs.close();
 		stream.close();
 	}
 
-
-
-
-	/** Read an array of modeled pedestals from the given file */
-	public static Pedestal[] loadPedestals(File file) throws Exception {
-		// use the pedestal model to parse the file
-		PedestalModel model;
-		model = new PedestalModel();
-		model.load( file );
-		
-		// convert pedestal model to a primitive array
-		ArrayList<Pedestal> list = model.asList();
-		Pedestal pedestals[] = new Pedestal[list.size()];
-		list.toArray(pedestals);
-
-		//Assume first pedestal in file is filter origin
-		Pedestal.setOrigin(pedestals[0].getLocation());
-		System.out.println("ORIGIN:" + Pedestal.getOrigin().toString(3));
-		
-		//Compute local coordinates wrt filter origin defined 
-		int pNum = pedestals.length;
-		for (int p = 0; p < pNum; p++) {
-			pedestals[p].setLocalOriginCoordinates();
-		}
-		
-		//return list with pedestals located and filter origin defined:
-		return pedestals;
-	} //TODO should extract this to some ensemble class, gathered with mass pointing and error perturbation. 
-	
 	/** Applies the given filter to a simulated set of track data. The target's
 	 * motion is simulated using a {@link Trajectory Trajectory object},
 	 * and each {@link tspi.model.Pedestal Pedestal} is pointed at the object
 	 * and perturbed by their error model. The array of noisy pedestal
 	 * measurements are then given to the filter incrementally over an interval
-	 * of time.
-	 * TODO We want to make this into a test; how can we do that?
-	 *  - make sure tracker state is within some epsilon of the truth?
-	 *  - monitor the internal residuals of the filter?
-	*/
+	 * of time. */
 	public static void demoFilter(
-            KalmanFilter filter, Trajectory trajectory, Pedestal pedestals[],
-            double t0, double dt, int n, PrintStream stream, PrintStream navs	) {
+            KalmanFilter filter, Trajectory trajectory, Ensemble pedestals,
+            double t0, double dt, int n, PrintStream stream, PrintStream navs ) {
 
 		Ellipsoid trueNav = new Ellipsoid();
 		Vector3 nav = new Vector3(Vector3.EMPTY);
 
 		// print the headers
-
 		navs.append("time, NLat, ELon, eHgt");
 		navs.println();
 
 		stream.append("time, S0, S1, S2, S3, S4, S5, S6, S7, S8, "
 				+ "dS0, dS1, dS2, dS3, dS4, dS5, dS6, dS7, dS8");
 		for (Pedestal pedestal : pedestals) {
-			stream.append( ", "+pedestal.getSystemId()+"_rg"); //@MAS
-			stream.append( ", "+pedestal.getSystemId()+"_az");
-			stream.append( ", "+pedestal.getSystemId()+"_el");
+			stream.append(", " + pedestal.getSystemId() + "_rg");
+			stream.append(", " + pedestal.getSystemId() + "_az");
+			stream.append(", " + pedestal.getSystemId() + "_el");
 		}
 		stream.println();
 
-
 		// Generate stream (measurements over time)
 		for (double t=t0; t<t0+n*dt; t+=dt) {
-			
+
 			// get the true object state
-			RealVector truth = trajectory.getState( t );
+			RealVector truth = trajectory.getState(t);
 
 			// get the true nav plot
-			nav.set(truth.getEntry(0),truth.getEntry(1),truth.getEntry(2)); //functional to get LLh
+			nav.set(truth.getEntry(0), truth.getEntry(1), truth.getEntry(2)); //functional to get LLh
 			trueNav.setGeocentric(nav);
 
 			//tabulate nav plots into csv
 			navs.append((Double.toString(t)));
-			navs.append(", "+trueNav.getNorthLatitude()+", "+trueNav.getEastLongitude()+", "+trueNav.getEllipsoidHeight()); //nav plot data
+			navs.append(", " + trueNav.getNorthLatitude() + ", " + trueNav.getEastLongitude() + ", " + trueNav.getEllipsoidHeight()); //nav plot data
 			navs.println();
-			
+
 			// take perturbed measurements
-			trajectory.simulateTrack( t, pedestals, random );
-//			// Propagate perturbed measurements... replaced 'simulateTrack' with free partial model of just 'track'...
-//			trajectory.track( t, pedestals, random );
+			//TODO start using the observation interface!
+			RealVector p = trajectory.getPosition(t);
+			TVector efg = new TVector(p);
+			pedestals.point(efg, random);
 
 			// update the filter with the noisy measurements
 			RealVector state = filter.filter(t, pedestals).copy(); // just added a copy to make sure I wasn't clobbering any leaked state...
-			
+
 			// compare the measurements
-			state.subtract( truth );
-			
+			state.subtract(truth);
+
 			// tabulate the results into CSV
 			stream.append(Double.toString(t)); // time
-			
+
 			for (double d : truth.toArray())
-				stream.append(", "+d);// true state
-			
+				stream.append(", " + d);// true state
+
 			for (double d : state.toArray())
-				stream.append(", "+d);// state delta
-			
-			// TODO I don't think if residue is meaningful for the cheatFilter...
-			// put this back in when you're ready?
-//			Polar[] residue = filter.getResidualsPrediction(t);
-//			for(Polar polar : residue) {
-//				stream.append( ", "+polar.getSignedAzimuth() );
-//				stream.append( ", "+polar.getElevation() );
-//			} // pre
-//			
-//			residue = filter.getResidualsUpdate(t);
-//			for(Polar polar : residue) {
-//				stream.append( ", "+polar.getSignedAzimuth() );
-//				stream.append( ", "+polar.getElevation() );
-//			} // post
-			
+				stream.append(", " + d);// state delta
+
+			// Do we want to include residuals?
+//			RealVector residuals = filter.getResiduals();
+//			RealVector innovations = filter.getInnovations();
+
 			stream.println();
 		}
 		// TODO use descriptive statistics and print a summary to screen ? Use them for unit test?
+		/* Do we want to adapt this into a test? How can we do that?
+		 *  - make sure tracker state is within some epsilon of the truth?
+		 *  - monitor the internal residuals of the filter? */
 	}
-	
 }

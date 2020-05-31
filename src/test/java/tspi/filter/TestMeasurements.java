@@ -117,7 +117,7 @@ public class TestMeasurements {
 		TVector p0 = new TVector(pOff.add(pos0).subtract(Pedestal.getOrigin()));     //init filter position
 		TVector v0 = new TVector(vOff);
 		
-		KalmanFilter kalman = new KalmanFilter( ensemble.toArray() ); // , p0, v0); //, processNoise );
+		KalmanFilter kalman = new KalmanFilter( ensemble ); // , p0, v0); //, processNoise );
 		
 		return kalman;
 	}
@@ -165,7 +165,7 @@ public class TestMeasurements {
 			}
 			
 			// Update the filter with the adjusted Ensemble measurements
-			RealVector state = filter.filter( time, ensemble.toArray() );
+			RealVector state = filter.filter( time, ensemble );
 			
 			// print out the time and state.
 			stream.append( "" + time );

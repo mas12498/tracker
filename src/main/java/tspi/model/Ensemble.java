@@ -18,11 +18,14 @@ public class Ensemble extends ArrayList<Pedestal>{
 				return pedestal;
 		return null;
 	}
+
+	public Pedestal getOrigin() {
+		return get(0);
+	} // TODO should we add origin as a member or continue the convention of using the first sensor?...
 	
 	public Pedestal[] toArray() {
 		Pedestal pedestal[] = new Pedestal[this.size()];
 		return super.toArray(pedestal);
-		//TODO I need to change the dependencies on Pedestal[] to Ensemble...
 	}
 	
 	/** Point each of the sensors in the ensemble at the given point, including a perturbation generated from 
@@ -31,10 +34,17 @@ public class Ensemble extends ArrayList<Pedestal>{
 		for (Pedestal pedestal : this) {
 			pedestal.pointToLocation(efg);
 			Polar perturbed = pedestal.getPerturbedLocal(random);
-			pedestal.pointDirection(perturbed.getUnsignedAzimuth(), perturbed.getElevation());
+			pedestal.point( perturbed.getRange(), perturbed.getUnsignedAzimuth(), perturbed.getElevation());
+			//pedestal.pointDirection( perturbed.getUnsignedAzimuth(), perturbed.getElevation() );
+			//pedestal.pointRange( perturbed.getRange() );
+
+			// this needs to be moved somewhere else...
+//			double trueRG = pedestals[n].getLocal().getRange();
+//			System.out.println("***** sim ped ranges true and perturbed:"+trueRG+"   "+pedestals[n].getLocal().getRange());
+
 		}
 	}
-	
+
 	/** Read an array of modeled pedestals from the given file */
 	public static Ensemble load(File file) throws Exception {
 		
@@ -64,9 +74,8 @@ public class Ensemble extends ArrayList<Pedestal>{
 		//return list with pedestals located and filter origin defined:
 		return ensemble;
 	}
-	
-	// TODO save
-	// TODO stream
+
+	// TODO add a save routine
 	
 	private static final long serialVersionUID = 1L;
 }

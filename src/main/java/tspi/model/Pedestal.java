@@ -13,7 +13,10 @@ import java.util.Random;
 public class Pedestal {
 	
 	String _systemId; // system identifier
-	
+
+	/** Bitmask for the current tracking mode of the sensor. TODO what are the possible values? */
+	int mode;
+
 	/** Pedestal instruments available for TSPI: boolean values */
 	final Boolean[] _mapSensors = new Boolean[3]; // == {hasRG,hasAZ,hasEL}
 
@@ -69,6 +72,7 @@ public class Pedestal {
 	public Pedestal( String id, Boolean hasRG, Boolean hasAZ, Boolean hasEL, Angle lat, Angle lon, double h) {
 		//_wgs84: from Pedestal's geodetic-ellipsoid coordinates Latitude, Longitude, height
 		this._systemId = id;
+		this.mode = 0; // TODO what should it be?
 		this._geodeticLocation.set(lat,lon, h); //Ellipsoid
 		this._localFrame.set(this._geodeticLocation);	//T_EFG_NED
 		this._unitNorth.set(this._localFrame._local.getImage_i());
@@ -117,7 +121,10 @@ public class Pedestal {
 
 	//Clone Pedestal objects...
 	public String getSystemId() { return this._systemId; }
-	
+
+	public int getMode() { return this.mode; }
+	public void setMode(int mode) { this.mode = mode; }
+
 	/**
 	 * @return pedestal's location in geocentric coordinate frame.
 	 */

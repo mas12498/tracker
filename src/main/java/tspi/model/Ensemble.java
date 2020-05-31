@@ -18,11 +18,14 @@ public class Ensemble extends ArrayList<Pedestal>{
 				return pedestal;
 		return null;
 	}
+
+	public Pedestal getOrigin() {
+		return get(0);
+	} // TODO should we add origin as a member or continue the convention of using the first sensor?...
 	
 	public Pedestal[] toArray() {
 		Pedestal pedestal[] = new Pedestal[this.size()];
 		return super.toArray(pedestal);
-		//TODO I need to change the dependencies on Pedestal[] to Ensemble...
 	}
 	
 	/** Point each of the sensors in the ensemble at the given point, including a perturbation generated from 
@@ -71,9 +74,8 @@ public class Ensemble extends ArrayList<Pedestal>{
 		//return list with pedestals located and filter origin defined:
 		return ensemble;
 	}
-	
-	// TODO save
-	// TODO stream
+
+	// TODO add a save routine
 	
 	private static final long serialVersionUID = 1L;
 }

@@ -95,7 +95,7 @@ class TestFilter {
 		int n = (int)Math.floor((trajectory.getPerimeter() / velocity) / dt); // one circuit of the racetrack
 
 		// create Kalman 'group' filter track from pedestal instruments selected... loaded ped states
-		Filter kalman = new KalmanFilter( pedestals );
+		KalmanFilter kalman = new KalmanFilter( pedestals );
 
 		// test the filter on the trajectory with pedestals simulated...time,frameInsterval,frames,stream
 		//NOTE: pedestal measurement models of simulation might want different from pedestals of filter.
@@ -113,7 +113,7 @@ class TestFilter {
 	 * measurements are then given to the filter incrementally over an interval
 	 * of time. */
 	public static void demoFilter(
-            Filter filter, Trajectory trajectory, Ensemble pedestals,
+            KalmanFilter filter, Trajectory trajectory, Ensemble pedestals,
             double t0, double dt, int n, PrintStream stream, PrintStream navs ) {
 
 		Ellipsoid trueNav = new Ellipsoid();
@@ -133,7 +133,7 @@ class TestFilter {
 		stream.println();
 
 		// Generate stream (measurements over time)
-		for (double t = t0; t < t0 + n * dt; t += dt) {
+		for (double t=t0; t<t0+n*dt; t+=dt) {
 
 			// get the true object state
 			RealVector truth = trajectory.getState(t);

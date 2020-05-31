@@ -11,7 +11,7 @@ import tspi.util.TVector;
 import java.util.ArrayList;
 
 /** A Kalman filter for synthesizing a series of measurements into a trajectory model in near-real-time. */
-public class KalmanFilter implements Filter {
+public class KalmanFilter {
 	
 	int[] mapPed;
 	int[] mapSensor;
@@ -418,7 +418,6 @@ public class KalmanFilter implements Filter {
 	/**
 	 * This routine updates the filter state with new pedestal measurements ...
 	 */
-	@Override
 	public RealVector filter(double time, Ensemble ensemble) {
 						
 		//Compile mapped measurements: {(H|z),R}

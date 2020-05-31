@@ -67,7 +67,7 @@ public class TestMeasurements {
 			
 			else if (args.length==3) {
 				File tracking = new File( args[2] );
-				Filter filter = getFilter( ensemble );
+				KalmanFilter filter = getFilter( ensemble );
 				track( ensemble, measurements, filter, tracking );	
 			}
 			
@@ -99,7 +99,7 @@ public class TestMeasurements {
 	}
 	
 	/** TODO this needs to be configurable too... */
-	public static Filter getFilter(Ensemble ensemble ) {
+	public static KalmanFilter getFilter(Ensemble ensemble ) {
 		
 		//Profile Kinematics starting reference:
 		TVector pos0 = new TVector(3135932.588, -5444754.209, 1103864.549); //geocentric position EFG m
@@ -117,7 +117,7 @@ public class TestMeasurements {
 		TVector p0 = new TVector(pOff.add(pos0).subtract(Pedestal.getOrigin()));     //init filter position
 		TVector v0 = new TVector(vOff);
 		
-		Filter kalman = new KalmanFilter( ensemble ); // , p0, v0); //, processNoise );
+		KalmanFilter kalman = new KalmanFilter( ensemble ); // , p0, v0); //, processNoise );
 		
 		return kalman;
 	}
@@ -126,7 +126,7 @@ public class TestMeasurements {
 	public static void track(
 			Ensemble ensemble,
 			File measurements,
-			Filter filter,
+			KalmanFilter filter,
 			File track // TODO do we really want to accept some stream instead of a file...
 	)
 		throws Exception

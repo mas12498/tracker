@@ -66,7 +66,7 @@ timeSec,trackE,trackF,trackG,A_mode,A_rg,A_az,A_el,B_mode,B_rg,B_az,B_el,C_mode,
                 Pedestal pedestal = ensemble.get(n);
                 Polar observation = pedestal.getLocal();
                 targetObservations.print(
-                        ",0"// + pedestal.getMode();
+                        "," + pedestal.getMode()
                         + "," + observation.getRange()
                         + "," + observation.getSignedAzimuth()
                         + "," + observation.getElevation());

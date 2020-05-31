@@ -119,7 +119,7 @@ public class ObservationsReader implements Observations {
             // update the corresponding pedestal
             Pedestal pedestal = ensemble.get(n);
             pedestal.point(range, Angle.inDegrees(azimuth), Angle.inDegrees(elevation));
-            //pedestal.setMode(mode);
+            pedestal.setMode(mode);
         }
     }
 

@@ -57,7 +57,6 @@ public class Ensemble extends ArrayList<Pedestal>{
 		
 		//Assume first pedestal in file is filter origin
 		Pedestal.setOrigin( list.get(0).getLocation() );
-		System.out.println( "ORIGIN:" + Pedestal.getOrigin().toString(3));
 		// TODO The origin should be a member of Ensemble instead of a static member of Pedestal!
 				
 		// convert the model to an ensemble

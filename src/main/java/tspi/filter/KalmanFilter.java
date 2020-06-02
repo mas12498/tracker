@@ -359,7 +359,7 @@ public class KalmanFilter {
 					+ "\t drg " + (_predictedPedestalResiduals.get(n)).getRange()
 					+ "\t daz " + _predictedPedestalResiduals.get(n).getSignedAzimuth().getDegrees()
 					+ "\t del " + _predictedPedestalResiduals.get(n).getElevation().getDegrees()
-					+ "\t (a priori) rg: "	+ filterPlot.getRange() );	//Process pedestals sensor[instr]: (those mapped to filter update...)
+					+ "\t (a priori) RAE: "	+ filterPlot.getRange() + "  " + filterPlot.getUnsignedAzimuth().getDegrees()+ "  " + filterPlot.getElevation().getDegrees());	//Process pedestals sensor[instr]: (those mapped to filter update...)
 
 			//INSTRUMENTS:
 			// add rows to H, z vector, and diag(R) (projection ped sensor measurements)!!!!
@@ -386,7 +386,7 @@ public class KalmanFilter {
 
 					_H.setRow(instr, projectJ.doubleArray());
 					_z.setEntry(instr, pedLocation.getInnerProduct(projectJ)); // meters track error normal->az // @radians tracke error AZ
-//					_sigmaMeasurement.setEntry(instr, ped[n].getDeviationAZ().getRadians() * filterPlot.getRange()); ////@MAS: Need '* Cos[EL]' multiplier! // innovation meters
+//					_sigmaMeasurement.setEntry(instr, pedestal.getDeviationAZ().getRadians() * filterPlot.getRange()); ////@MAS: Need '* Cos[EL]' multiplier! // innovation meters
 					_sigmaMeasurement.setEntry(instr, pedestal.getDeviationAZ().getRadians()
 							* filterPlot.getRange() * StrictMath.cos(filterPlot.getElevation().getRadians()) ); ////@MAS: Need '* Cos[EL]' multiplier! // innovation meters
 					//_R.setEntry(instr, instr, _sigmaMeasurement.getEntry(instr)*_sigmaMeasurement.getEntry(instr)); //measurements[n].getDeviationAZ().getRadians());

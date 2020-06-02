@@ -61,7 +61,7 @@ public class TestMeasurements {
 			File measurements = new File( args[1] );
 			
 			if (args.length==2) {
-				Trajectory trajectory = getTrajectory(  );
+				Trajectory trajectory = getKinematic(  );
 				createMeasurements( trajectory, ensemble, t0, dt, n, measurements );
 			}
 			
@@ -77,7 +77,7 @@ public class TestMeasurements {
 	}
 
 	/** I still don't know the best way to construct this, so I'm just using this in the interim. */
-	public static Trajectory getTrajectory() {
+	public static Trajectory getKinematic() {
 		//Set up track profile:
 		double t0 = 0.0;   //seconds initial frame time
 //		double dt = 0.020; //seconds interval between frames
@@ -97,7 +97,7 @@ public class TestMeasurements {
 		
 		return trajectory;
 	}
-	
+
 	/** TODO this needs to be configurable too... */
 	public static KalmanFilter getFilter(Ensemble ensemble ) {
 		

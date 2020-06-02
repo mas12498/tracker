@@ -80,8 +80,8 @@ class TestFilter {
 //				pos0.arrayRealVector(),
 //				vel0.arrayRealVector(),
 //				acc0.arrayRealVector()  );
-		Vector3 c1 = new Vector3(0.0, 0.0,-5000.0);
-		Vector3 c2 = new Vector3( 2000.0, 10000.0, -5000.0 );
+		Vector3 c1 = new Vector3(0.0, 0.0,5000.0);
+		Vector3 c2 = new Vector3( 2000.0, 10000.0, 5000.0 );
 		double radius = 1000.0;
 		double velocity = 150.0;
 		double start = 0.0;

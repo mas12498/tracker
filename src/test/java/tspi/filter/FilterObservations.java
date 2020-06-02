@@ -1,29 +1,24 @@
 package tspi.filter;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import tspi.model.*;
-import tspi.rotation.Angle;
 import tspi.rotation.Vector3;
 import tspi.simulator.*;
-import tspi.util.TVector;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Random;
 
 // TODO the simulator already generates a truth nav file- should we remove it from this one?
 
 /** Applies a KalmanFilter to a sequence of Observations */
-class TestFilter {
+class FilterObservations {
 
 	KalmanFilter filter;
 	Observations observations;
 
-	public TestFilter(Observations observations) {
+	public FilterObservations(Observations observations) {
 		this.observations = observations;
 		this.filter = new KalmanFilter( observations.getEnsemble() );
 	}
@@ -110,7 +105,7 @@ class TestFilter {
 			Ellipsoid origin = pedestal.getLocationEllipsoid();
 			System.out.println("ORIGIN:" + pedestal.getLocation().toString(3));
 
-			TestFilter test = new TestFilter(reader);
+			FilterObservations test = new FilterObservations(reader);
 			test.track(stream, navs);
 
 			// dispose IO

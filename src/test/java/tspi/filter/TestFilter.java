@@ -157,7 +157,7 @@ class TestFilter {
 			RealVector state = filter.filter(t, pedestals).copy(); // just added a copy to make sure I wasn't clobbering any leaked state...
 
 			// compare the measurements
-			state.subtract(truth);
+			RealVector diff = state.subtract(truth);
 
 			// tabulate the results into CSV
 			stream.append(Double.toString(t)); // time

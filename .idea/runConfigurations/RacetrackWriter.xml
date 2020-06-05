@@ -2,7 +2,7 @@
   <configuration default="false" name="RacetrackWriter" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="tspi.simulator.ObservationsWriter" />
     <module name="tracker" />
-    <option name="PROGRAM_PARAMETERS" value="0 0 10000 0 2000 10000 1000 223 0.02 &quot;./data/pedestalsTest100.csv&quot; &quot;./data/TrajectoryTest/racetrack.csv&quot; &quot;./data/TrajectoryTest/target.csv&quot;" />
+    <option name="PROGRAM_PARAMETERS" value="0 0 5000 2000 10000 5000 1000 150 0.02 &quot;./data/FilterTest/pedestalsFilter.csv&quot; &quot;./data/FilterTest/racetrack.csv&quot; &quot;./data/TrajectoryTest/target.csv&quot;" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
